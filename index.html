@@ -1017,4 +1017,10 @@ function doAddStu(){
   USERS[em]={pass:pw,role:'student',name:nm,subject:sj,year:yr,stats:{sessions:0,topics:0,quizAvg:0,hours:0},progress:[],sessions:[],activity:[]};
   document.getElementById('as-nm').value='';document.getElementById('as-em').value='';document.getElementById('as-pw').value='';
   closeM('addstu');renderStus();document.getElementById('sct').textContent=STUS.length;
-  toast(`
+  toast(`✅ Account created for ${nm} — login: ${em}`);
+}
+function doBook(){closeM('book');toast('✅ Enquiry sent! Kevin or Serena will be in touch within 24 hours.');}
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),3400);}
+</script>
+</body>
+</html>
