@@ -8,7 +8,7 @@ create table if not exists public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   email text unique,
   full_name text,
-  role text not null default 'student' check (role in ('tutor','student')),
+  role text not null default 'student' check (role in ('tutor','student','parent')),
   year_group text,
   created_at timestamptz not null default now()
 );
@@ -26,7 +26,10 @@ begin
     new.id,
     new.email,
     coalesce(new.raw_user_meta_data->>'full_name', new.email),
-    'student'
+    case
+      when new.raw_user_meta_data->>'signup_role' = 'parent' then 'parent'
+      else 'student'
+    end
   )
   on conflict (id) do nothing;
 
@@ -47,11 +50,17 @@ create table if not exists public.assignments (
   title text not null,
   subject text not null default 'General',
   description text,
+  resource_title text,
+  resource_url text,
   due_date date,
   status text not null default 'assigned' check (status in ('assigned','completed')),
   created_at timestamptz not null default now(),
   completed_at timestamptz
 );
+
+alter table public.assignments
+  add column if not exists resource_title text,
+  add column if not exists resource_url text;
 
 create index if not exists idx_assignments_tutor on public.assignments(tutor_id);
 create index if not exists idx_assignments_student on public.assignments(student_id);
@@ -64,16 +73,39 @@ create table if not exists public.submissions (
   student_id uuid not null references public.profiles(id) on delete cascade,
   notes text,
   submitted_at timestamptz not null default now(),
+  mark integer,
+  grade text,
+  tutor_feedback text,
+  graded_at timestamptz,
   unique (assignment_id, student_id)
 );
 
+alter table public.submissions
+  add column if not exists mark integer,
+  add column if not exists grade text,
+  add column if not exists tutor_feedback text,
+  add column if not exists graded_at timestamptz;
+
 create index if not exists idx_submissions_assignment on public.submissions(assignment_id);
 create index if not exists idx_submissions_student on public.submissions(student_id);
+
+-- 4) Parent <-> Student links
+create table if not exists public.parent_student_links (
+  id uuid primary key default gen_random_uuid(),
+  parent_id uuid not null references public.profiles(id) on delete cascade,
+  student_id uuid not null references public.profiles(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  unique (parent_id, student_id)
+);
+
+create index if not exists idx_parent_links_parent on public.parent_student_links(parent_id);
+create index if not exists idx_parent_links_student on public.parent_student_links(student_id);
 
 -- 4) RLS
 alter table public.profiles enable row level security;
 alter table public.assignments enable row level security;
 alter table public.submissions enable row level security;
+alter table public.parent_student_links enable row level security;
 
 -- Helper check: current user is tutor
 create or replace function public.is_tutor()
@@ -89,46 +121,72 @@ as $$
 $$;
 
 -- Profiles policies
-create policy if not exists "profiles_select_own_or_tutor"
+drop policy if exists "profiles_select_own_or_tutor" on public.profiles;
+create policy "profiles_select_own_or_tutor"
 on public.profiles
 for select
-using (id = auth.uid() or public.is_tutor());
+using (
+  id = auth.uid()
+  or public.is_tutor()
+  or exists (
+    select 1
+    from public.parent_student_links l
+    where l.parent_id = auth.uid()
+      and l.student_id = profiles.id
+  )
+);
 
-create policy if not exists "profiles_insert_own"
+drop policy if exists "profiles_insert_own" on public.profiles;
+create policy "profiles_insert_own"
 on public.profiles
 for insert
 with check (id = auth.uid());
 
-create policy if not exists "profiles_update_own"
+drop policy if exists "profiles_update_own" on public.profiles;
+create policy "profiles_update_own"
 on public.profiles
 for update
 using (id = auth.uid())
 with check (id = auth.uid());
 
 -- Assignments policies
-create policy if not exists "assignments_select_tutor_or_student"
+drop policy if exists "assignments_select_tutor_or_student" on public.assignments;
+create policy "assignments_select_tutor_or_student"
 on public.assignments
 for select
-using (tutor_id = auth.uid() or student_id = auth.uid());
+using (
+  tutor_id = auth.uid()
+  or student_id = auth.uid()
+  or exists (
+    select 1
+    from public.parent_student_links l
+    where l.parent_id = auth.uid()
+      and l.student_id = assignments.student_id
+  )
+);
 
-create policy if not exists "assignments_insert_tutor_only"
+drop policy if exists "assignments_insert_tutor_only" on public.assignments;
+create policy "assignments_insert_tutor_only"
 on public.assignments
 for insert
 with check (public.is_tutor() and tutor_id = auth.uid());
 
-create policy if not exists "assignments_update_tutor_or_assigned_student"
+drop policy if exists "assignments_update_tutor_or_assigned_student" on public.assignments;
+create policy "assignments_update_tutor_or_assigned_student"
 on public.assignments
 for update
 using (tutor_id = auth.uid() or student_id = auth.uid())
 with check (tutor_id = auth.uid() or student_id = auth.uid());
 
-create policy if not exists "assignments_delete_tutor_only"
+drop policy if exists "assignments_delete_tutor_only" on public.assignments;
+create policy "assignments_delete_tutor_only"
 on public.assignments
 for delete
 using (public.is_tutor() and tutor_id = auth.uid());
 
 -- Submissions policies
-create policy if not exists "submissions_select_own_or_assignment_tutor"
+drop policy if exists "submissions_select_own_or_assignment_tutor" on public.submissions;
+create policy "submissions_select_own_or_assignment_tutor"
 on public.submissions
 for select
 using (
@@ -139,9 +197,17 @@ using (
     where a.id = submissions.assignment_id
       and a.tutor_id = auth.uid()
   )
+  or exists (
+    select 1
+    from public.assignments a
+    join public.parent_student_links l on l.student_id = a.student_id
+    where a.id = submissions.assignment_id
+      and l.parent_id = auth.uid()
+  )
 );
 
-create policy if not exists "submissions_insert_own_for_own_assignment"
+drop policy if exists "submissions_insert_own_for_own_assignment" on public.submissions;
+create policy "submissions_insert_own_for_own_assignment"
 on public.submissions
 for insert
 with check (
@@ -154,11 +220,48 @@ with check (
   )
 );
 
-create policy if not exists "submissions_update_own"
+drop policy if exists "submissions_update_own" on public.submissions;
+drop policy if exists "submissions_update_student_or_assignment_tutor" on public.submissions;
+create policy "submissions_update_student_or_assignment_tutor"
 on public.submissions
 for update
-using (student_id = auth.uid())
-with check (student_id = auth.uid());
+using (
+  student_id = auth.uid()
+  or exists (
+    select 1
+    from public.assignments a
+    where a.id = submissions.assignment_id
+      and a.tutor_id = auth.uid()
+  )
+)
+with check (
+  student_id = auth.uid()
+  or exists (
+    select 1
+    from public.assignments a
+    where a.id = submissions.assignment_id
+      and a.tutor_id = auth.uid()
+  )
+);
+
+-- Parent link policies
+drop policy if exists "parent_links_select_own_or_tutor" on public.parent_student_links;
+create policy "parent_links_select_own_or_tutor"
+on public.parent_student_links
+for select
+using (parent_id = auth.uid() or public.is_tutor());
+
+drop policy if exists "parent_links_insert_tutor_only" on public.parent_student_links;
+create policy "parent_links_insert_tutor_only"
+on public.parent_student_links
+for insert
+with check (public.is_tutor());
+
+drop policy if exists "parent_links_delete_tutor_only" on public.parent_student_links;
+create policy "parent_links_delete_tutor_only"
+on public.parent_student_links
+for delete
+using (public.is_tutor());
 
 -- 5) Promote your tutor account after signup/signin
 -- Replace with your tutor email:

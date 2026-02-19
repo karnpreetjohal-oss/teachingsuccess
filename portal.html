@@ -108,12 +108,19 @@ textarea{min-height:84px;resize:vertical}
       </div>
 
       <div class="card">
-        <h2>Create Student Account</h2>
-        <p class="muted" style="margin-bottom:.6rem">Use this for student self-signup (or tutor-created student account).</p>
+        <h2>Create Student/Parent Account</h2>
+        <p class="muted" style="margin-bottom:.6rem">Use this for student or parent signup.</p>
         <div class="row">
           <div><label>Full Name</label><input id="signup-name" type="text" placeholder="Student Name"></div>
           <div><label>Email</label><input id="signup-email" type="email" placeholder="student@example.com"></div>
           <div><label>Password</label><input id="signup-password" type="password" placeholder="At least 8 characters"></div>
+          <div>
+            <label>Account Type</label>
+            <select id="signup-role">
+              <option value="student">Student</option>
+              <option value="parent">Parent</option>
+            </select>
+          </div>
           <div>
             <label>Year Group</label>
             <select id="signup-year">
@@ -165,8 +172,25 @@ textarea{min-height:84px;resize:vertical}
             <div><label>Title</label><input id="asg-title" type="text" placeholder="e.g. Algebra worksheet set"></div>
             <div><label>Due Date</label><input id="asg-due" type="date"></div>
             <div><label>Description / Instructions</label><textarea id="asg-desc" placeholder="What exactly should they complete?"></textarea></div>
+            <div><label>Resource Title</label><input id="asg-resource-title" type="text" placeholder="e.g. GCSE Algebra Worksheet"></div>
+            <div><label>Resource Link</label><input id="asg-resource-url" type="url" placeholder="https://... (website, PDF, Drive link, etc.)"></div>
             <div class="actions"><button class="btn blue" id="btn-create-asg" type="button">Create Assignment</button></div>
             <div class="msg" id="asg-msg"></div>
+          </div>
+          <hr style="border:none;border-top:1px solid var(--border);margin:1rem 0">
+          <h2 style="font-size:1.1rem">Link Parent to Student</h2>
+          <div class="row">
+            <div>
+              <label>Parent</label>
+              <select id="link-parent"></select>
+            </div>
+            <div>
+              <label>Student</label>
+              <select id="link-student"></select>
+            </div>
+            <div class="actions"><button class="btn dark" id="btn-link-parent" type="button">Create Parent Link</button></div>
+            <div class="msg" id="link-msg"></div>
+            <div id="parent-links-list" class="list"></div>
           </div>
         </aside>
 
@@ -185,6 +209,18 @@ textarea{min-height:84px;resize:vertical}
         <h2>My Assignments</h2>
         <p class="muted" style="margin-bottom:.7rem">Submit notes/evidence when finished. This updates tutor tracking.</p>
         <div id="student-list" class="list"></div>
+      </div>
+
+      <div id="parent-view" class="card hidden">
+        <h2>Parent Tracker</h2>
+        <p class="muted" style="margin-bottom:.7rem">Read-only view of your linked child assignments, submissions, marks and feedback.</p>
+        <div class="kpis">
+          <div class="kpi"><span class="muted">Linked Students</span><b id="kpi-parent-students">0</b></div>
+          <div class="kpi"><span class="muted">Total Assignments</span><b id="kpi-parent-total">0</b></div>
+          <div class="kpi"><span class="muted">Completed</span><b id="kpi-parent-complete">0</b></div>
+        </div>
+        <div id="parent-linked-students" class="list" style="margin-bottom:.8rem"></div>
+        <div id="parent-list" class="list"></div>
       </div>
     </section>
   </main>

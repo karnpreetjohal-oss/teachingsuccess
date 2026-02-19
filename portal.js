@@ -4,8 +4,8 @@
   2) Run supabase/schema.sql in Supabase SQL editor
 */
 
-const SUPABASE_URL = 'YOUR_SUPABASE_URL';
-const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+const SUPABASE_URL = 'https://vcnophmfmzpanqglqopz.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_0gOJeJ9z8WZfZH1ZeVm-Ww_GzoGg-kk';
 
 const hasConfig = !SUPABASE_URL.includes('YOUR_') && !SUPABASE_ANON_KEY.includes('YOUR_');
 const $ = (id) => document.getElementById(id);
@@ -78,6 +78,71 @@ async function loadStudentsForTutor() {
     opt.textContent = `${st.full_name || st.email} (${st.email})${yr}`;
     select.appendChild(opt);
   });
+
+  const linkStudentSelect = $('link-student');
+  linkStudentSelect.innerHTML = '';
+  data.forEach((st) => {
+    const opt = document.createElement('option');
+    opt.value = st.id;
+    const yr = st.year_group ? ` - ${st.year_group}` : '';
+    opt.textContent = `${st.full_name || st.email} (${st.email})${yr}`;
+    linkStudentSelect.appendChild(opt);
+  });
+}
+
+async function loadParentsForTutor() {
+  const { data, error } = await sb
+    .from('profiles')
+    .select('id, full_name, email')
+    .eq('role', 'parent')
+    .order('full_name', { ascending: true });
+
+  if (error) throw error;
+
+  const select = $('link-parent');
+  select.innerHTML = '';
+  if (!data.length) {
+    select.innerHTML = '<option value="">No parent accounts yet</option>';
+    return;
+  }
+
+  data.forEach((p) => {
+    const opt = document.createElement('option');
+    opt.value = p.id;
+    opt.textContent = `${p.full_name || p.email} (${p.email})`;
+    select.appendChild(opt);
+  });
+}
+
+function parentLinkItemHtml(link) {
+  const parentName = link.parent?.full_name || link.parent?.email || 'Unknown parent';
+  const studentName = link.student?.full_name || link.student?.email || 'Unknown student';
+  return `
+    <article class="item">
+      <h3>${parentName}</h3>
+      <div class="meta">
+        <span class="tag">Linked Student: ${studentName}</span>
+      </div>
+    </article>
+  `;
+}
+
+async function renderParentLinksForTutor() {
+  const { data, error } = await sb
+    .from('parent_student_links')
+    .select(`
+      id,
+      created_at,
+      parent:profiles!parent_student_links_parent_id_fkey(full_name,email),
+      student:profiles!parent_student_links_student_id_fkey(full_name,email,year_group)
+    `)
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+
+  $('parent-links-list').innerHTML = (data || []).length
+    ? data.map(parentLinkItemHtml).join('')
+    : '<p class="muted">No parent links yet.</p>';
 }
 
 function tutorItemHtml(a) {
@@ -85,6 +150,29 @@ function tutorItemHtml(a) {
   const studentName = a.student?.full_name || a.student?.email || 'Unknown student';
   const due = formatDate(a.due_date);
   const desc = a.description || 'No instructions provided.';
+  const resourceHtml = a.resource_url
+    ? `<p class="muted" style="margin-top:.45rem"><b>Resource:</b> <a href="${a.resource_url}" target="_blank" rel="noopener noreferrer">${a.resource_title || a.resource_url}</a></p>`
+    : '';
+
+  const submittedTag = a.submission
+    ? `<span class="tag ok">Submitted: ${new Date(a.submission.submitted_at).toLocaleString()}</span>`
+    : '<span class="tag warn">Not submitted yet</span>';
+
+  const gradeBlock = a.submission
+    ? `
+      <div style="margin-top:.6rem;border-top:1px solid var(--border);padding-top:.6rem">
+        <p class="muted" style="margin-bottom:.35rem"><b>Student Notes:</b> ${a.submission.notes || 'No notes added.'}</p>
+        <div class="row">
+          <div><label>Mark (0-100)</label><input id="mark-${a.id}" type="number" min="0" max="100" value="${a.submission.mark ?? ''}"></div>
+          <div><label>Grade</label><input id="grade-${a.id}" type="text" placeholder="e.g. 7, B+, A*" value="${a.submission.grade || ''}"></div>
+          <div><label>Tutor Feedback</label><textarea id="feedback-${a.id}" placeholder="Feedback for student">${a.submission.tutor_feedback || ''}</textarea></div>
+          <div class="actions">
+            <button class="btn dark small" type="button" data-action="save-grade" data-id="${a.id}">Save Mark/Grade</button>
+          </div>
+        </div>
+      </div>
+    `
+    : '';
 
   return `
     <article class="item">
@@ -94,8 +182,11 @@ function tutorItemHtml(a) {
         <span class="tag">${studentName}</span>
         <span class="tag ${statusClass}">${a.status}</span>
         <span class="tag">Due: ${due}</span>
+        ${submittedTag}
       </div>
       <p class="muted">${desc}</p>
+      ${resourceHtml}
+      ${gradeBlock}
     </article>
   `;
 }
@@ -108,6 +199,8 @@ async function renderTutorDashboard() {
       title,
       subject,
       description,
+      resource_title,
+      resource_url,
       due_date,
       status,
       created_at,
@@ -124,6 +217,23 @@ async function renderTutorDashboard() {
 
   if (subError) throw subError;
 
+  const assignmentIds = assignments.map((a) => a.id);
+  let submissionMap = new Map();
+  if (assignmentIds.length) {
+    const { data: subs, error: subsErr } = await sb
+      .from('submissions')
+      .select('id, assignment_id, notes, submitted_at, mark, grade, tutor_feedback, graded_at')
+      .in('assignment_id', assignmentIds);
+
+    if (subsErr) throw subsErr;
+    submissionMap = new Map((subs || []).map((s) => [s.assignment_id, s]));
+  }
+
+  const enrichedAssignments = assignments.map((a) => ({
+    ...a,
+    submission: submissionMap.get(a.id) || null
+  }));
+
   const active = assignments.filter((x) => x.status === 'assigned').length;
   const complete = assignments.filter((x) => x.status === 'completed').length;
 
@@ -131,14 +241,127 @@ async function renderTutorDashboard() {
   $('kpi-complete').textContent = String(complete);
   $('kpi-subs').textContent = String(submissionsCount || 0);
 
-  $('tutor-list').innerHTML = assignments.length
-    ? assignments.map(tutorItemHtml).join('')
+  $('tutor-list').innerHTML = enrichedAssignments.length
+    ? enrichedAssignments.map(tutorItemHtml).join('')
     : '<p class="muted">No assignments yet. Create the first one on the left.</p>';
+}
+
+function parentAssignmentItemHtml(a) {
+  const due = formatDate(a.due_date);
+  const desc = a.description || 'No instructions provided.';
+  const studentName = a.student?.full_name || a.student?.email || 'Unknown student';
+  const resourceHtml = a.resource_url
+    ? `<p class="muted" style="margin:.4rem 0"><b>Resource:</b> <a href="${a.resource_url}" target="_blank" rel="noopener noreferrer">${a.resource_title || a.resource_url}</a></p>`
+    : '';
+  const submissionTag = a.submission
+    ? `<span class="tag ok">Submitted: ${new Date(a.submission.submitted_at).toLocaleString()}</span>`
+    : '<span class="tag warn">Not submitted yet</span>';
+  const gradeHtml = a.submission
+    ? `
+      <p class="muted" style="margin:.35rem 0">
+        <b>Mark:</b> ${a.submission.mark ?? '-'} &nbsp;·&nbsp;
+        <b>Grade:</b> ${a.submission.grade || '-'}
+      </p>
+      <p class="muted" style="margin-bottom:.45rem"><b>Tutor Feedback:</b> ${a.submission.tutor_feedback || 'No feedback yet.'}</p>
+    `
+    : '<p class="muted" style="margin-bottom:.45rem"><b>Tutor Feedback:</b> Awaiting submission.</p>';
+
+  return `
+    <article class="item">
+      <h3>${a.title}</h3>
+      <div class="meta">
+        <span class="tag">${studentName}</span>
+        <span class="tag">${a.subject}</span>
+        <span class="tag ${a.status === 'completed' ? 'ok' : 'warn'}">${a.status}</span>
+        <span class="tag">Due: ${due}</span>
+        ${submissionTag}
+      </div>
+      <p class="muted">${desc}</p>
+      ${resourceHtml}
+      ${gradeHtml}
+    </article>
+  `;
+}
+
+async function renderParentTracker() {
+  const { data: links, error: linksErr } = await sb
+    .from('parent_student_links')
+    .select('student_id')
+    .eq('parent_id', currentUser.id);
+
+  if (linksErr) throw linksErr;
+
+  const studentIds = [...new Set((links || []).map((l) => l.student_id).filter(Boolean))];
+  $('kpi-parent-students').textContent = String(studentIds.length);
+
+  if (!studentIds.length) {
+    $('kpi-parent-total').textContent = '0';
+    $('kpi-parent-complete').textContent = '0';
+    $('parent-linked-students').innerHTML = '';
+    $('parent-list').innerHTML = '<p class="muted">No linked students yet. Ask tutor to link your account.</p>';
+    return;
+  }
+
+  let studentsById = new Map();
+  const { data: students, error: studentsErr } = await sb
+    .from('profiles')
+    .select('id,full_name,email,year_group')
+    .in('id', studentIds);
+  if (!studentsErr && students?.length) {
+    studentsById = new Map(students.map((s) => [s.id, s]));
+  }
+
+  $('parent-linked-students').innerHTML = studentIds.map((id) => {
+    const s = studentsById.get(id);
+    const label = s ? `${s.full_name || s.email}${s.year_group ? ` (${s.year_group})` : ''}` : id;
+    return `<article class="item"><div class="meta"><span class="tag">Linked Student</span></div><p><b>${label}</b></p></article>`;
+  }).join('');
+
+  const { data: assignments, error: asgErr } = await sb
+    .from('assignments')
+    .select(`
+      id,title,subject,description,resource_title,resource_url,due_date,status,created_at,student_id,
+      student:profiles!assignments_student_id_fkey(full_name,email,year_group)
+    `)
+    .in('student_id', studentIds)
+    .order('created_at', { ascending: false });
+
+  if (asgErr) throw asgErr;
+
+  const assignmentIds = (assignments || []).map((a) => a.id);
+  let submissionMap = new Map();
+  if (assignmentIds.length) {
+    const { data: subs, error: subErr } = await sb
+      .from('submissions')
+      .select('assignment_id, notes, submitted_at, mark, grade, tutor_feedback, graded_at')
+      .in('assignment_id', assignmentIds);
+    if (subErr) throw subErr;
+    submissionMap = new Map((subs || []).map((s) => [s.assignment_id, s]));
+  }
+
+  const enriched = (assignments || []).map((a) => ({ ...a, submission: submissionMap.get(a.id) || null }));
+  $('kpi-parent-total').textContent = String(enriched.length);
+  $('kpi-parent-complete').textContent = String(enriched.filter((x) => x.status === 'completed').length);
+  $('parent-list').innerHTML = enriched.length
+    ? enriched.map(parentAssignmentItemHtml).join('')
+    : '<p class="muted">No assignments found for linked students.</p>';
 }
 
 function studentItemHtml(a) {
   const due = formatDate(a.due_date);
   const desc = a.description || 'No instructions provided.';
+  const resourceHtml = a.resource_url
+    ? `<p class="muted" style="margin:.4rem 0"><b>Resource:</b> <a href="${a.resource_url}" target="_blank" rel="noopener noreferrer">${a.resource_title || a.resource_url}</a></p>`
+    : '';
+  const gradeHtml = a.submission
+    ? `
+      <p class="muted" style="margin:.35rem 0">
+        <b>Mark:</b> ${a.submission.mark ?? '-'} &nbsp;·&nbsp;
+        <b>Grade:</b> ${a.submission.grade || '-'}
+      </p>
+      <p class="muted" style="margin-bottom:.45rem"><b>Tutor Feedback:</b> ${a.submission.tutor_feedback || 'No feedback yet.'}</p>
+    `
+    : '';
 
   return `
     <article class="item" data-assignment-id="${a.id}">
@@ -149,6 +372,8 @@ function studentItemHtml(a) {
         <span class="tag">Due: ${due}</span>
       </div>
       <p class="muted" style="margin-bottom:.5rem">${desc}</p>
+      ${resourceHtml}
+      ${gradeHtml}
       <label style="margin-bottom:.35rem">Submission Notes</label>
       <textarea id="notes-${a.id}" placeholder="What did you complete? Add links/evidence if needed"></textarea>
       <div class="actions" style="margin-top:.45rem">
@@ -161,14 +386,29 @@ function studentItemHtml(a) {
 async function renderStudentAssignments() {
   const { data, error } = await sb
     .from('assignments')
-    .select('id,title,subject,description,due_date,status,created_at')
+    .select('id,title,subject,description,resource_title,resource_url,due_date,status,created_at')
     .eq('student_id', currentUser.id)
     .order('created_at', { ascending: false });
 
   if (error) throw error;
 
-  $('student-list').innerHTML = data.length
-    ? data.map(studentItemHtml).join('')
+  const assignmentIds = (data || []).map((a) => a.id);
+  let submissionMap = new Map();
+  if (assignmentIds.length) {
+    const { data: subs, error: subErr } = await sb
+      .from('submissions')
+      .select('assignment_id, notes, submitted_at, mark, grade, tutor_feedback, graded_at')
+      .in('assignment_id', assignmentIds)
+      .eq('student_id', currentUser.id);
+
+    if (subErr) throw subErr;
+    submissionMap = new Map((subs || []).map((s) => [s.assignment_id, s]));
+  }
+
+  const enriched = (data || []).map((a) => ({ ...a, submission: submissionMap.get(a.id) || null }));
+
+  $('student-list').innerHTML = enriched.length
+    ? enriched.map(studentItemHtml).join('')
     : '<p class="muted">No assignments yet. Your tutor will assign work here.</p>';
 }
 
@@ -180,6 +420,8 @@ async function createAssignment() {
   const title = $('asg-title').value.trim();
   const dueDate = $('asg-due').value || null;
   const description = $('asg-desc').value.trim();
+  const resourceTitle = $('asg-resource-title').value.trim();
+  const resourceUrl = $('asg-resource-url').value.trim();
 
   if (!studentId || !title) {
     showMsg($('asg-msg'), 'Select a student and add a title.', 'err');
@@ -193,6 +435,8 @@ async function createAssignment() {
     title,
     due_date: dueDate,
     description,
+    resource_title: resourceTitle || null,
+    resource_url: resourceUrl || null,
     status: 'assigned'
   };
 
@@ -205,8 +449,34 @@ async function createAssignment() {
   $('asg-title').value = '';
   $('asg-due').value = '';
   $('asg-desc').value = '';
+  $('asg-resource-title').value = '';
+  $('asg-resource-url').value = '';
   showMsg($('asg-msg'), 'Assignment created.', 'ok');
   await renderTutorDashboard();
+}
+
+async function linkParentToStudent() {
+  clearMsg($('link-msg'));
+  const parentId = $('link-parent').value;
+  const studentId = $('link-student').value;
+
+  if (!parentId || !studentId) {
+    showMsg($('link-msg'), 'Select both parent and student.', 'err');
+    return;
+  }
+
+  const { error } = await sb.from('parent_student_links').insert({
+    parent_id: parentId,
+    student_id: studentId
+  });
+
+  if (error) {
+    showMsg($('link-msg'), error.message, 'err');
+    return;
+  }
+
+  showMsg($('link-msg'), 'Parent linked to student.', 'ok');
+  await renderParentLinksForTutor();
 }
 
 async function submitStudentWork(assignmentId) {
@@ -242,6 +512,39 @@ async function submitStudentWork(assignmentId) {
   await renderStudentAssignments();
 }
 
+async function saveTutorGrade(assignmentId) {
+  const markRaw = ($(`mark-${assignmentId}`)?.value || '').trim();
+  const grade = ($(`grade-${assignmentId}`)?.value || '').trim();
+  const feedback = ($(`feedback-${assignmentId}`)?.value || '').trim();
+
+  let mark = null;
+  if (markRaw !== '') {
+    mark = Number(markRaw);
+    if (!Number.isFinite(mark) || mark < 0 || mark > 100) {
+      alert('Mark must be a number between 0 and 100.');
+      return;
+    }
+  }
+
+  const { error } = await sb
+    .from('submissions')
+    .update({
+      mark,
+      grade: grade || null,
+      tutor_feedback: feedback || null,
+      graded_at: new Date().toISOString()
+    })
+    .eq('assignment_id', assignmentId);
+
+  if (error) {
+    alert(`Saving mark/grade failed: ${error.message}`);
+    return;
+  }
+
+  alert('Mark/grade saved.');
+  await renderTutorDashboard();
+}
+
 function bindStudentActions() {
   $('student-list').addEventListener('click', async (e) => {
     const btn = e.target.closest('[data-action="submit"]');
@@ -252,6 +555,16 @@ function bindStudentActions() {
   });
 }
 
+function bindTutorActions() {
+  $('tutor-list').addEventListener('click', async (e) => {
+    const btn = e.target.closest('[data-action="save-grade"]');
+    if (!btn) return;
+    const id = btn.dataset.id;
+    if (!id) return;
+    await saveTutorGrade(id);
+  });
+}
+
 async function renderAppForRole() {
   $('who-name').textContent = currentProfile.full_name || currentUser.email;
   $('who-role').textContent = `Role: ${currentProfile.role}`;
@@ -259,13 +572,25 @@ async function renderAppForRole() {
   if (currentProfile.role === 'tutor') {
     $('tutor-view').classList.remove('hidden');
     $('student-view').classList.add('hidden');
+    $('parent-view').classList.add('hidden');
     await loadStudentsForTutor();
+    await loadParentsForTutor();
     await renderTutorDashboard();
+    await renderParentLinksForTutor();
+    return;
+  }
+
+  if (currentProfile.role === 'parent') {
+    $('tutor-view').classList.add('hidden');
+    $('student-view').classList.add('hidden');
+    $('parent-view').classList.remove('hidden');
+    await renderParentTracker();
     return;
   }
 
   $('tutor-view').classList.add('hidden');
   $('student-view').classList.remove('hidden');
+  $('parent-view').classList.add('hidden');
   await renderStudentAssignments();
 }
 
@@ -308,6 +633,7 @@ async function handleSignUp() {
   const full_name = $('signup-name').value.trim();
   const email = $('signup-email').value.trim();
   const password = $('signup-password').value;
+  const signupRole = $('signup-role').value === 'parent' ? 'parent' : 'student';
   const year_group = $('signup-year').value || null;
 
   if (!full_name || !email || password.length < 8) {
@@ -319,7 +645,7 @@ async function handleSignUp() {
     email,
     password,
     options: {
-      data: { full_name, year_group }
+      data: { full_name, year_group: signupRole === 'student' ? year_group : null, signup_role: signupRole }
     }
   });
 
@@ -331,6 +657,7 @@ async function handleSignUp() {
   $('signup-name').value = '';
   $('signup-email').value = '';
   $('signup-password').value = '';
+  $('signup-role').value = 'student';
   $('signup-year').value = '';
 
   showMsg($('signup-msg'), 'Account created. Check email if confirmation is enabled, then sign in.', 'ok');
@@ -357,8 +684,10 @@ async function bootstrap() {
     await renderAppForRole();
   });
   $('btn-create-asg').addEventListener('click', createAssignment);
+  $('btn-link-parent').addEventListener('click', linkParentToStudent);
 
   bindStudentActions();
+  bindTutorActions();
 
   const { data } = await sb.auth.getUser();
   if (data?.user) {
