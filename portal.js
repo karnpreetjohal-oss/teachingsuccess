@@ -64,6 +64,37 @@ function parseYearGroupInt(value) {
   return Number.isFinite(n) ? n : null;
 }
 
+function deriveObjectiveYears(yearGroupRaw) {
+  if (yearGroupRaw === null || yearGroupRaw === undefined || yearGroupRaw === '') return [];
+  if (typeof yearGroupRaw === 'number' && Number.isFinite(yearGroupRaw)) return [yearGroupRaw];
+
+  const raw = String(yearGroupRaw).trim();
+  const lower = raw.toLowerCase();
+
+  if (lower.includes('reception') && lower.includes('2')) return [1, 2];
+  if (lower.includes('year 3-6') || lower.includes('3-6')) return [3, 4, 5, 6];
+  if (lower.includes('year 7-9') || lower.includes('7-9')) return [7, 8, 9];
+  if (lower.includes('gcse')) return [10, 11];
+  if (lower.includes('a-level') || lower.includes('a level')) return [12, 13];
+
+  if (lower.includes('year 10-11') || lower.includes('10-11')) return [10, 11];
+  if (lower.includes('year 12-13') || lower.includes('12-13')) return [12, 13];
+
+  const range = lower.match(/(\d{1,2})\s*[-–]\s*(\d{1,2})/);
+  if (range) {
+    const start = Number(range[1]);
+    const end = Number(range[2]);
+    if (Number.isFinite(start) && Number.isFinite(end) && end >= start) {
+      const years = [];
+      for (let y = start; y <= end; y += 1) years.push(y);
+      return years;
+    }
+  }
+
+  const single = parseYearGroupInt(raw);
+  return single ? [single] : [];
+}
+
 function escapeHtml(value) {
   return String(value ?? '')
     .replaceAll('&', '&amp;')
@@ -404,7 +435,8 @@ async function loadObjectivesForAssignmentForm() {
   }
 
   const student = tutorStudentsById.get(studentId);
-  const year = parseYearGroupInt(student?.year_group);
+  const years = deriveObjectiveYears(student?.year_group);
+  const hasYear11 = years.includes(11);
 
   let q = sb
     .from('curriculum_objectives')
@@ -412,9 +444,10 @@ async function loadObjectivesForAssignmentForm() {
     .eq('subject', coreSubject)
     .order('objective_id', { ascending: true });
 
-  if (year) q = q.eq('year_group', year);
-  if (year === 11 && examBoardRaw) q = q.eq('exam_board', examBoardRaw);
-  if (year && year !== 11) q = q.is('exam_board', null);
+  if (years.length) q = q.in('year_group', years);
+
+  // Only board-filter when this is explicitly Year 11-only selection.
+  if (years.length === 1 && hasYear11 && examBoardRaw) q = q.eq('exam_board', examBoardRaw);
 
   const { data, error } = await q;
   if (error) {
@@ -424,7 +457,7 @@ async function loadObjectivesForAssignmentForm() {
   }
 
   currentFormObjectives = data || [];
-  help.textContent = `${currentFormObjectives.length} objectives loaded.`;
+  help.textContent = `${currentFormObjectives.length} objectives loaded${years.length ? ` for Y${years.join(', Y')}` : ''}.`;
 
   currentFormObjectives.forEach((o) => {
     const opt = document.createElement('option');
