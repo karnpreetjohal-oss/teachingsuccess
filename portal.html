@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Teaching Success Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#2c3a52;
+  --ink2:#1e2a3d;
+  --blue:#4a6fa5;
+  --gold:#f5c842;
+  --bg:#eef1f7;
+  --card:#ffffff;
+  --border:#c8d0e0;
+  --muted:#6b7a96;
+  --ok:#1f7a4f;
+  --warn:#b7791f;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh}
+button,input,select,textarea{font-family:'Outfit',sans-serif}
+
+.nav{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.25rem;background:var(--ink);color:#fff;border-bottom:1px solid rgba(255,255,255,.14)}
+.brand{display:flex;align-items:center;gap:.6rem;font-family:'Fraunces',serif;font-size:1.08rem;font-weight:800}
+.mark{width:34px;height:34px;border-radius:8px;background:var(--gold);color:var(--ink);display:flex;align-items:center;justify-content:center;font-weight:900}
+.nav a{color:rgba(255,255,255,.86);text-decoration:none;font-size:.9rem}
+
+.wrap{max-width:1180px;margin:0 auto;padding:1rem}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1rem}
+.hero{background:linear-gradient(135deg,var(--ink2),var(--blue));color:#fff;border:1px solid rgba(255,255,255,.16);margin-bottom:1rem}
+.hero h1{font-family:'Fraunces',serif;font-size:1.8rem;margin-bottom:.4rem}
+.hero p{opacity:.93;line-height:1.6}
+.badge{display:inline-block;font-size:.73rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:.2rem .5rem;border-radius:999px;background:rgba(255,255,255,.18);margin-bottom:.55rem}
+
+.grid{display:grid;gap:1rem}
+.grid.auth{grid-template-columns:1fr 1fr}
+.grid.main{grid-template-columns:380px 1fr}
+
+h2{font-family:'Fraunces',serif;font-size:1.25rem;margin-bottom:.7rem}
+label{display:block;font-size:.78rem;font-weight:700;color:var(--muted);margin-bottom:.24rem;text-transform:uppercase;letter-spacing:.05em}
+input,select,textarea{width:100%;padding:.66rem .78rem;border:2px solid var(--border);border-radius:8px;background:#fff;color:var(--ink)}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--blue)}
+textarea{min-height:84px;resize:vertical}
+
+.row{display:grid;gap:.7rem}
+.actions{display:flex;gap:.6rem;flex-wrap:wrap}
+.btn{border:none;border-radius:8px;padding:.62rem .95rem;cursor:pointer;font-weight:700}
+.btn.dark{background:var(--ink);color:#fff}
+.btn.blue{background:var(--blue);color:#fff}
+.btn.ghost{background:#fff;border:2px solid var(--border);color:var(--ink)}
+.btn.small{font-size:.82rem;padding:.45rem .65rem}
+
+.muted{color:var(--muted);font-size:.9rem}
+.msg{margin-top:.6rem;padding:.6rem .75rem;border-radius:8px;font-size:.88rem;display:none}
+.msg.ok{background:#e8f7ef;color:var(--ok);border:1px solid #bfe5cf}
+.msg.err{background:#fff0f0;color:#9b2c2c;border:1px solid #efc4c4}
+
+.list{display:grid;gap:.7rem}
+.item{border:1px solid var(--border);border-radius:10px;padding:.8rem;background:#fff}
+.item h3{font-size:1rem;margin-bottom:.3rem}
+.meta{display:flex;gap:.35rem;flex-wrap:wrap;margin-bottom:.45rem}
+.tag{font-size:.72rem;border-radius:999px;padding:.14rem .45rem;background:#edf2fb;color:#233a62}
+.tag.ok{background:#e8f7ef;color:var(--ok)}
+.tag.warn{background:#fff8e8;color:var(--warn)}
+
+.topline{display:flex;align-items:center;justify-content:space-between;gap:.6rem;margin-bottom:.75rem}
+.kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.7rem;margin-bottom:.8rem}
+.kpi{border:1px solid var(--border);border-radius:10px;padding:.7rem;background:#fff}
+.kpi b{font-family:'Fraunces',serif;font-size:1.35rem;display:block}
+
+.hidden{display:none!important}
+
+@media (max-width:980px){
+  .grid.auth,.grid.main{grid-template-columns:1fr}
+  .kpis{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+  <header class="nav">
+    <div class="brand"><div class="mark">TS</div>Teaching Success Portal</div>
+    <a href="index.html">Back to Home</a>
+  </header>
+
+  <main class="wrap">
+    <section class="card hero">
+      <span class="badge">Supabase Portal</span>
+      <h1>Real Login + Student Assignments</h1>
+      <p>This is the real backend-powered portal scaffold. Tutors can assign work. Students can view and submit work. Data is stored in Supabase.</p>
+    </section>
+
+    <section id="config-warning" class="card" style="border-color:#efc4c4;background:#fff7f7;margin-bottom:1rem">
+      <h2>Setup Required</h2>
+      <p class="muted">Add your Supabase URL and anon key in <code>portal.js</code> before using this page.</p>
+    </section>
+
+    <section id="auth-view" class="grid auth">
+      <div class="card">
+        <h2>Sign In</h2>
+        <div class="row">
+          <div><label>Email</label><input id="signin-email" type="email" placeholder="you@example.com"></div>
+          <div><label>Password</label><input id="signin-password" type="password" placeholder="********"></div>
+          <div class="actions"><button class="btn dark" id="btn-signin" type="button">Sign In</button></div>
+          <div class="msg" id="signin-msg"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Create Student Account</h2>
+        <p class="muted" style="margin-bottom:.6rem">Use this for student self-signup (or tutor-created student account).</p>
+        <div class="row">
+          <div><label>Full Name</label><input id="signup-name" type="text" placeholder="Student Name"></div>
+          <div><label>Email</label><input id="signup-email" type="email" placeholder="student@example.com"></div>
+          <div><label>Password</label><input id="signup-password" type="password" placeholder="At least 8 characters"></div>
+          <div>
+            <label>Year Group</label>
+            <select id="signup-year">
+              <option value="">Prefer not to say</option>
+              <option>Reception-Year 2</option>
+              <option>Year 3-6</option>
+              <option>Year 7-9</option>
+              <option>GCSE</option>
+              <option>A-Level</option>
+              <option>11+</option>
+            </select>
+          </div>
+          <div class="actions"><button class="btn blue" id="btn-signup" type="button">Create Account</button></div>
+          <div class="msg" id="signup-msg"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="app-view" class="hidden">
+      <div class="topline card" style="margin-bottom:1rem">
+        <div>
+          <h2 style="margin-bottom:.2rem">Welcome, <span id="who-name">...</span></h2>
+          <p class="muted" id="who-role">Role: ...</p>
+        </div>
+        <div class="actions">
+          <button class="btn ghost" id="btn-refresh" type="button">Refresh</button>
+          <button class="btn dark" id="btn-signout" type="button">Sign Out</button>
+        </div>
+      </div>
+
+      <div id="tutor-view" class="grid main hidden">
+        <aside class="card">
+          <h2>Set Assignment</h2>
+          <div class="row">
+            <div>
+              <label>Student</label>
+              <select id="asg-student"></select>
+            </div>
+            <div>
+              <label>Subject</label>
+              <select id="asg-subject">
+                <option>Maths</option>
+                <option>English</option>
+                <option>Science</option>
+                <option>11+</option>
+                <option>General</option>
+              </select>
+            </div>
+            <div><label>Title</label><input id="asg-title" type="text" placeholder="e.g. Algebra worksheet set"></div>
+            <div><label>Due Date</label><input id="asg-due" type="date"></div>
+            <div><label>Description / Instructions</label><textarea id="asg-desc" placeholder="What exactly should they complete?"></textarea></div>
+            <div class="actions"><button class="btn blue" id="btn-create-asg" type="button">Create Assignment</button></div>
+            <div class="msg" id="asg-msg"></div>
+          </div>
+        </aside>
+
+        <section class="card">
+          <h2>Tutor Dashboard</h2>
+          <div class="kpis">
+            <div class="kpi"><span class="muted">Active Assignments</span><b id="kpi-active">0</b></div>
+            <div class="kpi"><span class="muted">Completed</span><b id="kpi-complete">0</b></div>
+            <div class="kpi"><span class="muted">Student Submissions</span><b id="kpi-subs">0</b></div>
+          </div>
+          <div id="tutor-list" class="list"></div>
+        </section>
+      </div>
+
+      <div id="student-view" class="card hidden">
+        <h2>My Assignments</h2>
+        <p class="muted" style="margin-bottom:.7rem">Submit notes/evidence when finished. This updates tutor tracking.</p>
+        <div id="student-list" class="list"></div>
+      </div>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="portal.js"></script>
+</body>
+</html>
