@@ -403,6 +403,7 @@ body{font-family:'Outfit',sans-serif;background:var(--cream);color:var(--ink);ov
   <div class="nlinks">
     <a href="#tutors">Our Tutors</a>
     <a href="#levels">Subjects &amp; Levels</a>
+    <a href="resources.html">Resources</a>
     <a href="#reviews">Reviews</a>
     <a href="#contact-sec">Contact</a>
   </div>
@@ -1020,6 +1021,7 @@ function doAddStu(){
 }
 function doBook(){closeM('book');toast('✅ Enquiry sent! Kevin or Serena will be in touch within 24 hours.');}
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),3400);}
+
 </script>
 </body>
 </html>

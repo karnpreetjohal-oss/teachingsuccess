@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resources | Teaching Success</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,700;9..144,900&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#2c3a52;
+  --ink2:#1e2a3d;
+  --blue:#4a6fa5;
+  --blue2:#3a5f95;
+  --gold:#f5c842;
+  --cream:#eef1f7;
+  --card:#ffffff;
+  --muted:#6b7a96;
+  --border:#c8d0e0;
+  --surf:#e4e9f2;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Outfit',sans-serif;background:var(--cream);color:var(--ink)}
+a{text-decoration:none}
+
+.navbar{display:flex;align-items:center;justify-content:space-between;padding:1rem 2rem;background:var(--ink);position:sticky;top:0;z-index:20}
+.logo{display:flex;align-items:center;gap:.55rem}
+.logo-mark{width:34px;height:34px;border-radius:8px;background:var(--gold);display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-weight:900;color:var(--ink)}
+.logo-text{font-family:'Fraunces',serif;font-size:1.15rem;font-weight:900;color:#fff}
+.logo-text span{color:var(--gold)}
+.links{display:flex;gap:1rem;flex-wrap:wrap}
+.links a{color:rgba(255,255,255,.72);font-size:.9rem}
+.links a.active{color:#fff;font-weight:700}
+
+.container{max-width:1200px;margin:0 auto;padding:2rem}
+.hero{background:linear-gradient(135deg,var(--ink2),var(--blue2));border-radius:18px;padding:2rem;color:#fff;border:1px solid rgba(255,255,255,.14)}
+.eyebrow{font-size:.75rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(245,200,66,.95);margin-bottom:.5rem}
+.hero h1{font-family:'Fraunces',serif;font-size:2.3rem;line-height:1.1;margin-bottom:.65rem}
+.hero p{color:rgba(255,255,255,.85);max-width:760px;line-height:1.7}
+.note{margin-top:.9rem;font-size:.86rem;color:rgba(255,255,255,.82)}
+
+.panel{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1rem;margin-top:1rem}
+.filter-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.75rem;align-items:end}
+label{font-size:.78rem;font-weight:700;color:var(--muted);display:block;margin-bottom:.28rem;text-transform:uppercase;letter-spacing:.05em}
+input,select,textarea{width:100%;padding:.68rem .8rem;border:2px solid var(--border);background:#fff;border-radius:8px;font-family:'Outfit',sans-serif;color:var(--ink)}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--blue2)}
+textarea{min-height:76px;resize:vertical}
+.btn{border:none;border-radius:8px;padding:.7rem 1rem;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif}
+.btn-dark{background:var(--ink);color:#fff}
+.btn-dark:hover{background:var(--ink2)}
+.btn-gold{background:var(--gold);color:var(--ink)}
+.btn-gold:hover{filter:brightness(1.02)}
+
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1rem}
+.sec{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1rem}
+.sec h2{font-family:'Fraunces',serif;font-size:1.55rem;margin-bottom:.3rem}
+.sec-sub{color:var(--muted);font-size:.9rem;margin-bottom:.8rem}
+.add-form{display:grid;gap:.65rem;padding:1rem;background:var(--surf);border-radius:12px;border:1px solid var(--border)}
+
+.list{display:grid;gap:.65rem;margin-top:.9rem}
+.item{background:#fff;border:1px solid var(--border);border-radius:11px;padding:.85rem}
+.item-top{display:flex;justify-content:space-between;gap:.6rem;align-items:flex-start}
+.item h3{font-size:1rem;line-height:1.35}
+.meta{display:flex;gap:.35rem;flex-wrap:wrap;margin:.45rem 0}
+.tag{font-size:.72rem;padding:.14rem .48rem;border-radius:999px;background:var(--surf);color:var(--ink)}
+.item p{font-size:.88rem;color:var(--muted);line-height:1.5}
+.item a{display:inline-block;margin-top:.45rem;color:var(--blue2);font-weight:700;font-size:.9rem}
+.empty{color:var(--muted);font-size:.88rem;padding:.8rem 0}
+
+@media (max-width:1020px){
+  .filter-grid{grid-template-columns:1fr 1fr}
+  .cols{grid-template-columns:1fr}
+}
+@media (max-width:640px){
+  .navbar{padding:.9rem 1rem;gap:.8rem;align-items:flex-start;flex-direction:column}
+  .container{padding:1rem}
+  .hero h1{font-size:1.8rem}
+  .filter-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="logo">
+      <div class="logo-mark">TS</div>
+      <div class="logo-text">Teaching <span>Success</span></div>
+    </div>
+    <div class="links">
+      <a href="index.html">Home</a>
+      <a href="index.html#tutors">Tutors</a>
+      <a href="index.html#levels">Levels</a>
+      <a class="active" href="resources.html">Resources</a>
+    </div>
+  </nav>
+
+  <main class="container">
+    <section class="hero">
+      <div class="eyebrow">Student Hub</div>
+      <h1>Resources</h1>
+      <p>Keep all your learning links and downloads in one place. Filter by year group, 11+, and subject so students can quickly find what they need.</p>
+      <p class="note">Resources are managed by Teaching Success only.</p>
+    </section>
+
+    <section class="panel">
+      <div class="filter-grid">
+        <div>
+          <label for="f-year">Year Group</label>
+          <select id="f-year">
+            <option value="all">All</option>
+            <option value="Reception-Year 2">Reception-Year 2</option>
+            <option value="Year 3-6">Year 3-6</option>
+            <option value="Year 7-9">Year 7-9</option>
+            <option value="GCSE">GCSE</option>
+            <option value="A-Level">A-Level</option>
+            <option value="11+">11+</option>
+          </select>
+        </div>
+        <div>
+          <label for="f-subj">Subject</label>
+          <select id="f-subj">
+            <option value="all">All</option>
+            <option value="Maths">Maths</option>
+            <option value="English">English</option>
+            <option value="Science">Science</option>
+            <option value="11+">11+</option>
+            <option value="General">General</option>
+          </select>
+        </div>
+        <div>
+          <label for="f-search">Keyword</label>
+          <input id="f-search" type="text" placeholder="e.g. algebra, macbeth, UCAT">
+        </div>
+        <div>
+          <button id="clear-filters" class="btn btn-dark" type="button">Clear Filters</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="cols">
+      <div class="sec">
+        <h2>Website Links</h2>
+        <p class="sec-sub">Useful websites, revision tools and practice platforms.</p>
+
+        <div id="web-list" class="list"></div>
+      </div>
+
+      <div class="sec">
+        <h2>Downloadable Sources</h2>
+        <p class="sec-sub">Worksheets, PDFs, notes and revision packs.</p>
+
+        <div id="dl-list" class="list"></div>
+      </div>
+    </section>
+  </main>
+
+<script>
+const WEB_KEY = 'ts_res_web_v1';
+const DL_KEY = 'ts_res_dl_v1';
+
+const seedWeb = [
+  {title:'Dr Frost Maths',url:'https://www.drfrostmaths.com',year:'GCSE',subject:'Maths',notes:'Practice questions, videos and auto-marked homework.'},
+  {title:'BBC Bitesize Maths',url:'https://www.bbc.co.uk/bitesize/subjects/z6vg9j6',year:'GCSE',subject:'Maths',notes:'GCSE topic summaries and quick quizzes.'},
+  {title:'BBC Bitesize English',url:'https://www.bbc.co.uk/bitesize/subjects/z3kw2hv',year:'GCSE',subject:'English',notes:'Language and Literature revision.'},
+  {title:'BBC Bitesize Science',url:'https://www.bbc.co.uk/bitesize/subjects/zrkw2hv',year:'GCSE',subject:'Science',notes:'Biology, Chemistry and Physics explanations.'},
+  {title:'Corbettmaths',url:'https://corbettmaths.com',year:'GCSE',subject:'Maths',notes:'Videos, textbook exercises and 5-a-day practice.'},
+  {title:'Maths Genie',url:'https://www.mathsgenie.co.uk',year:'GCSE',subject:'Maths',notes:'Grade-by-grade GCSE maths practice papers.'},
+  {title:'Physics & Maths Tutor',url:'https://www.physicsandmathstutor.com',year:'A-Level',subject:'Science',notes:'Topic questions and past papers.'},
+  {title:'Savemyexams',url:'https://www.savemyexams.com',year:'A-Level',subject:'Science',notes:'Concise notes and exam questions across boards.'},
+  {title:'Seneca Learning',url:'https://app.senecalearning.com',year:'GCSE',subject:'General',notes:'Interactive revision across multiple subjects.'},
+  {title:'Quizlet',url:'https://quizlet.com',year:'Year 7-9',subject:'General',notes:'Flashcards for definitions, formulas and quotes.'},
+  {title:'Oak National Academy',url:'https://www.thenational.academy',year:'Year 7-9',subject:'General',notes:'Free lessons and tasks by topic.'},
+  {title:'Topmarks',url:'https://www.topmarks.co.uk',year:'Year 3-6',subject:'General',notes:'Primary-friendly games and practice activities.'},
+  {title:'Phonics Play',url:'https://www.phonicsplay.co.uk',year:'Reception-Year 2',subject:'English',notes:'Phonics games and early reading support.'},
+  {title:'Teach Your Monster to Read',url:'https://www.teachyourmonster.org',year:'Reception-Year 2',subject:'English',notes:'Early reading and phonics game platform.'},
+  {title:'Nrich',url:'https://nrich.maths.org',year:'Year 3-6',subject:'Maths',notes:'Problem-solving tasks to build reasoning skills.'},
+  {title:'Times Tables Rock Stars',url:'https://ttrockstars.com',year:'Year 3-6',subject:'Maths',notes:'Fast multiplication fluency practice.'},
+  {title:'Khan Academy Maths',url:'https://www.khanacademy.org/math',year:'Year 7-9',subject:'Maths',notes:'Structured lessons from basics to advanced topics.'},
+  {title:'Spelling Shed',url:'https://www.spellingshed.com',year:'Year 3-6',subject:'English',notes:'Spelling games aligned to year-group lists.'},
+  {title:'11 Plus Guide',url:'https://www.11plusguide.com',year:'11+',subject:'11+',notes:'Exam format information and preparation advice.'},
+  {title:'Bond 11+',url:'https://www.bond11plus.co.uk',year:'11+',subject:'11+',notes:'11+ practice resources and guidance.'},
+  {title:'AQA Past Papers',url:'https://www.aqa.org.uk/find-past-papers-and-mark-schemes',year:'GCSE',subject:'General',notes:'Official past papers and mark schemes.'},
+  {title:'Edexcel Past Papers',url:'https://qualifications.pearson.com/en/support/support-topics/exams/past-papers.html',year:'A-Level',subject:'General',notes:'Official Pearson Edexcel papers.'},
+  {title:'OCR Past Papers',url:'https://www.ocr.org.uk/qualifications/past-paper-finder/',year:'GCSE',subject:'General',notes:'OCR exam board paper finder.'},
+  {title:'UCAT Official',url:'https://www.ucat.ac.uk',year:'A-Level',subject:'General',notes:'Official UCAT guidance and practice information.'},
+  {title:'The Medic Portal',url:'https://www.themedicportal.com',year:'A-Level',subject:'General',notes:'Medicine applications, UCAT and interview support.'}
+];
+
+const seedDl = [
+  {title:'Reception Phonics Sound Mat',url:'#',year:'Reception-Year 2',subject:'English',type:'PDF',notes:'Daily sound review and blending prompts.'},
+  {title:'KS1 Reading Comprehension Pack',url:'#',year:'Reception-Year 2',subject:'English',type:'Worksheet',notes:'Short passages with retrieval questions.'},
+  {title:'KS1 Number Bonds to 20',url:'#',year:'Reception-Year 2',subject:'Maths',type:'Worksheet',notes:'Fluency drills with visual models.'},
+  {title:'Year 3-4 Times Tables Tracker',url:'#',year:'Year 3-6',subject:'Maths',type:'Worksheet',notes:'Weekly multiplication score tracker.'},
+  {title:'Year 5-6 SATs Arithmetic Pack',url:'#',year:'Year 3-6',subject:'Maths',type:'Exam Pack',notes:'Timed arithmetic papers with answers.'},
+  {title:'KS2 Grammar and Punctuation Booster',url:'#',year:'Year 3-6',subject:'English',type:'Worksheet',notes:'SPaG drills for SATs prep.'},
+  {title:'KS2 Science Knowledge Organisers',url:'#',year:'Year 3-6',subject:'Science',type:'Notes',notes:'Core science vocabulary and concepts by topic.'},
+  {title:'Year 7 Algebra Basics Workbook',url:'#',year:'Year 7-9',subject:'Maths',type:'Worksheet',notes:'Substitution, expanding and solving equations.'},
+  {title:'Year 8-9 Fractions, Decimals, Percentages',url:'#',year:'Year 7-9',subject:'Maths',type:'Worksheet',notes:'Progressive mixed practice with exam-style questions.'},
+  {title:'Year 7-9 Creative Writing Prompts',url:'#',year:'Year 7-9',subject:'English',type:'Worksheet',notes:'Descriptive and narrative tasks with planning grids.'},
+  {title:'KS3 Science Practical Skills Sheet',url:'#',year:'Year 7-9',subject:'Science',type:'PDF',notes:'Variables, graphing and evaluation checklist.'},
+  {title:'GCSE Algebra Revision Pack',url:'#',year:'GCSE',subject:'Maths',type:'Worksheet',notes:'Core algebra skills and mixed exam-style questions.'},
+  {title:'GCSE Geometry and Trigonometry Pack',url:'#',year:'GCSE',subject:'Maths',type:'Worksheet',notes:'Angles, circles, bearings and trig problems.'},
+  {title:'GCSE Foundation to Higher Bridge Pack',url:'#',year:'GCSE',subject:'Maths',type:'Exam Pack',notes:'Targeted questions to move up grades.'},
+  {title:'GCSE English Language Paper 1 Techniques',url:'#',year:'GCSE',subject:'English',type:'Notes',notes:'Question-by-question method and model responses.'},
+  {title:'GCSE English Literature Quote Bank',url:'#',year:'GCSE',subject:'English',type:'PDF',notes:'Theme-organised quotes for key set texts.'},
+  {title:'Macbeth Essay Planning Grid',url:'#',year:'GCSE',subject:'English',type:'Worksheet',notes:'Clear structure for grade 7-9 responses.'},
+  {title:'GCSE Biology Cells and Organisation',url:'#',year:'GCSE',subject:'Science',type:'Notes',notes:'Topic summary with retrieval questions.'},
+  {title:'GCSE Chemistry Bonding and Structure',url:'#',year:'GCSE',subject:'Science',type:'Worksheet',notes:'Mixed questions plus mark-scheme style answers.'},
+  {title:'GCSE Physics Energy and Electricity',url:'#',year:'GCSE',subject:'Science',type:'Exam Pack',notes:'Exam-style paper with worked solutions.'},
+  {title:'A-Level Pure Maths Differentiation Pack',url:'#',year:'A-Level',subject:'Maths',type:'Worksheet',notes:'From basics to chain/product/quotient rules.'},
+  {title:'A-Level Integration Challenge Set',url:'#',year:'A-Level',subject:'Maths',type:'Exam Pack',notes:'Past-paper style mixed integration questions.'},
+  {title:'A-Level Biology Required Practicals Guide',url:'#',year:'A-Level',subject:'Science',type:'Notes',notes:'Method, variables and evaluation points.'},
+  {title:'A-Level Chemistry Organic Mechanisms',url:'#',year:'A-Level',subject:'Science',type:'PDF',notes:'Mechanisms and conditions summary sheet.'},
+  {title:'A-Level Physics Equations and Units Sheet',url:'#',year:'A-Level',subject:'Science',type:'PDF',notes:'High-frequency equations with unit checks.'},
+  {title:'A-Level English Comparative Essay Toolkit',url:'#',year:'A-Level',subject:'English',type:'Notes',notes:'Argument structures and comparison sentence stems.'},
+  {title:'11+ Verbal Reasoning Pack',url:'#',year:'11+',subject:'11+',type:'Exam Pack',notes:'Timed VR drills and answer sheet.'},
+  {title:'11+ Non-Verbal Reasoning Shapes Pack',url:'#',year:'11+',subject:'11+',type:'Worksheet',notes:'Pattern, rotation and sequence questions.'},
+  {title:'11+ Maths Speed Drills',url:'#',year:'11+',subject:'11+',type:'Worksheet',notes:'Mental arithmetic and short method strategies.'},
+  {title:'11+ English Comprehension Set',url:'#',year:'11+',subject:'11+',type:'Exam Pack',notes:'Reading passages with mark-scheme guidance.'}
+];
+
+let webResources = [];
+let dlResources = [];
+
+const fYear = document.getElementById('f-year');
+const fSubj = document.getElementById('f-subj');
+const fSearch = document.getElementById('f-search');
+
+function mergeByIdentity(existing, defaults){
+  const out = Array.isArray(existing) ? [...existing] : [];
+  const seen = new Set(out.map(x => `${x.title}__${x.url}`));
+  defaults.forEach(item => {
+    const key = `${item.title}__${item.url}`;
+    if(!seen.has(key)){
+      out.push(item);
+      seen.add(key);
+    }
+  });
+  return out;
+}
+
+function loadData(){
+  const storedWeb = JSON.parse(localStorage.getItem(WEB_KEY) || 'null');
+  const storedDl = JSON.parse(localStorage.getItem(DL_KEY) || 'null');
+  webResources = mergeByIdentity(storedWeb, seedWeb);
+  dlResources = mergeByIdentity(storedDl, seedDl);
+  saveData();
+}
+
+function saveData(){
+  localStorage.setItem(WEB_KEY, JSON.stringify(webResources));
+  localStorage.setItem(DL_KEY, JSON.stringify(dlResources));
+}
+
+function matchFilters(item){
+  const y = fYear.value;
+  const s = fSubj.value;
+  const q = fSearch.value.trim().toLowerCase();
+
+  const yearOk = y === 'all' || item.year === y;
+  const subjOk = s === 'all' || item.subject === s;
+  const text = `${item.title} ${item.notes || ''} ${item.subject} ${item.year}`.toLowerCase();
+  const queryOk = !q || text.includes(q);
+
+  return yearOk && subjOk && queryOk;
+}
+
+function itemHtml(item, isDownload){
+  const typeTag = isDownload ? `<span class="tag">${item.type}</span>` : '';
+  return `
+    <article class="item">
+      <div class="item-top">
+        <h3>${item.title}</h3>
+      </div>
+      <div class="meta">
+        <span class="tag">${item.year}</span>
+        <span class="tag">${item.subject}</span>
+        ${typeTag}
+      </div>
+      <p>${item.notes || 'No notes added yet.'}</p>
+      <a href="${item.url}" target="_blank" rel="noopener">Open Resource →</a>
+    </article>
+  `;
+}
+
+function render(){
+  const webList = document.getElementById('web-list');
+  const dlList = document.getElementById('dl-list');
+
+  const filteredWeb = webResources.filter(matchFilters);
+  const filteredDl = dlResources.filter(matchFilters);
+
+  webList.innerHTML = filteredWeb.length
+    ? filteredWeb.map(r => itemHtml(r, false)).join('')
+    : '<p class="empty">No website links match these filters.</p>';
+
+  dlList.innerHTML = filteredDl.length
+    ? filteredDl.map(r => itemHtml(r, true)).join('')
+    : '<p class="empty">No downloadable sources match these filters.</p>';
+}
+
+function bindFilters(){
+  [fYear, fSubj, fSearch].forEach(el => el.addEventListener('input', render));
+  document.getElementById('clear-filters').addEventListener('click', () => {
+    fYear.value = 'all';
+    fSubj.value = 'all';
+    fSearch.value = '';
+    render();
+  });
+}
+
+loadData();
+bindFilters();
+render();
+</script>
+</body>
+</html>
