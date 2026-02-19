@@ -20,7 +20,6 @@ let sb = null;
 let currentUser = null;
 let currentProfile = null;
 let tutorStudentsById = new Map();
-let currentFormObjectives = [];
 
 function showMsg(el, text, type = 'ok') {
   if (!el) return;
@@ -64,37 +63,6 @@ function parseYearGroupInt(value) {
   return Number.isFinite(n) ? n : null;
 }
 
-function deriveObjectiveYears(yearGroupRaw) {
-  if (yearGroupRaw === null || yearGroupRaw === undefined || yearGroupRaw === '') return [];
-  if (typeof yearGroupRaw === 'number' && Number.isFinite(yearGroupRaw)) return [yearGroupRaw];
-
-  const raw = String(yearGroupRaw).trim();
-  const lower = raw.toLowerCase();
-
-  if (lower.includes('reception') && lower.includes('2')) return [1, 2];
-  if (lower.includes('year 3-6') || lower.includes('3-6')) return [3, 4, 5, 6];
-  if (lower.includes('year 7-9') || lower.includes('7-9')) return [7, 8, 9];
-  if (lower.includes('gcse')) return [10, 11];
-  if (lower.includes('a-level') || lower.includes('a level')) return [12, 13];
-
-  if (lower.includes('year 10-11') || lower.includes('10-11')) return [10, 11];
-  if (lower.includes('year 12-13') || lower.includes('12-13')) return [12, 13];
-
-  const range = lower.match(/(\d{1,2})\s*[-–]\s*(\d{1,2})/);
-  if (range) {
-    const start = Number(range[1]);
-    const end = Number(range[2]);
-    if (Number.isFinite(start) && Number.isFinite(end) && end >= start) {
-      const years = [];
-      for (let y = start; y <= end; y += 1) years.push(y);
-      return years;
-    }
-  }
-
-  const single = parseYearGroupInt(raw);
-  return single ? [single] : [];
-}
-
 function escapeHtml(value) {
   return String(value ?? '')
     .replaceAll('&', '&amp;')
@@ -102,6 +70,59 @@ function escapeHtml(value) {
     .replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#39;');
+}
+
+function normalizeSubject(value) {
+  const raw = String(value || '').trim().toLowerCase();
+  if (!raw) return '';
+  if (raw === 'maths' || raw === 'math') return 'maths';
+  if (raw === 'english') return 'english';
+  if (raw === 'science') return 'science';
+  if (raw === '11+' || raw === '11 plus' || raw === 'eleven plus') return '11+';
+  if (raw === 'general') return 'general';
+  return raw;
+}
+
+function subjectVariants(value) {
+  const s = normalizeSubject(value);
+  if (s === 'maths') return ['maths', 'math'];
+  if (s === '11+') return ['11+', '11 plus', 'eleven_plus', 'eleven plus'];
+  return s ? [s] : [];
+}
+
+function expandYearGroupValues(value) {
+  if (value === null || value === undefined) return [];
+  if (typeof value === 'number' && Number.isFinite(value)) return [value];
+
+  const s = String(value).toLowerCase();
+  if (s.includes('gcse')) return [10, 11];
+  if (s.includes('a-level') || s.includes('alevel') || s.includes('a level')) return [12, 13];
+
+  const allNums = [...s.matchAll(/\d{1,2}/g)].map((m) => Number(m[0])).filter((n) => Number.isFinite(n));
+  if (!allNums.length) return [];
+  if (allNums.length >= 2 && (s.includes('-') || s.includes('to'))) {
+    const min = Math.min(allNums[0], allNums[1]);
+    const max = Math.max(allNums[0], allNums[1]);
+    const out = [];
+    for (let i = min; i <= max; i += 1) out.push(i);
+    return out;
+  }
+  return [allNums[0]];
+}
+
+function setSelectOptions(el, options, emptyLabel) {
+  if (!el) return;
+  el.innerHTML = '';
+  if (!options.length) {
+    el.innerHTML = `<option value="">${emptyLabel}</option>`;
+    return;
+  }
+  options.forEach((opt) => {
+    const o = document.createElement('option');
+    o.value = opt.value;
+    o.textContent = opt.label;
+    el.appendChild(o);
+  });
 }
 
 async function ensureProfile(user) {
@@ -169,14 +190,11 @@ async function loadStudentsForTutor() {
     .order('full_name', { ascending: true });
 
   if (error) throw error;
-  tutorStudentsById = new Map((data || []).map((st) => [st.id, st]));
-
   const studentSelect = $('asg-student');
   const linkStudentSelect = $('link-student');
-  const mFilterStudent = $('m-filter-student');
+  tutorStudentsById = new Map((data || []).map((x) => [x.id, x]));
   studentSelect.innerHTML = '';
   linkStudentSelect.innerHTML = '';
-  if (mFilterStudent) mFilterStudent.innerHTML = '<option value="">All students</option>';
 
   if (!data.length) {
     studentSelect.innerHTML = '<option value="">No student accounts yet</option>';
@@ -196,15 +214,90 @@ async function loadStudentsForTutor() {
     b.textContent = txt;
     linkStudentSelect.appendChild(b);
   });
+  await loadUnitsForAssignmentForm();
+}
 
-  if (mFilterStudent) {
-    data.forEach((st) => {
-      const o = document.createElement('option');
-      o.value = st.id;
-      o.textContent = st.full_name || st.email;
-      mFilterStudent.appendChild(o);
-    });
+async function loadUnitsForAssignmentForm() {
+  const studentId = $('asg-student')?.value || '';
+  const subjectRaw = $('asg-subject')?.value || '';
+  const examBoardRaw = String($('asg-exam-board')?.value || '').trim().toLowerCase();
+  const unitSelect = $('asg-unit');
+  const lessonSelect = $('asg-lesson');
+
+  if (!studentId || !subjectRaw) {
+    setSelectOptions(unitSelect, [], 'Select student + subject first');
+    setSelectOptions(lessonSelect, [], 'Select a unit first');
+    return;
   }
+
+  const subjectList = subjectVariants(subjectRaw);
+  if (!subjectList.length) {
+    setSelectOptions(unitSelect, [], 'No units for selected subject');
+    setSelectOptions(lessonSelect, [], 'Select a unit first');
+    return;
+  }
+
+  const student = tutorStudentsById.get(studentId);
+  const years = [...new Set(expandYearGroupValues(student?.year_group))];
+
+  let query = sb
+    .from('curriculum_units')
+    .select('id,year_group,subject,unit_title,unit_order,exam_board,course')
+    .in('subject', subjectList)
+    .order('year_group', { ascending: true })
+    .order('unit_order', { ascending: true, nullsFirst: false })
+    .order('unit_title', { ascending: true });
+
+  if (years.length) query = query.in('year_group', years);
+  if (examBoardRaw) query = query.ilike('exam_board', examBoardRaw);
+
+  const { data, error } = await query;
+  if (error) {
+    console.warn('loadUnitsForAssignmentForm error:', error.message);
+    setSelectOptions(unitSelect, [], 'Could not load units');
+    setSelectOptions(lessonSelect, [], 'Select a unit first');
+    return;
+  }
+
+  const options = (data || []).map((u) => ({
+    value: u.id,
+    label: `Y${u.year_group} · ${u.unit_title}${u.exam_board ? ` · ${String(u.exam_board).toUpperCase()}` : ''}${u.course ? ` · ${u.course}` : ''}`
+  }));
+
+  setSelectOptions(unitSelect, options, 'No matching units for this student/subject');
+  setSelectOptions(lessonSelect, [], 'Select a unit first');
+  if (options.length) {
+    unitSelect.value = options[0].value;
+    await loadLessonsForAssignmentForm();
+  }
+}
+
+async function loadLessonsForAssignmentForm() {
+  const unitId = $('asg-unit')?.value || '';
+  const lessonSelect = $('asg-lesson');
+  if (!unitId) {
+    setSelectOptions(lessonSelect, [], 'Select a unit first');
+    return;
+  }
+
+  const { data, error } = await sb
+    .from('curriculum_lessons')
+    .select('id,lesson_order,lesson_title')
+    .eq('unit_id', unitId)
+    .order('lesson_order', { ascending: true })
+    .order('lesson_title', { ascending: true });
+
+  if (error) {
+    console.warn('loadLessonsForAssignmentForm error:', error.message);
+    setSelectOptions(lessonSelect, [], 'Could not load lessons');
+    return;
+  }
+
+  const options = (data || []).map((l) => ({
+    value: l.id,
+    label: `L${l.lesson_order} · ${l.lesson_title}`
+  }));
+  setSelectOptions(lessonSelect, options, 'No lessons in this unit');
 }
 
 async function loadParentsForTutor() {
@@ -247,20 +340,15 @@ function attachmentButtonHtml(a, context) {
   return buttons.length ? `<div class="actions" style="margin-top:.45rem">${buttons.join('')}</div>` : '';
 }
 
-function objectiveTagsHtml(objectives) {
-  if (!objectives || !objectives.length) return '';
-  return `
-    <div class="meta" style="margin-top:.35rem">
-      ${objectives.map((o) => `<span class="tag">${escapeHtml(o.objective_id)} · ${escapeHtml(o.strand || o.subject || 'objective')}</span>`).join('')}
-    </div>
-  `;
-}
-
 function tutorItemHtml(a) {
   const statusClass = a.status === 'marked' || a.status === 'completed' ? 'ok' : 'warn';
   const studentName = a.student?.full_name || a.student?.email || 'Unknown student';
   const due = formatDate(a.due_date);
   const desc = a.description || 'No instructions provided.';
+  const unitTag = a.unit?.unit_title ? `<span class="tag">Unit: ${escapeHtml(a.unit.unit_title)}</span>` : '';
+  const lessonTag = a.lesson?.lesson_title
+    ? `<span class="tag">Lesson: ${a.lesson.lesson_order ? `L${a.lesson.lesson_order} · ` : ''}${escapeHtml(a.lesson.lesson_title)}</span>`
+    : '';
 
   const submittedTag = a.submission
     ? `<span class="tag ok">Submitted: ${new Date(a.submission.submitted_at).toLocaleString()}</span>`
@@ -288,10 +376,11 @@ function tutorItemHtml(a) {
         <span class="tag">${studentName}</span>
         <span class="tag ${statusClass}">${a.status}</span>
         <span class="tag">Due: ${due}</span>
+        ${unitTag}
+        ${lessonTag}
         ${submittedTag}
       </div>
       <p class="muted">${desc}</p>
-      ${objectiveTagsHtml(a.objectives)}
       ${attachmentButtonHtml(a, 'tutor')}
       ${gradingBlock}
     </article>
@@ -301,6 +390,10 @@ function tutorItemHtml(a) {
 function studentItemHtml(a) {
   const due = formatDate(a.due_date);
   const desc = a.description || 'No instructions provided.';
+  const unitTag = a.unit?.unit_title ? `<span class="tag">Unit: ${escapeHtml(a.unit.unit_title)}</span>` : '';
+  const lessonTag = a.lesson?.lesson_title
+    ? `<span class="tag">Lesson: ${a.lesson.lesson_order ? `L${a.lesson.lesson_order} · ` : ''}${escapeHtml(a.lesson.lesson_title)}</span>`
+    : '';
   const gradeHtml = a.submission
     ? `
       <p class="muted" style="margin:.35rem 0"><b>Mark:</b> ${a.submission.mark ?? '-'} · <b>Grade:</b> ${a.submission.grade || '-'}</p>
@@ -315,9 +408,10 @@ function studentItemHtml(a) {
         <span class="tag">${a.subject}</span>
         <span class="tag ${a.status === 'marked' || a.status === 'completed' ? 'ok' : 'warn'}">${a.status}</span>
         <span class="tag">Due: ${due}</span>
+        ${unitTag}
+        ${lessonTag}
       </div>
       <p class="muted" style="margin-bottom:.5rem">${desc}</p>
-      ${objectiveTagsHtml(a.objectives)}
       ${attachmentButtonHtml(a, 'student')}
       ${gradeHtml}
       <label style="margin-top:.5rem;margin-bottom:.35rem">Submission Notes</label>
@@ -333,6 +427,10 @@ function parentItemHtml(a) {
   const due = formatDate(a.due_date);
   const studentName = a.student?.full_name || a.student?.email || a.student_id;
   const desc = a.description || 'No instructions provided.';
+  const unitTag = a.unit?.unit_title ? `<span class="tag">Unit: ${escapeHtml(a.unit.unit_title)}</span>` : '';
+  const lessonTag = a.lesson?.lesson_title
+    ? `<span class="tag">Lesson: ${a.lesson.lesson_order ? `L${a.lesson.lesson_order} · ` : ''}${escapeHtml(a.lesson.lesson_title)}</span>`
+    : '';
   const submissionTag = a.submission
     ? `<span class="tag ok">Submitted: ${new Date(a.submission.submitted_at).toLocaleString()}</span>`
     : '<span class="tag warn">Not submitted yet</span>';
@@ -345,128 +443,16 @@ function parentItemHtml(a) {
         <span class="tag">${a.subject}</span>
         <span class="tag ${a.status === 'marked' || a.status === 'completed' ? 'ok' : 'warn'}">${a.status}</span>
         <span class="tag">Due: ${due}</span>
+        ${unitTag}
+        ${lessonTag}
         ${submissionTag}
       </div>
       <p class="muted">${desc}</p>
-      ${objectiveTagsHtml(a.objectives)}
       ${attachmentButtonHtml(a, 'parent')}
       <p class="muted" style="margin:.35rem 0"><b>Mark:</b> ${a.submission?.mark ?? '-'} · <b>Grade:</b> ${a.submission?.grade || '-'}</p>
       <p class="muted" style="margin-bottom:.35rem"><b>Tutor Feedback:</b> ${a.submission?.tutor_feedback || 'No feedback yet.'}</p>
     </article>
   `;
-}
-
-function masteryItemHtml(m) {
-  const st = m.student?.full_name || m.student?.email || m.student_id;
-  const ratingClass = m.rating === 'secure' ? 'ok' : (m.rating === 'developing' ? 'warn' : '');
-  const objective = m.objective || {};
-  return `
-    <article class="item">
-      <h3>${escapeHtml(st)}</h3>
-      <div class="meta">
-        <span class="tag ${ratingClass}">${escapeHtml(m.rating)}</span>
-        <span class="tag">${escapeHtml(objective.subject || '-')}</span>
-        <span class="tag">Y${escapeHtml(objective.year_group || '-')}</span>
-        <span class="tag">${escapeHtml(objective.objective_id || m.objective_id)}</span>
-      </div>
-      <p class="muted"><b>${escapeHtml(objective.strand || '')}</b> ${objective.objective_text ? `· ${escapeHtml(objective.objective_text)}` : ''}</p>
-    </article>
-  `;
-}
-
-async function fetchObjectivesMapForAssignments(assignmentIds) {
-  const map = new Map();
-  if (!assignmentIds.length) return map;
-  const { data, error } = await sb
-    .from('assignment_objectives')
-    .select(`
-      assignment_id, objective_id,
-      objective:curriculum_objectives!assignment_objectives_objective_id_fkey(objective_id,subject,strand,objective_text,year_group,exam_board)
-    `)
-    .in('assignment_id', assignmentIds);
-  if (error) throw error;
-  (data || []).forEach((row) => {
-    const list = map.get(row.assignment_id) || [];
-    list.push({
-      objective_id: row.objective_id,
-      subject: row.objective?.subject,
-      strand: row.objective?.strand,
-      objective_text: row.objective?.objective_text,
-      year_group: row.objective?.year_group,
-      exam_board: row.objective?.exam_board
-    });
-    map.set(row.assignment_id, list);
-  });
-  return map;
-}
-
-function renderSelectedObjectivesPreview() {
-  const box = $('asg-objectives-selected');
-  const select = $('asg-objectives');
-  if (!box || !select) return;
-  const selected = [...select.selectedOptions];
-  if (!selected.length) {
-    box.innerHTML = '<p class="muted">No objectives selected.</p>';
-    return;
-  }
-  box.innerHTML = selected.map((opt) => `<article class="item"><p class="muted"><b>${escapeHtml(opt.value)}</b> · ${escapeHtml(opt.dataset.strand || '')}</p><p>${escapeHtml(opt.textContent || '')}</p></article>`).join('');
-}
-
-async function loadObjectivesForAssignmentForm() {
-  const select = $('asg-objectives');
-  const help = $('asg-objectives-help');
-  if (!select || !help) return;
-  const studentId = $('asg-student')?.value || '';
-  const subjectRaw = ($('asg-subject')?.value || '').toLowerCase();
-  const examBoardRaw = ($('asg-exam-board')?.value || '').trim().toLowerCase();
-  const coreSubject = ['english', 'maths', 'science'].includes(subjectRaw) ? subjectRaw : '';
-
-  select.innerHTML = '';
-  currentFormObjectives = [];
-  if (!studentId) {
-    help.textContent = 'Select a student to load objectives.';
-    renderSelectedObjectivesPreview();
-    return;
-  }
-  if (!coreSubject) {
-    help.textContent = 'Choose English, Maths, or Science to load objectives.';
-    renderSelectedObjectivesPreview();
-    return;
-  }
-
-  const student = tutorStudentsById.get(studentId);
-  const years = deriveObjectiveYears(student?.year_group);
-  const hasYear11 = years.includes(11);
-
-  let q = sb
-    .from('curriculum_objectives')
-    .select('objective_id,year_group,subject,strand,exam_board,objective_text')
-    .eq('subject', coreSubject)
-    .order('objective_id', { ascending: true });
-
-  if (years.length) q = q.in('year_group', years);
-
-  // Only board-filter when this is explicitly Year 11-only selection.
-  if (years.length === 1 && hasYear11 && examBoardRaw) q = q.eq('exam_board', examBoardRaw);
-
-  const { data, error } = await q;
-  if (error) {
-    help.textContent = `Could not load objectives: ${error.message}`;
-    renderSelectedObjectivesPreview();
-    return;
-  }
-
-  currentFormObjectives = data || [];
-  help.textContent = `${currentFormObjectives.length} objectives loaded${years.length ? ` for Y${years.join(', Y')}` : ''}.`;
-
-  currentFormObjectives.forEach((o) => {
-    const opt = document.createElement('option');
-    opt.value = o.objective_id;
-    opt.textContent = o.objective_text;
-    opt.dataset.strand = o.strand || '';
-    select.appendChild(opt);
-  });
-  renderSelectedObjectivesPreview();
 }
 
 function parentLinkItemHtml(link) {
@@ -501,7 +487,9 @@ async function renderTutorDashboard() {
     .from('assignments')
     .select(`
       id,tutor_id,student_id,subject,title,description,due_date,status,resource_title,resource_url,file_path,file_url,year_group,exam_board,created_at,
-      student:profiles!assignments_student_id_fkey(full_name,email,year_group)
+      student:profiles!assignments_student_id_fkey(full_name,email,year_group),
+      unit:curriculum_units!assignments_unit_id_fkey(unit_title),
+      lesson:curriculum_lessons!assignments_lesson_id_fkey(lesson_title,lesson_order)
     `)
     .eq('tutor_id', currentUser.id)
     .order('created_at', { ascending: false });
@@ -514,7 +502,6 @@ async function renderTutorDashboard() {
   if (subCountErr) throw subCountErr;
 
   const assignmentIds = (assignments || []).map((a) => a.id);
-  const objectiveMap = await fetchObjectivesMapForAssignments(assignmentIds);
   let submissionMap = new Map();
   if (assignmentIds.length) {
     const { data: subs, error: subErr } = await sb
@@ -527,8 +514,7 @@ async function renderTutorDashboard() {
 
   const enriched = (assignments || []).map((a) => ({
     ...a,
-    submission: submissionMap.get(a.id) || null,
-    objectives: objectiveMap.get(a.id) || []
+    submission: submissionMap.get(a.id) || null
   }));
   $('kpi-active').textContent = String(enriched.filter((x) => x.status === 'assigned' || x.status === 'submitted').length);
   $('kpi-complete').textContent = String(enriched.filter((x) => x.status === 'marked' || x.status === 'completed').length);
@@ -541,13 +527,16 @@ async function renderTutorDashboard() {
 async function renderStudentAssignments() {
   const { data: assignments, error } = await sb
     .from('assignments')
-    .select('id,student_id,subject,title,description,due_date,status,resource_title,resource_url,file_path,file_url,created_at')
+    .select(`
+      id,student_id,subject,title,description,due_date,status,resource_title,resource_url,file_path,file_url,created_at,
+      unit:curriculum_units!assignments_unit_id_fkey(unit_title),
+      lesson:curriculum_lessons!assignments_lesson_id_fkey(lesson_title,lesson_order)
+    `)
     .eq('student_id', currentUser.id)
     .order('created_at', { ascending: false });
   if (error) throw error;
 
   const assignmentIds = (assignments || []).map((a) => a.id);
-  const objectiveMap = await fetchObjectivesMapForAssignments(assignmentIds);
   let submissionMap = new Map();
   if (assignmentIds.length) {
     const { data: subs, error: subErr } = await sb
@@ -561,8 +550,7 @@ async function renderStudentAssignments() {
 
   const enriched = (assignments || []).map((a) => ({
     ...a,
-    submission: submissionMap.get(a.id) || null,
-    objectives: objectiveMap.get(a.id) || []
+    submission: submissionMap.get(a.id) || null
   }));
   $('student-list').innerHTML = enriched.length
     ? enriched.map(studentItemHtml).join('')
@@ -603,14 +591,15 @@ async function renderParentTracker() {
     .from('assignments')
     .select(`
       id,tutor_id,student_id,subject,title,description,due_date,status,resource_title,resource_url,file_path,file_url,created_at,
-      student:profiles!assignments_student_id_fkey(full_name,email,year_group)
+      student:profiles!assignments_student_id_fkey(full_name,email,year_group),
+      unit:curriculum_units!assignments_unit_id_fkey(unit_title),
+      lesson:curriculum_lessons!assignments_lesson_id_fkey(lesson_title,lesson_order)
     `)
     .in('student_id', studentIds)
     .order('created_at', { ascending: false });
   if (asgErr) throw asgErr;
 
   const assignmentIds = (assignments || []).map((a) => a.id);
-  const objectiveMap = await fetchObjectivesMapForAssignments(assignmentIds);
   let submissionMap = new Map();
   if (assignmentIds.length) {
     const { data: subs, error: subErr } = await sb
@@ -623,37 +612,13 @@ async function renderParentTracker() {
 
   const enriched = (assignments || []).map((a) => ({
     ...a,
-    submission: submissionMap.get(a.id) || null,
-    objectives: objectiveMap.get(a.id) || []
+    submission: submissionMap.get(a.id) || null
   }));
   $('kpi-parent-total').textContent = String(enriched.length);
   $('kpi-parent-complete').textContent = String(enriched.filter((x) => x.status === 'marked' || x.status === 'completed').length);
   $('parent-list').innerHTML = enriched.length
     ? enriched.map(parentItemHtml).join('')
     : '<p class="muted">No assignments found for linked students.</p>';
-}
-
-async function renderTutorMasteryDashboard() {
-  const studentFilter = $('m-filter-student')?.value || '';
-  const subjectFilter = ($('m-filter-subject')?.value || '').trim().toLowerCase();
-  const { data, error } = await sb
-    .from('objective_mastery')
-    .select(`
-      student_id,objective_id,rating,updated_at,evidence_assignment_id,
-      student:profiles!objective_mastery_student_id_fkey(full_name,email),
-      objective:curriculum_objectives!objective_mastery_objective_id_fkey(objective_id,subject,strand,objective_text,year_group,exam_board)
-    `)
-    .order('updated_at', { ascending: false });
-  if (error) throw error;
-  let rows = data || [];
-  if (studentFilter) rows = rows.filter((r) => r.student_id === studentFilter);
-  if (subjectFilter) rows = rows.filter((r) => (r.objective?.subject || '').toLowerCase() === subjectFilter);
-  $('kpi-mastery-secure').textContent = String(rows.filter((r) => r.rating === 'secure').length);
-  $('kpi-mastery-developing').textContent = String(rows.filter((r) => r.rating === 'developing').length);
-  $('kpi-mastery-notyet').textContent = String(rows.filter((r) => r.rating === 'not_yet').length);
-  $('mastery-list').innerHTML = rows.length
-    ? rows.map(masteryItemHtml).join('')
-    : '<p class="muted">No mastery data yet. Grade assignments linked to objectives.</p>';
 }
 
 async function createAssignment() {
@@ -666,20 +631,17 @@ async function createAssignment() {
   const description = $('asg-desc').value.trim();
   const resourceTitle = $('asg-resource-title').value.trim();
   const resourceUrl = $('asg-resource-url').value.trim();
-  const examBoard = $('asg-exam-board') ? $('asg-exam-board').value.trim() : null;
+  const examBoard = $('asg-exam-board') ? String($('asg-exam-board').value || '').trim().toLowerCase() : null;
+  const unitId = $('asg-unit')?.value || null;
+  const lessonId = $('asg-lesson')?.value || null;
   const file = $('asg-file')?.files?.[0] || null;
-  const objectiveIds = [...($('asg-objectives')?.selectedOptions || [])].map((o) => o.value);
 
   if (!studentId || !title) {
     showMsg($('asg-msg'), 'Select a student and add a title.', 'err');
     return;
   }
 
-  const { data: studentProfile } = await sb
-    .from('profiles')
-    .select('year_group')
-    .eq('id', studentId)
-    .maybeSingle();
+  const studentProfile = tutorStudentsById.get(studentId) || null;
 
   const payload = {
     tutor_id: currentUser.id,
@@ -692,7 +654,9 @@ async function createAssignment() {
     resource_title: resourceTitle || null,
     resource_url: resourceUrl || null,
     year_group: parseYearGroupInt(studentProfile?.year_group),
-    exam_board: examBoard || null
+    exam_board: examBoard || null,
+    unit_id: unitId || null,
+    lesson_id: lessonId || null
   };
 
   const { data: created, error: insErr } = await sb
@@ -722,16 +686,6 @@ async function createAssignment() {
     }
   }
 
-  if (objectiveIds.length) {
-    const links = objectiveIds.map((objective_id) => ({ assignment_id: created.id, objective_id }));
-    const { error: objErr } = await sb.from('assignment_objectives').upsert(links, { onConflict: 'assignment_id,objective_id' });
-    if (objErr) {
-      showMsg($('asg-msg'), `Assignment created, but objective links failed: ${objErr.message}`, 'err');
-      await renderTutorDashboard();
-      return;
-    }
-  }
-
   $('asg-title').value = '';
   $('asg-due').value = '';
   $('asg-desc').value = '';
@@ -739,12 +693,12 @@ async function createAssignment() {
   $('asg-resource-url').value = '';
   if ($('asg-exam-board')) $('asg-exam-board').value = '';
   if ($('asg-file')) $('asg-file').value = '';
-  if ($('asg-objectives')) [...$('asg-objectives').options].forEach((o) => { o.selected = false; });
-  renderSelectedObjectivesPreview();
+  if ($('asg-unit')) $('asg-unit').value = '';
+  if ($('asg-lesson')) $('asg-lesson').value = '';
+  await loadUnitsForAssignmentForm();
 
   showMsg($('asg-msg'), 'Assignment created.', 'ok');
   await renderTutorDashboard();
-  await renderTutorMasteryDashboard();
 }
 
 async function linkParentToStudent() {
@@ -845,34 +799,8 @@ async function saveTutorGrade(assignmentId) {
     return;
   }
 
-  if (mark !== null) {
-    const rating = mark >= 75 ? 'secure' : (mark >= 45 ? 'developing' : 'not_yet');
-    const { data: linkedObjectives, error: linkErr } = await sb
-      .from('assignment_objectives')
-      .select('objective_id,assignment_id')
-      .eq('assignment_id', assignmentId);
-    if (!linkErr && (linkedObjectives || []).length) {
-      const { data: assignmentRow, error: asgRowErr } = await sb
-        .from('assignments')
-        .select('student_id')
-        .eq('id', assignmentId)
-        .single();
-      if (!asgRowErr && assignmentRow?.student_id) {
-        const rows = linkedObjectives.map((x) => ({
-          student_id: assignmentRow.student_id,
-          objective_id: x.objective_id,
-          rating,
-          evidence_assignment_id: assignmentId,
-          updated_at: new Date().toISOString()
-        }));
-        await sb.from('objective_mastery').upsert(rows, { onConflict: 'student_id,objective_id' });
-      }
-    }
-  }
-
   alert('Mark/grade saved.');
   await renderTutorDashboard();
-  await renderTutorMasteryDashboard();
 }
 
 function openExternalUrl(url) {
@@ -955,9 +883,7 @@ async function renderAppForRole() {
     $('parent-view').classList.add('hidden');
     await loadStudentsForTutor();
     await loadParentsForTutor();
-    await loadObjectivesForAssignmentForm();
     await renderTutorDashboard();
-    await renderTutorMasteryDashboard();
     await renderParentLinksForTutor();
     return;
   }
@@ -1083,12 +1009,10 @@ async function bootstrap() {
 
   safeBind('btn-create-asg', 'click', createAssignment);
   safeBind('btn-link-parent', 'click', linkParentToStudent);
-  safeBind('asg-student', 'change', async () => { await loadObjectivesForAssignmentForm(); });
-  safeBind('asg-subject', 'change', async () => { await loadObjectivesForAssignmentForm(); });
-  safeBind('asg-exam-board', 'change', async () => { await loadObjectivesForAssignmentForm(); });
-  safeBind('asg-objectives', 'change', renderSelectedObjectivesPreview);
-  safeBind('m-filter-student', 'change', async () => { await renderTutorMasteryDashboard(); });
-  safeBind('m-filter-subject', 'change', async () => { await renderTutorMasteryDashboard(); });
+  safeBind('asg-student', 'change', loadUnitsForAssignmentForm);
+  safeBind('asg-subject', 'change', loadUnitsForAssignmentForm);
+  safeBind('asg-exam-board', 'change', loadUnitsForAssignmentForm);
+  safeBind('asg-unit', 'change', loadLessonsForAssignmentForm);
 
   bindListActions();
 
