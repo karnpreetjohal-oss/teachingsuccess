@@ -19,6 +19,8 @@ const $ = (id) => document.getElementById(id);
 let sb = null;
 let currentUser = null;
 let currentProfile = null;
+let tutorStudentsById = new Map();
+let currentFormObjectives = [];
 
 function showMsg(el, text, type = 'ok') {
   if (!el) return;
@@ -60,6 +62,15 @@ function parseYearGroupInt(value) {
   if (!m) return null;
   const n = Number(m[0]);
   return Number.isFinite(n) ? n : null;
+}
+
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
 }
 
 async function ensureProfile(user) {
@@ -127,11 +138,14 @@ async function loadStudentsForTutor() {
     .order('full_name', { ascending: true });
 
   if (error) throw error;
+  tutorStudentsById = new Map((data || []).map((st) => [st.id, st]));
 
   const studentSelect = $('asg-student');
   const linkStudentSelect = $('link-student');
+  const mFilterStudent = $('m-filter-student');
   studentSelect.innerHTML = '';
   linkStudentSelect.innerHTML = '';
+  if (mFilterStudent) mFilterStudent.innerHTML = '<option value="">All students</option>';
 
   if (!data.length) {
     studentSelect.innerHTML = '<option value="">No student accounts yet</option>';
@@ -151,6 +165,15 @@ async function loadStudentsForTutor() {
     b.textContent = txt;
     linkStudentSelect.appendChild(b);
   });
+
+  if (mFilterStudent) {
+    data.forEach((st) => {
+      const o = document.createElement('option');
+      o.value = st.id;
+      o.textContent = st.full_name || st.email;
+      mFilterStudent.appendChild(o);
+    });
+  }
 }
 
 async function loadParentsForTutor() {
@@ -183,14 +206,23 @@ function attachmentButtonHtml(a, context) {
 
   if (a.resource_url) {
     const label = a.resource_title || 'Open resource link';
-    buttons.push(`<button class="btn ghost small" type="button" data-action="open-resource" data-url="${a.resource_url}">${label}</button>`);
+    buttons.push(`<button class="btn ghost small" type="button" data-action="open-resource" data-url="${escapeHtml(a.resource_url)}">${escapeHtml(label)}</button>`);
   }
 
   if (a.file_path) {
-    buttons.push(`<button class="btn ghost small" type="button" data-action="open-file" data-path="${a.file_path}" data-context="${context}" data-id="${a.id}">View file</button>`);
+    buttons.push(`<button class="btn ghost small" type="button" data-action="open-file" data-path="${escapeHtml(a.file_path)}" data-context="${escapeHtml(context)}" data-id="${escapeHtml(a.id)}">View file</button>`);
   }
 
   return buttons.length ? `<div class="actions" style="margin-top:.45rem">${buttons.join('')}</div>` : '';
+}
+
+function objectiveTagsHtml(objectives) {
+  if (!objectives || !objectives.length) return '';
+  return `
+    <div class="meta" style="margin-top:.35rem">
+      ${objectives.map((o) => `<span class="tag">${escapeHtml(o.objective_id)} · ${escapeHtml(o.strand || o.subject || 'objective')}</span>`).join('')}
+    </div>
+  `;
 }
 
 function tutorItemHtml(a) {
@@ -228,6 +260,7 @@ function tutorItemHtml(a) {
         ${submittedTag}
       </div>
       <p class="muted">${desc}</p>
+      ${objectiveTagsHtml(a.objectives)}
       ${attachmentButtonHtml(a, 'tutor')}
       ${gradingBlock}
     </article>
@@ -253,6 +286,7 @@ function studentItemHtml(a) {
         <span class="tag">Due: ${due}</span>
       </div>
       <p class="muted" style="margin-bottom:.5rem">${desc}</p>
+      ${objectiveTagsHtml(a.objectives)}
       ${attachmentButtonHtml(a, 'student')}
       ${gradeHtml}
       <label style="margin-top:.5rem;margin-bottom:.35rem">Submission Notes</label>
@@ -283,11 +317,123 @@ function parentItemHtml(a) {
         ${submissionTag}
       </div>
       <p class="muted">${desc}</p>
+      ${objectiveTagsHtml(a.objectives)}
       ${attachmentButtonHtml(a, 'parent')}
       <p class="muted" style="margin:.35rem 0"><b>Mark:</b> ${a.submission?.mark ?? '-'} · <b>Grade:</b> ${a.submission?.grade || '-'}</p>
       <p class="muted" style="margin-bottom:.35rem"><b>Tutor Feedback:</b> ${a.submission?.tutor_feedback || 'No feedback yet.'}</p>
     </article>
   `;
+}
+
+function masteryItemHtml(m) {
+  const st = m.student?.full_name || m.student?.email || m.student_id;
+  const ratingClass = m.rating === 'secure' ? 'ok' : (m.rating === 'developing' ? 'warn' : '');
+  const objective = m.objective || {};
+  return `
+    <article class="item">
+      <h3>${escapeHtml(st)}</h3>
+      <div class="meta">
+        <span class="tag ${ratingClass}">${escapeHtml(m.rating)}</span>
+        <span class="tag">${escapeHtml(objective.subject || '-')}</span>
+        <span class="tag">Y${escapeHtml(objective.year_group || '-')}</span>
+        <span class="tag">${escapeHtml(objective.objective_id || m.objective_id)}</span>
+      </div>
+      <p class="muted"><b>${escapeHtml(objective.strand || '')}</b> ${objective.objective_text ? `· ${escapeHtml(objective.objective_text)}` : ''}</p>
+    </article>
+  `;
+}
+
+async function fetchObjectivesMapForAssignments(assignmentIds) {
+  const map = new Map();
+  if (!assignmentIds.length) return map;
+  const { data, error } = await sb
+    .from('assignment_objectives')
+    .select(`
+      assignment_id, objective_id,
+      objective:curriculum_objectives!assignment_objectives_objective_id_fkey(objective_id,subject,strand,objective_text,year_group,exam_board)
+    `)
+    .in('assignment_id', assignmentIds);
+  if (error) throw error;
+  (data || []).forEach((row) => {
+    const list = map.get(row.assignment_id) || [];
+    list.push({
+      objective_id: row.objective_id,
+      subject: row.objective?.subject,
+      strand: row.objective?.strand,
+      objective_text: row.objective?.objective_text,
+      year_group: row.objective?.year_group,
+      exam_board: row.objective?.exam_board
+    });
+    map.set(row.assignment_id, list);
+  });
+  return map;
+}
+
+function renderSelectedObjectivesPreview() {
+  const box = $('asg-objectives-selected');
+  const select = $('asg-objectives');
+  if (!box || !select) return;
+  const selected = [...select.selectedOptions];
+  if (!selected.length) {
+    box.innerHTML = '<p class="muted">No objectives selected.</p>';
+    return;
+  }
+  box.innerHTML = selected.map((opt) => `<article class="item"><p class="muted"><b>${escapeHtml(opt.value)}</b> · ${escapeHtml(opt.dataset.strand || '')}</p><p>${escapeHtml(opt.textContent || '')}</p></article>`).join('');
+}
+
+async function loadObjectivesForAssignmentForm() {
+  const select = $('asg-objectives');
+  const help = $('asg-objectives-help');
+  if (!select || !help) return;
+  const studentId = $('asg-student')?.value || '';
+  const subjectRaw = ($('asg-subject')?.value || '').toLowerCase();
+  const examBoardRaw = ($('asg-exam-board')?.value || '').trim().toLowerCase();
+  const coreSubject = ['english', 'maths', 'science'].includes(subjectRaw) ? subjectRaw : '';
+
+  select.innerHTML = '';
+  currentFormObjectives = [];
+  if (!studentId) {
+    help.textContent = 'Select a student to load objectives.';
+    renderSelectedObjectivesPreview();
+    return;
+  }
+  if (!coreSubject) {
+    help.textContent = 'Choose English, Maths, or Science to load objectives.';
+    renderSelectedObjectivesPreview();
+    return;
+  }
+
+  const student = tutorStudentsById.get(studentId);
+  const year = parseYearGroupInt(student?.year_group);
+
+  let q = sb
+    .from('curriculum_objectives')
+    .select('objective_id,year_group,subject,strand,exam_board,objective_text')
+    .eq('subject', coreSubject)
+    .order('objective_id', { ascending: true });
+
+  if (year) q = q.eq('year_group', year);
+  if (year === 11 && examBoardRaw) q = q.eq('exam_board', examBoardRaw);
+  if (year && year !== 11) q = q.is('exam_board', null);
+
+  const { data, error } = await q;
+  if (error) {
+    help.textContent = `Could not load objectives: ${error.message}`;
+    renderSelectedObjectivesPreview();
+    return;
+  }
+
+  currentFormObjectives = data || [];
+  help.textContent = `${currentFormObjectives.length} objectives loaded.`;
+
+  currentFormObjectives.forEach((o) => {
+    const opt = document.createElement('option');
+    opt.value = o.objective_id;
+    opt.textContent = o.objective_text;
+    opt.dataset.strand = o.strand || '';
+    select.appendChild(opt);
+  });
+  renderSelectedObjectivesPreview();
 }
 
 function parentLinkItemHtml(link) {
@@ -335,6 +481,7 @@ async function renderTutorDashboard() {
   if (subCountErr) throw subCountErr;
 
   const assignmentIds = (assignments || []).map((a) => a.id);
+  const objectiveMap = await fetchObjectivesMapForAssignments(assignmentIds);
   let submissionMap = new Map();
   if (assignmentIds.length) {
     const { data: subs, error: subErr } = await sb
@@ -345,7 +492,11 @@ async function renderTutorDashboard() {
     submissionMap = new Map((subs || []).map((s) => [s.assignment_id, s]));
   }
 
-  const enriched = (assignments || []).map((a) => ({ ...a, submission: submissionMap.get(a.id) || null }));
+  const enriched = (assignments || []).map((a) => ({
+    ...a,
+    submission: submissionMap.get(a.id) || null,
+    objectives: objectiveMap.get(a.id) || []
+  }));
   $('kpi-active').textContent = String(enriched.filter((x) => x.status === 'assigned' || x.status === 'submitted').length);
   $('kpi-complete').textContent = String(enriched.filter((x) => x.status === 'marked' || x.status === 'completed').length);
   $('kpi-subs').textContent = String(submissionsCount || 0);
@@ -363,6 +514,7 @@ async function renderStudentAssignments() {
   if (error) throw error;
 
   const assignmentIds = (assignments || []).map((a) => a.id);
+  const objectiveMap = await fetchObjectivesMapForAssignments(assignmentIds);
   let submissionMap = new Map();
   if (assignmentIds.length) {
     const { data: subs, error: subErr } = await sb
@@ -374,7 +526,11 @@ async function renderStudentAssignments() {
     submissionMap = new Map((subs || []).map((s) => [s.assignment_id, s]));
   }
 
-  const enriched = (assignments || []).map((a) => ({ ...a, submission: submissionMap.get(a.id) || null }));
+  const enriched = (assignments || []).map((a) => ({
+    ...a,
+    submission: submissionMap.get(a.id) || null,
+    objectives: objectiveMap.get(a.id) || []
+  }));
   $('student-list').innerHTML = enriched.length
     ? enriched.map(studentItemHtml).join('')
     : '<p class="muted">No assignments yet. Your tutor will assign work here.</p>';
@@ -421,6 +577,7 @@ async function renderParentTracker() {
   if (asgErr) throw asgErr;
 
   const assignmentIds = (assignments || []).map((a) => a.id);
+  const objectiveMap = await fetchObjectivesMapForAssignments(assignmentIds);
   let submissionMap = new Map();
   if (assignmentIds.length) {
     const { data: subs, error: subErr } = await sb
@@ -431,12 +588,39 @@ async function renderParentTracker() {
     submissionMap = new Map((subs || []).map((s) => [s.assignment_id, s]));
   }
 
-  const enriched = (assignments || []).map((a) => ({ ...a, submission: submissionMap.get(a.id) || null }));
+  const enriched = (assignments || []).map((a) => ({
+    ...a,
+    submission: submissionMap.get(a.id) || null,
+    objectives: objectiveMap.get(a.id) || []
+  }));
   $('kpi-parent-total').textContent = String(enriched.length);
   $('kpi-parent-complete').textContent = String(enriched.filter((x) => x.status === 'marked' || x.status === 'completed').length);
   $('parent-list').innerHTML = enriched.length
     ? enriched.map(parentItemHtml).join('')
     : '<p class="muted">No assignments found for linked students.</p>';
+}
+
+async function renderTutorMasteryDashboard() {
+  const studentFilter = $('m-filter-student')?.value || '';
+  const subjectFilter = ($('m-filter-subject')?.value || '').trim().toLowerCase();
+  const { data, error } = await sb
+    .from('objective_mastery')
+    .select(`
+      student_id,objective_id,rating,updated_at,evidence_assignment_id,
+      student:profiles!objective_mastery_student_id_fkey(full_name,email),
+      objective:curriculum_objectives!objective_mastery_objective_id_fkey(objective_id,subject,strand,objective_text,year_group,exam_board)
+    `)
+    .order('updated_at', { ascending: false });
+  if (error) throw error;
+  let rows = data || [];
+  if (studentFilter) rows = rows.filter((r) => r.student_id === studentFilter);
+  if (subjectFilter) rows = rows.filter((r) => (r.objective?.subject || '').toLowerCase() === subjectFilter);
+  $('kpi-mastery-secure').textContent = String(rows.filter((r) => r.rating === 'secure').length);
+  $('kpi-mastery-developing').textContent = String(rows.filter((r) => r.rating === 'developing').length);
+  $('kpi-mastery-notyet').textContent = String(rows.filter((r) => r.rating === 'not_yet').length);
+  $('mastery-list').innerHTML = rows.length
+    ? rows.map(masteryItemHtml).join('')
+    : '<p class="muted">No mastery data yet. Grade assignments linked to objectives.</p>';
 }
 
 async function createAssignment() {
@@ -451,6 +635,7 @@ async function createAssignment() {
   const resourceUrl = $('asg-resource-url').value.trim();
   const examBoard = $('asg-exam-board') ? $('asg-exam-board').value.trim() : null;
   const file = $('asg-file')?.files?.[0] || null;
+  const objectiveIds = [...($('asg-objectives')?.selectedOptions || [])].map((o) => o.value);
 
   if (!studentId || !title) {
     showMsg($('asg-msg'), 'Select a student and add a title.', 'err');
@@ -504,6 +689,16 @@ async function createAssignment() {
     }
   }
 
+  if (objectiveIds.length) {
+    const links = objectiveIds.map((objective_id) => ({ assignment_id: created.id, objective_id }));
+    const { error: objErr } = await sb.from('assignment_objectives').upsert(links, { onConflict: 'assignment_id,objective_id' });
+    if (objErr) {
+      showMsg($('asg-msg'), `Assignment created, but objective links failed: ${objErr.message}`, 'err');
+      await renderTutorDashboard();
+      return;
+    }
+  }
+
   $('asg-title').value = '';
   $('asg-due').value = '';
   $('asg-desc').value = '';
@@ -511,9 +706,12 @@ async function createAssignment() {
   $('asg-resource-url').value = '';
   if ($('asg-exam-board')) $('asg-exam-board').value = '';
   if ($('asg-file')) $('asg-file').value = '';
+  if ($('asg-objectives')) [...$('asg-objectives').options].forEach((o) => { o.selected = false; });
+  renderSelectedObjectivesPreview();
 
   showMsg($('asg-msg'), 'Assignment created.', 'ok');
   await renderTutorDashboard();
+  await renderTutorMasteryDashboard();
 }
 
 async function linkParentToStudent() {
@@ -614,8 +812,34 @@ async function saveTutorGrade(assignmentId) {
     return;
   }
 
+  if (mark !== null) {
+    const rating = mark >= 75 ? 'secure' : (mark >= 45 ? 'developing' : 'not_yet');
+    const { data: linkedObjectives, error: linkErr } = await sb
+      .from('assignment_objectives')
+      .select('objective_id,assignment_id')
+      .eq('assignment_id', assignmentId);
+    if (!linkErr && (linkedObjectives || []).length) {
+      const { data: assignmentRow, error: asgRowErr } = await sb
+        .from('assignments')
+        .select('student_id')
+        .eq('id', assignmentId)
+        .single();
+      if (!asgRowErr && assignmentRow?.student_id) {
+        const rows = linkedObjectives.map((x) => ({
+          student_id: assignmentRow.student_id,
+          objective_id: x.objective_id,
+          rating,
+          evidence_assignment_id: assignmentId,
+          updated_at: new Date().toISOString()
+        }));
+        await sb.from('objective_mastery').upsert(rows, { onConflict: 'student_id,objective_id' });
+      }
+    }
+  }
+
   alert('Mark/grade saved.');
   await renderTutorDashboard();
+  await renderTutorMasteryDashboard();
 }
 
 function openExternalUrl(url) {
@@ -698,7 +922,9 @@ async function renderAppForRole() {
     $('parent-view').classList.add('hidden');
     await loadStudentsForTutor();
     await loadParentsForTutor();
+    await loadObjectivesForAssignmentForm();
     await renderTutorDashboard();
+    await renderTutorMasteryDashboard();
     await renderParentLinksForTutor();
     return;
   }
@@ -824,6 +1050,12 @@ async function bootstrap() {
 
   safeBind('btn-create-asg', 'click', createAssignment);
   safeBind('btn-link-parent', 'click', linkParentToStudent);
+  safeBind('asg-student', 'change', async () => { await loadObjectivesForAssignmentForm(); });
+  safeBind('asg-subject', 'change', async () => { await loadObjectivesForAssignmentForm(); });
+  safeBind('asg-exam-board', 'change', async () => { await loadObjectivesForAssignmentForm(); });
+  safeBind('asg-objectives', 'change', renderSelectedObjectivesPreview);
+  safeBind('m-filter-student', 'change', async () => { await renderTutorMasteryDashboard(); });
+  safeBind('m-filter-subject', 'change', async () => { await renderTutorMasteryDashboard(); });
 
   bindListActions();
 

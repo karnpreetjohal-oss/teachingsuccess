@@ -43,6 +43,8 @@ label{display:block;font-size:.78rem;font-weight:700;color:var(--muted);margin-b
 input,select,textarea{width:100%;padding:.66rem .78rem;border:2px solid var(--border);border-radius:8px;background:#fff;color:var(--ink)}
 input:focus,select:focus,textarea:focus{outline:none;border-color:var(--blue)}
 textarea{min-height:84px;resize:vertical}
+.multiselect{min-height:150px}
+.tiny{font-size:.8rem}
 
 .row{display:grid;gap:.7rem}
 .actions{display:flex;gap:.6rem;flex-wrap:wrap}
@@ -176,6 +178,12 @@ textarea{min-height:84px;resize:vertical}
             <div><label>Resource Title</label><input id="asg-resource-title" type="text" placeholder="e.g. GCSE Algebra Worksheet"></div>
             <div><label>Resource Link</label><input id="asg-resource-url" type="url" placeholder="https://... (website, PDF, Drive link, etc.)"></div>
             <div><label>Attach File (private)</label><input id="asg-file" type="file"></div>
+            <div>
+              <label>Curriculum Objectives (Ctrl/Cmd + click for multiple)</label>
+              <select id="asg-objectives" class="multiselect" multiple></select>
+              <p class="muted tiny" id="asg-objectives-help">Select student + subject to load objectives.</p>
+            </div>
+            <div id="asg-objectives-selected" class="list"></div>
             <div class="actions"><button class="btn blue" id="btn-create-asg" type="button">Create Assignment</button></div>
             <div class="msg" id="asg-msg"></div>
           </div>
@@ -204,6 +212,33 @@ textarea{min-height:84px;resize:vertical}
             <div class="kpi"><span class="muted">Student Submissions</span><b id="kpi-subs">0</b></div>
           </div>
           <div id="tutor-list" class="list"></div>
+        </section>
+
+        <section class="card">
+          <h2>Objective Mastery Dashboard</h2>
+          <div class="row">
+            <div>
+              <label>Filter Student</label>
+              <select id="m-filter-student">
+                <option value="">All students</option>
+              </select>
+            </div>
+            <div>
+              <label>Filter Subject</label>
+              <select id="m-filter-subject">
+                <option value="">All subjects</option>
+                <option value="english">English</option>
+                <option value="maths">Maths</option>
+                <option value="science">Science</option>
+              </select>
+            </div>
+          </div>
+          <div class="kpis" style="margin-top:.7rem">
+            <div class="kpi"><span class="muted">Secure</span><b id="kpi-mastery-secure">0</b></div>
+            <div class="kpi"><span class="muted">Developing</span><b id="kpi-mastery-developing">0</b></div>
+            <div class="kpi"><span class="muted">Not Yet</span><b id="kpi-mastery-notyet">0</b></div>
+          </div>
+          <div id="mastery-list" class="list"></div>
         </section>
       </div>
 
