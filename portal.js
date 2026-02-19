@@ -1,7 +1,13 @@
 /*
   Teaching Success Portal (Supabase)
-  1) Fill SUPABASE_URL and SUPABASE_ANON_KEY
-  2) Run supabase/schema.sql in Supabase SQL editor
+  Required config:
+  - SUPABASE_URL
+  - SUPABASE_ANON_KEY
+
+  Setup notes:
+  1) Run supabase/migrations/0001_portal.sql in Supabase SQL Editor
+  2) Create a PRIVATE storage bucket named: assignment-files
+  3) Use this page for tutor/student/parent portal flows
 */
 
 const SUPABASE_URL = 'https://vcnophmfmzpanqglqopz.supabase.co';
@@ -27,148 +33,185 @@ function clearMsg(el) {
   el.style.display = 'none';
 }
 
+function safeBind(id, event, handler) {
+  const el = $(id);
+  if (!el) {
+    console.warn(`Missing element #${id} for ${event} binding`);
+    return;
+  }
+  el.addEventListener(event, handler);
+}
+
 function formatDate(value) {
   if (!value) return 'No due date';
-  const d = new Date(value + 'T00:00:00');
+  const d = new Date(`${value}T00:00:00`);
   return d.toLocaleDateString();
+}
+
+function safeFileName(name) {
+  return name.replace(/[^a-zA-Z0-9._-]/g, '_');
+}
+
+function parseYearGroupInt(value) {
+  if (value === null || value === undefined) return null;
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  const s = String(value);
+  const m = s.match(/\d{1,2}/);
+  if (!m) return null;
+  const n = Number(m[0]);
+  return Number.isFinite(n) ? n : null;
 }
 
 async function ensureProfile(user) {
   const meta = user.user_metadata || {};
+  const roleFromMeta = meta.signup_role === 'parent' ? 'parent' : (meta.signup_role === 'tutor' ? 'tutor' : 'student');
+
+  const { data: existing, error: existingErr } = await sb
+    .from('profiles')
+    .select('*')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  if (existingErr) throw existingErr;
+
   const payload = {
     id: user.id,
     email: user.email,
-    full_name: meta.full_name || user.email,
-    year_group: meta.year_group || null
+    full_name: meta.full_name || existing?.full_name || user.email,
+    year_group: meta.year_group ?? existing?.year_group ?? null,
+    role: existing?.role || roleFromMeta
   };
 
-  const { error } = await sb.from('profiles').upsert(payload, { onConflict: 'id' });
-  if (error) throw error;
+  const { error: upsertErr } = await sb.from('profiles').upsert(payload, { onConflict: 'id' });
+  if (upsertErr) throw upsertErr;
 
-  const { data, error: profileErr } = await sb
+  const { data: profile, error: profileErr } = await sb
     .from('profiles')
     .select('*')
     .eq('id', user.id)
     .single();
 
   if (profileErr) throw profileErr;
-  return data;
+  return profile;
+}
+
+async function getSignedUrl(filePath) {
+  if (!filePath) return null;
+  const { data, error } = await sb.storage.from('assignment-files').createSignedUrl(filePath, 600);
+  if (error) {
+    console.warn('Signed URL error:', error.message);
+    return null;
+  }
+  return data?.signedUrl || null;
+}
+
+async function uploadAssignmentFile(file, studentId, assignmentId) {
+  if (!file) return null;
+  const uuid = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  const fileName = safeFileName(file.name || 'attachment');
+  const path = `${studentId}/${assignmentId}/${uuid}_${fileName}`;
+
+  const { error } = await sb.storage
+    .from('assignment-files')
+    .upload(path, file, { upsert: false, cacheControl: '3600' });
+
+  if (error) throw error;
+  return path;
 }
 
 async function loadStudentsForTutor() {
   const { data, error } = await sb
     .from('profiles')
-    .select('id, full_name, email, year_group')
+    .select('id,full_name,email,year_group')
     .eq('role', 'student')
     .order('full_name', { ascending: true });
 
   if (error) throw error;
-  const select = $('asg-student');
-  select.innerHTML = '';
+
+  const studentSelect = $('asg-student');
+  const linkStudentSelect = $('link-student');
+  studentSelect.innerHTML = '';
+  linkStudentSelect.innerHTML = '';
 
   if (!data.length) {
-    select.innerHTML = '<option value="">No student accounts yet</option>';
+    studentSelect.innerHTML = '<option value="">No student accounts yet</option>';
+    linkStudentSelect.innerHTML = '<option value="">No student accounts yet</option>';
     return;
   }
 
   data.forEach((st) => {
-    const opt = document.createElement('option');
-    opt.value = st.id;
-    const yr = st.year_group ? ` - ${st.year_group}` : '';
-    opt.textContent = `${st.full_name || st.email} (${st.email})${yr}`;
-    select.appendChild(opt);
-  });
+    const txt = `${st.full_name || st.email} (${st.email})${st.year_group ? ` - ${st.year_group}` : ''}`;
+    const a = document.createElement('option');
+    a.value = st.id;
+    a.textContent = txt;
+    studentSelect.appendChild(a);
 
-  const linkStudentSelect = $('link-student');
-  linkStudentSelect.innerHTML = '';
-  data.forEach((st) => {
-    const opt = document.createElement('option');
-    opt.value = st.id;
-    const yr = st.year_group ? ` - ${st.year_group}` : '';
-    opt.textContent = `${st.full_name || st.email} (${st.email})${yr}`;
-    linkStudentSelect.appendChild(opt);
+    const b = document.createElement('option');
+    b.value = st.id;
+    b.textContent = txt;
+    linkStudentSelect.appendChild(b);
   });
 }
 
 async function loadParentsForTutor() {
   const { data, error } = await sb
     .from('profiles')
-    .select('id, full_name, email')
+    .select('id,full_name,email')
     .eq('role', 'parent')
     .order('full_name', { ascending: true });
 
   if (error) throw error;
 
-  const select = $('link-parent');
-  select.innerHTML = '';
+  const parentSelect = $('link-parent');
+  parentSelect.innerHTML = '';
+
   if (!data.length) {
-    select.innerHTML = '<option value="">No parent accounts yet</option>';
+    parentSelect.innerHTML = '<option value="">No parent accounts yet</option>';
     return;
   }
 
   data.forEach((p) => {
-    const opt = document.createElement('option');
-    opt.value = p.id;
-    opt.textContent = `${p.full_name || p.email} (${p.email})`;
-    select.appendChild(opt);
+    const o = document.createElement('option');
+    o.value = p.id;
+    o.textContent = `${p.full_name || p.email} (${p.email})`;
+    parentSelect.appendChild(o);
   });
 }
 
-function parentLinkItemHtml(link) {
-  const parentName = link.parent?.full_name || link.parent?.email || 'Unknown parent';
-  const studentName = link.student?.full_name || link.student?.email || 'Unknown student';
-  return `
-    <article class="item">
-      <h3>${parentName}</h3>
-      <div class="meta">
-        <span class="tag">Linked Student: ${studentName}</span>
-      </div>
-    </article>
-  `;
-}
+function attachmentButtonHtml(a, context) {
+  const buttons = [];
 
-async function renderParentLinksForTutor() {
-  const { data, error } = await sb
-    .from('parent_student_links')
-    .select(`
-      id,
-      created_at,
-      parent:profiles!parent_student_links_parent_id_fkey(full_name,email),
-      student:profiles!parent_student_links_student_id_fkey(full_name,email,year_group)
-    `)
-    .order('created_at', { ascending: false });
+  if (a.resource_url) {
+    const label = a.resource_title || 'Open resource link';
+    buttons.push(`<button class="btn ghost small" type="button" data-action="open-resource" data-url="${a.resource_url}">${label}</button>`);
+  }
 
-  if (error) throw error;
+  if (a.file_path) {
+    buttons.push(`<button class="btn ghost small" type="button" data-action="open-file" data-path="${a.file_path}" data-context="${context}" data-id="${a.id}">View file</button>`);
+  }
 
-  $('parent-links-list').innerHTML = (data || []).length
-    ? data.map(parentLinkItemHtml).join('')
-    : '<p class="muted">No parent links yet.</p>';
+  return buttons.length ? `<div class="actions" style="margin-top:.45rem">${buttons.join('')}</div>` : '';
 }
 
 function tutorItemHtml(a) {
-  const statusClass = a.status === 'completed' ? 'ok' : 'warn';
+  const statusClass = a.status === 'marked' || a.status === 'completed' ? 'ok' : 'warn';
   const studentName = a.student?.full_name || a.student?.email || 'Unknown student';
   const due = formatDate(a.due_date);
   const desc = a.description || 'No instructions provided.';
-  const resourceHtml = a.resource_url
-    ? `<p class="muted" style="margin-top:.45rem"><b>Resource:</b> <a href="${a.resource_url}" target="_blank" rel="noopener noreferrer">${a.resource_title || a.resource_url}</a></p>`
-    : '';
 
   const submittedTag = a.submission
     ? `<span class="tag ok">Submitted: ${new Date(a.submission.submitted_at).toLocaleString()}</span>`
     : '<span class="tag warn">Not submitted yet</span>';
 
-  const gradeBlock = a.submission
+  const gradingBlock = a.submission
     ? `
-      <div style="margin-top:.6rem;border-top:1px solid var(--border);padding-top:.6rem">
+      <div style="margin-top:.65rem;border-top:1px solid var(--border);padding-top:.65rem">
         <p class="muted" style="margin-bottom:.35rem"><b>Student Notes:</b> ${a.submission.notes || 'No notes added.'}</p>
         <div class="row">
-          <div><label>Mark (0-100)</label><input id="mark-${a.id}" type="number" min="0" max="100" value="${a.submission.mark ?? ''}"></div>
-          <div><label>Grade</label><input id="grade-${a.id}" type="text" placeholder="e.g. 7, B+, A*" value="${a.submission.grade || ''}"></div>
+          <div><label>Mark (%)</label><input id="mark-${a.id}" type="number" min="0" max="100" step="0.1" value="${a.submission.mark ?? ''}"></div>
+          <div><label>Grade</label><input id="grade-${a.id}" type="text" placeholder="e.g. 7 / B+ / A*" value="${a.submission.grade || ''}"></div>
           <div><label>Tutor Feedback</label><textarea id="feedback-${a.id}" placeholder="Feedback for student">${a.submission.tutor_feedback || ''}</textarea></div>
-          <div class="actions">
-            <button class="btn dark small" type="button" data-action="save-grade" data-id="${a.id}">Save Mark/Grade</button>
-          </div>
+          <div class="actions"><button class="btn dark small" type="button" data-action="save-grade" data-id="${a.id}">Save Mark/Grade</button></div>
         </div>
       </div>
     `
@@ -185,86 +228,49 @@ function tutorItemHtml(a) {
         ${submittedTag}
       </div>
       <p class="muted">${desc}</p>
-      ${resourceHtml}
-      ${gradeBlock}
+      ${attachmentButtonHtml(a, 'tutor')}
+      ${gradingBlock}
     </article>
   `;
 }
 
-async function renderTutorDashboard() {
-  const { data: assignments, error } = await sb
-    .from('assignments')
-    .select(`
-      id,
-      title,
-      subject,
-      description,
-      resource_title,
-      resource_url,
-      due_date,
-      status,
-      created_at,
-      student:profiles!assignments_student_id_fkey(full_name,email,year_group)
-    `)
-    .eq('tutor_id', currentUser.id)
-    .order('created_at', { ascending: false });
-
-  if (error) throw error;
-
-  const { count: submissionsCount, error: subError } = await sb
-    .from('submissions')
-    .select('id', { count: 'exact', head: true });
-
-  if (subError) throw subError;
-
-  const assignmentIds = assignments.map((a) => a.id);
-  let submissionMap = new Map();
-  if (assignmentIds.length) {
-    const { data: subs, error: subsErr } = await sb
-      .from('submissions')
-      .select('id, assignment_id, notes, submitted_at, mark, grade, tutor_feedback, graded_at')
-      .in('assignment_id', assignmentIds);
-
-    if (subsErr) throw subsErr;
-    submissionMap = new Map((subs || []).map((s) => [s.assignment_id, s]));
-  }
-
-  const enrichedAssignments = assignments.map((a) => ({
-    ...a,
-    submission: submissionMap.get(a.id) || null
-  }));
-
-  const active = assignments.filter((x) => x.status === 'assigned').length;
-  const complete = assignments.filter((x) => x.status === 'completed').length;
-
-  $('kpi-active').textContent = String(active);
-  $('kpi-complete').textContent = String(complete);
-  $('kpi-subs').textContent = String(submissionsCount || 0);
-
-  $('tutor-list').innerHTML = enrichedAssignments.length
-    ? enrichedAssignments.map(tutorItemHtml).join('')
-    : '<p class="muted">No assignments yet. Create the first one on the left.</p>';
-}
-
-function parentAssignmentItemHtml(a) {
+function studentItemHtml(a) {
   const due = formatDate(a.due_date);
   const desc = a.description || 'No instructions provided.';
-  const studentName = a.student?.full_name || a.student?.email || 'Unknown student';
-  const resourceHtml = a.resource_url
-    ? `<p class="muted" style="margin:.4rem 0"><b>Resource:</b> <a href="${a.resource_url}" target="_blank" rel="noopener noreferrer">${a.resource_title || a.resource_url}</a></p>`
+  const gradeHtml = a.submission
+    ? `
+      <p class="muted" style="margin:.35rem 0"><b>Mark:</b> ${a.submission.mark ?? '-'} · <b>Grade:</b> ${a.submission.grade || '-'}</p>
+      <p class="muted" style="margin-bottom:.45rem"><b>Tutor Feedback:</b> ${a.submission.tutor_feedback || 'No feedback yet.'}</p>
+    `
     : '';
+
+  return `
+    <article class="item">
+      <h3>${a.title}</h3>
+      <div class="meta">
+        <span class="tag">${a.subject}</span>
+        <span class="tag ${a.status === 'marked' || a.status === 'completed' ? 'ok' : 'warn'}">${a.status}</span>
+        <span class="tag">Due: ${due}</span>
+      </div>
+      <p class="muted" style="margin-bottom:.5rem">${desc}</p>
+      ${attachmentButtonHtml(a, 'student')}
+      ${gradeHtml}
+      <label style="margin-top:.5rem;margin-bottom:.35rem">Submission Notes</label>
+      <textarea id="notes-${a.id}" placeholder="What did you complete? Add links/evidence if needed">${a.submission?.notes || ''}</textarea>
+      <div class="actions" style="margin-top:.45rem">
+        <button class="btn blue small" type="button" data-action="submit" data-id="${a.id}">Submit Work</button>
+      </div>
+    </article>
+  `;
+}
+
+function parentItemHtml(a) {
+  const due = formatDate(a.due_date);
+  const studentName = a.student?.full_name || a.student?.email || a.student_id;
+  const desc = a.description || 'No instructions provided.';
   const submissionTag = a.submission
     ? `<span class="tag ok">Submitted: ${new Date(a.submission.submitted_at).toLocaleString()}</span>`
     : '<span class="tag warn">Not submitted yet</span>';
-  const gradeHtml = a.submission
-    ? `
-      <p class="muted" style="margin:.35rem 0">
-        <b>Mark:</b> ${a.submission.mark ?? '-'} &nbsp;·&nbsp;
-        <b>Grade:</b> ${a.submission.grade || '-'}
-      </p>
-      <p class="muted" style="margin-bottom:.45rem"><b>Tutor Feedback:</b> ${a.submission.tutor_feedback || 'No feedback yet.'}</p>
-    `
-    : '<p class="muted" style="margin-bottom:.45rem"><b>Tutor Feedback:</b> Awaiting submission.</p>';
 
   return `
     <article class="item">
@@ -272,15 +278,106 @@ function parentAssignmentItemHtml(a) {
       <div class="meta">
         <span class="tag">${studentName}</span>
         <span class="tag">${a.subject}</span>
-        <span class="tag ${a.status === 'completed' ? 'ok' : 'warn'}">${a.status}</span>
+        <span class="tag ${a.status === 'marked' || a.status === 'completed' ? 'ok' : 'warn'}">${a.status}</span>
         <span class="tag">Due: ${due}</span>
         ${submissionTag}
       </div>
       <p class="muted">${desc}</p>
-      ${resourceHtml}
-      ${gradeHtml}
+      ${attachmentButtonHtml(a, 'parent')}
+      <p class="muted" style="margin:.35rem 0"><b>Mark:</b> ${a.submission?.mark ?? '-'} · <b>Grade:</b> ${a.submission?.grade || '-'}</p>
+      <p class="muted" style="margin-bottom:.35rem"><b>Tutor Feedback:</b> ${a.submission?.tutor_feedback || 'No feedback yet.'}</p>
     </article>
   `;
+}
+
+function parentLinkItemHtml(link) {
+  const p = link.parent?.full_name || link.parent?.email || 'Unknown parent';
+  const s = link.student?.full_name || link.student?.email || link.student_id;
+  return `
+    <article class="item">
+      <h3>${p}</h3>
+      <div class="meta"><span class="tag">Linked student: ${s}</span></div>
+    </article>
+  `;
+}
+
+async function renderParentLinksForTutor() {
+  const { data, error } = await sb
+    .from('parent_student_links')
+    .select(`
+      id, parent_id, student_id, created_at,
+      parent:profiles!parent_student_links_parent_id_fkey(full_name,email),
+      student:profiles!parent_student_links_student_id_fkey(full_name,email,year_group)
+    `)
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+  $('parent-links-list').innerHTML = (data || []).length
+    ? data.map(parentLinkItemHtml).join('')
+    : '<p class="muted">No parent links yet.</p>';
+}
+
+async function renderTutorDashboard() {
+  const { data: assignments, error } = await sb
+    .from('assignments')
+    .select(`
+      id,tutor_id,student_id,subject,title,description,due_date,status,resource_title,resource_url,file_path,file_url,year_group,exam_board,created_at,
+      student:profiles!assignments_student_id_fkey(full_name,email,year_group)
+    `)
+    .eq('tutor_id', currentUser.id)
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+
+  const { count: submissionsCount, error: subCountErr } = await sb
+    .from('submissions')
+    .select('id', { count: 'exact', head: true });
+  if (subCountErr) throw subCountErr;
+
+  const assignmentIds = (assignments || []).map((a) => a.id);
+  let submissionMap = new Map();
+  if (assignmentIds.length) {
+    const { data: subs, error: subErr } = await sb
+      .from('submissions')
+      .select('assignment_id,notes,submitted_at,mark,grade,tutor_feedback,graded_at')
+      .in('assignment_id', assignmentIds);
+    if (subErr) throw subErr;
+    submissionMap = new Map((subs || []).map((s) => [s.assignment_id, s]));
+  }
+
+  const enriched = (assignments || []).map((a) => ({ ...a, submission: submissionMap.get(a.id) || null }));
+  $('kpi-active').textContent = String(enriched.filter((x) => x.status === 'assigned' || x.status === 'submitted').length);
+  $('kpi-complete').textContent = String(enriched.filter((x) => x.status === 'marked' || x.status === 'completed').length);
+  $('kpi-subs').textContent = String(submissionsCount || 0);
+  $('tutor-list').innerHTML = enriched.length
+    ? enriched.map(tutorItemHtml).join('')
+    : '<p class="muted">No assignments yet. Create the first one on the left.</p>';
+}
+
+async function renderStudentAssignments() {
+  const { data: assignments, error } = await sb
+    .from('assignments')
+    .select('id,student_id,subject,title,description,due_date,status,resource_title,resource_url,file_path,file_url,created_at')
+    .eq('student_id', currentUser.id)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+
+  const assignmentIds = (assignments || []).map((a) => a.id);
+  let submissionMap = new Map();
+  if (assignmentIds.length) {
+    const { data: subs, error: subErr } = await sb
+      .from('submissions')
+      .select('assignment_id,notes,submitted_at,mark,grade,tutor_feedback,graded_at')
+      .eq('student_id', currentUser.id)
+      .in('assignment_id', assignmentIds);
+    if (subErr) throw subErr;
+    submissionMap = new Map((subs || []).map((s) => [s.assignment_id, s]));
+  }
+
+  const enriched = (assignments || []).map((a) => ({ ...a, submission: submissionMap.get(a.id) || null }));
+  $('student-list').innerHTML = enriched.length
+    ? enriched.map(studentItemHtml).join('')
+    : '<p class="muted">No assignments yet. Your tutor will assign work here.</p>';
 }
 
 async function renderParentTracker() {
@@ -288,10 +385,9 @@ async function renderParentTracker() {
     .from('parent_student_links')
     .select('student_id')
     .eq('parent_id', currentUser.id);
-
   if (linksErr) throw linksErr;
 
-  const studentIds = [...new Set((links || []).map((l) => l.student_id).filter(Boolean))];
+  const studentIds = [...new Set((links || []).map((x) => x.student_id).filter(Boolean))];
   $('kpi-parent-students').textContent = String(studentIds.length);
 
   if (!studentIds.length) {
@@ -302,30 +398,26 @@ async function renderParentTracker() {
     return;
   }
 
-  let studentsById = new Map();
-  const { data: students, error: studentsErr } = await sb
+  const { data: students } = await sb
     .from('profiles')
     .select('id,full_name,email,year_group')
     .in('id', studentIds);
-  if (!studentsErr && students?.length) {
-    studentsById = new Map(students.map((s) => [s.id, s]));
-  }
+  const studentsById = new Map((students || []).map((s) => [s.id, s]));
 
   $('parent-linked-students').innerHTML = studentIds.map((id) => {
-    const s = studentsById.get(id);
-    const label = s ? `${s.full_name || s.email}${s.year_group ? ` (${s.year_group})` : ''}` : id;
+    const st = studentsById.get(id);
+    const label = st ? `${st.full_name || st.email}${st.year_group ? ` (${st.year_group})` : ''}` : id;
     return `<article class="item"><div class="meta"><span class="tag">Linked Student</span></div><p><b>${label}</b></p></article>`;
   }).join('');
 
   const { data: assignments, error: asgErr } = await sb
     .from('assignments')
     .select(`
-      id,title,subject,description,resource_title,resource_url,due_date,status,created_at,student_id,
+      id,tutor_id,student_id,subject,title,description,due_date,status,resource_title,resource_url,file_path,file_url,created_at,
       student:profiles!assignments_student_id_fkey(full_name,email,year_group)
     `)
     .in('student_id', studentIds)
     .order('created_at', { ascending: false });
-
   if (asgErr) throw asgErr;
 
   const assignmentIds = (assignments || []).map((a) => a.id);
@@ -333,7 +425,7 @@ async function renderParentTracker() {
   if (assignmentIds.length) {
     const { data: subs, error: subErr } = await sb
       .from('submissions')
-      .select('assignment_id, notes, submitted_at, mark, grade, tutor_feedback, graded_at')
+      .select('assignment_id,notes,submitted_at,mark,grade,tutor_feedback,graded_at')
       .in('assignment_id', assignmentIds);
     if (subErr) throw subErr;
     submissionMap = new Map((subs || []).map((s) => [s.assignment_id, s]));
@@ -341,75 +433,10 @@ async function renderParentTracker() {
 
   const enriched = (assignments || []).map((a) => ({ ...a, submission: submissionMap.get(a.id) || null }));
   $('kpi-parent-total').textContent = String(enriched.length);
-  $('kpi-parent-complete').textContent = String(enriched.filter((x) => x.status === 'completed').length);
+  $('kpi-parent-complete').textContent = String(enriched.filter((x) => x.status === 'marked' || x.status === 'completed').length);
   $('parent-list').innerHTML = enriched.length
-    ? enriched.map(parentAssignmentItemHtml).join('')
+    ? enriched.map(parentItemHtml).join('')
     : '<p class="muted">No assignments found for linked students.</p>';
-}
-
-function studentItemHtml(a) {
-  const due = formatDate(a.due_date);
-  const desc = a.description || 'No instructions provided.';
-  const resourceHtml = a.resource_url
-    ? `<p class="muted" style="margin:.4rem 0"><b>Resource:</b> <a href="${a.resource_url}" target="_blank" rel="noopener noreferrer">${a.resource_title || a.resource_url}</a></p>`
-    : '';
-  const gradeHtml = a.submission
-    ? `
-      <p class="muted" style="margin:.35rem 0">
-        <b>Mark:</b> ${a.submission.mark ?? '-'} &nbsp;·&nbsp;
-        <b>Grade:</b> ${a.submission.grade || '-'}
-      </p>
-      <p class="muted" style="margin-bottom:.45rem"><b>Tutor Feedback:</b> ${a.submission.tutor_feedback || 'No feedback yet.'}</p>
-    `
-    : '';
-
-  return `
-    <article class="item" data-assignment-id="${a.id}">
-      <h3>${a.title}</h3>
-      <div class="meta">
-        <span class="tag">${a.subject}</span>
-        <span class="tag ${a.status === 'completed' ? 'ok' : 'warn'}">${a.status}</span>
-        <span class="tag">Due: ${due}</span>
-      </div>
-      <p class="muted" style="margin-bottom:.5rem">${desc}</p>
-      ${resourceHtml}
-      ${gradeHtml}
-      <label style="margin-bottom:.35rem">Submission Notes</label>
-      <textarea id="notes-${a.id}" placeholder="What did you complete? Add links/evidence if needed"></textarea>
-      <div class="actions" style="margin-top:.45rem">
-        <button class="btn blue small" type="button" data-action="submit" data-id="${a.id}">Submit Work</button>
-      </div>
-    </article>
-  `;
-}
-
-async function renderStudentAssignments() {
-  const { data, error } = await sb
-    .from('assignments')
-    .select('id,title,subject,description,resource_title,resource_url,due_date,status,created_at')
-    .eq('student_id', currentUser.id)
-    .order('created_at', { ascending: false });
-
-  if (error) throw error;
-
-  const assignmentIds = (data || []).map((a) => a.id);
-  let submissionMap = new Map();
-  if (assignmentIds.length) {
-    const { data: subs, error: subErr } = await sb
-      .from('submissions')
-      .select('assignment_id, notes, submitted_at, mark, grade, tutor_feedback, graded_at')
-      .in('assignment_id', assignmentIds)
-      .eq('student_id', currentUser.id);
-
-    if (subErr) throw subErr;
-    submissionMap = new Map((subs || []).map((s) => [s.assignment_id, s]));
-  }
-
-  const enriched = (data || []).map((a) => ({ ...a, submission: submissionMap.get(a.id) || null }));
-
-  $('student-list').innerHTML = enriched.length
-    ? enriched.map(studentItemHtml).join('')
-    : '<p class="muted">No assignments yet. Your tutor will assign work here.</p>';
 }
 
 async function createAssignment() {
@@ -422,28 +449,59 @@ async function createAssignment() {
   const description = $('asg-desc').value.trim();
   const resourceTitle = $('asg-resource-title').value.trim();
   const resourceUrl = $('asg-resource-url').value.trim();
+  const examBoard = $('asg-exam-board') ? $('asg-exam-board').value.trim() : null;
+  const file = $('asg-file')?.files?.[0] || null;
 
   if (!studentId || !title) {
     showMsg($('asg-msg'), 'Select a student and add a title.', 'err');
     return;
   }
 
+  const { data: studentProfile } = await sb
+    .from('profiles')
+    .select('year_group')
+    .eq('id', studentId)
+    .maybeSingle();
+
   const payload = {
     tutor_id: currentUser.id,
     student_id: studentId,
     subject,
     title,
+    description: description || null,
     due_date: dueDate,
-    description,
+    status: 'assigned',
     resource_title: resourceTitle || null,
     resource_url: resourceUrl || null,
-    status: 'assigned'
+    year_group: parseYearGroupInt(studentProfile?.year_group),
+    exam_board: examBoard || null
   };
 
-  const { error } = await sb.from('assignments').insert(payload);
-  if (error) {
-    showMsg($('asg-msg'), error.message, 'err');
+  const { data: created, error: insErr } = await sb
+    .from('assignments')
+    .insert(payload)
+    .select('id,student_id')
+    .single();
+
+  if (insErr) {
+    showMsg($('asg-msg'), insErr.message, 'err');
     return;
+  }
+
+  if (file) {
+    try {
+      const path = await uploadAssignmentFile(file, created.student_id, created.id);
+      const { error: updErr } = await sb
+        .from('assignments')
+        .update({ file_path: path })
+        .eq('id', created.id)
+        .eq('tutor_id', currentUser.id);
+      if (updErr) throw updErr;
+    } catch (e) {
+      showMsg($('asg-msg'), `Assignment created, but file upload failed: ${e.message}`, 'err');
+      await renderTutorDashboard();
+      return;
+    }
   }
 
   $('asg-title').value = '';
@@ -451,6 +509,9 @@ async function createAssignment() {
   $('asg-desc').value = '';
   $('asg-resource-title').value = '';
   $('asg-resource-url').value = '';
+  if ($('asg-exam-board')) $('asg-exam-board').value = '';
+  if ($('asg-file')) $('asg-file').value = '';
+
   showMsg($('asg-msg'), 'Assignment created.', 'ok');
   await renderTutorDashboard();
 }
@@ -465,10 +526,9 @@ async function linkParentToStudent() {
     return;
   }
 
-  const { error } = await sb.from('parent_student_links').insert({
-    parent_id: parentId,
-    student_id: studentId
-  });
+  const { error } = await sb
+    .from('parent_student_links')
+    .insert({ parent_id: parentId, student_id: studentId });
 
   if (error) {
     showMsg($('link-msg'), error.message, 'err');
@@ -482,29 +542,31 @@ async function linkParentToStudent() {
 async function submitStudentWork(assignmentId) {
   const notes = ($(`notes-${assignmentId}`)?.value || '').trim();
 
-  const { error: submitErr } = await sb.from('submissions').upsert(
-    {
-      assignment_id: assignmentId,
-      student_id: currentUser.id,
-      notes,
-      submitted_at: new Date().toISOString()
-    },
-    { onConflict: 'assignment_id,student_id' }
-  );
+  const { error: submitErr } = await sb
+    .from('submissions')
+    .upsert(
+      {
+        assignment_id: assignmentId,
+        student_id: currentUser.id,
+        notes: notes || null,
+        submitted_at: new Date().toISOString()
+      },
+      { onConflict: 'assignment_id,student_id' }
+    );
 
   if (submitErr) {
     alert(`Submission failed: ${submitErr.message}`);
     return;
   }
 
-  const { error: updateErr } = await sb
+  const { error: statusErr } = await sb
     .from('assignments')
-    .update({ status: 'completed', completed_at: new Date().toISOString() })
+    .update({ status: 'submitted' })
     .eq('id', assignmentId)
     .eq('student_id', currentUser.id);
 
-  if (updateErr) {
-    alert(`Status update failed: ${updateErr.message}`);
+  if (statusErr) {
+    alert(`Status update failed: ${statusErr.message}`);
     return;
   }
 
@@ -521,12 +583,12 @@ async function saveTutorGrade(assignmentId) {
   if (markRaw !== '') {
     mark = Number(markRaw);
     if (!Number.isFinite(mark) || mark < 0 || mark > 100) {
-      alert('Mark must be a number between 0 and 100.');
+      alert('Mark must be between 0 and 100.');
       return;
     }
   }
 
-  const { error } = await sb
+  const { error: subErr } = await sb
     .from('submissions')
     .update({
       mark,
@@ -536,8 +598,19 @@ async function saveTutorGrade(assignmentId) {
     })
     .eq('assignment_id', assignmentId);
 
-  if (error) {
-    alert(`Saving mark/grade failed: ${error.message}`);
+  if (subErr) {
+    alert(`Saving mark/grade failed: ${subErr.message}`);
+    return;
+  }
+
+  const { error: asgErr } = await sb
+    .from('assignments')
+    .update({ status: 'marked' })
+    .eq('id', assignmentId)
+    .eq('tutor_id', currentUser.id);
+
+  if (asgErr) {
+    alert(`Assignment status update failed: ${asgErr.message}`);
     return;
   }
 
@@ -545,23 +618,73 @@ async function saveTutorGrade(assignmentId) {
   await renderTutorDashboard();
 }
 
-function bindStudentActions() {
-  $('student-list').addEventListener('click', async (e) => {
-    const btn = e.target.closest('[data-action="submit"]');
-    if (!btn) return;
-    const id = btn.dataset.id;
-    if (!id) return;
-    await submitStudentWork(id);
-  });
+function openExternalUrl(url) {
+  if (!url) return;
+  window.open(url, '_blank', 'noopener,noreferrer');
 }
 
-function bindTutorActions() {
-  $('tutor-list').addEventListener('click', async (e) => {
-    const btn = e.target.closest('[data-action="save-grade"]');
-    if (!btn) return;
-    const id = btn.dataset.id;
-    if (!id) return;
-    await saveTutorGrade(id);
+async function openAssignmentFile(path) {
+  const signedUrl = await getSignedUrl(path);
+  if (!signedUrl) {
+    alert('Could not generate secure file link.');
+    return;
+  }
+  openExternalUrl(signedUrl);
+}
+
+function bindListActions() {
+  const studentList = $('student-list');
+  if (studentList) studentList.addEventListener('click', async (e) => {
+    const submitBtn = e.target.closest('[data-action="submit"]');
+    if (submitBtn) {
+      await submitStudentWork(submitBtn.dataset.id);
+      return;
+    }
+
+    const resourceBtn = e.target.closest('[data-action="open-resource"]');
+    if (resourceBtn) {
+      openExternalUrl(resourceBtn.dataset.url);
+      return;
+    }
+
+    const fileBtn = e.target.closest('[data-action="open-file"]');
+    if (fileBtn) {
+      await openAssignmentFile(fileBtn.dataset.path);
+    }
+  });
+
+  const tutorList = $('tutor-list');
+  if (tutorList) tutorList.addEventListener('click', async (e) => {
+    const gradeBtn = e.target.closest('[data-action="save-grade"]');
+    if (gradeBtn) {
+      await saveTutorGrade(gradeBtn.dataset.id);
+      return;
+    }
+
+    const resourceBtn = e.target.closest('[data-action="open-resource"]');
+    if (resourceBtn) {
+      openExternalUrl(resourceBtn.dataset.url);
+      return;
+    }
+
+    const fileBtn = e.target.closest('[data-action="open-file"]');
+    if (fileBtn) {
+      await openAssignmentFile(fileBtn.dataset.path);
+    }
+  });
+
+  const parentList = $('parent-list');
+  if (parentList) parentList.addEventListener('click', async (e) => {
+    const resourceBtn = e.target.closest('[data-action="open-resource"]');
+    if (resourceBtn) {
+      openExternalUrl(resourceBtn.dataset.url);
+      return;
+    }
+
+    const fileBtn = e.target.closest('[data-action="open-file"]');
+    if (fileBtn) {
+      await openAssignmentFile(fileBtn.dataset.path);
+    }
   });
 }
 
@@ -597,7 +720,6 @@ async function renderAppForRole() {
 async function toSignedIn(user) {
   currentUser = user;
   currentProfile = await ensureProfile(user);
-
   $('auth-view').classList.add('hidden');
   $('app-view').classList.remove('hidden');
   await renderAppForRole();
@@ -611,20 +733,32 @@ function toSignedOut() {
 }
 
 async function handleSignIn() {
-  clearMsg($('signin-msg'));
-  const email = $('signin-email').value.trim();
-  const password = $('signin-password').value;
+  try {
+    const msgEl = $('signin-msg');
+    clearMsg(msgEl);
+    showMsg(msgEl, 'Signing in...', 'ok');
 
-  const { data, error } = await sb.auth.signInWithPassword({ email, password });
-  if (error) {
-    showMsg($('signin-msg'), error.message, 'err');
-    return;
+    const email = $('signin-email')?.value?.trim() || '';
+    const password = $('signin-password')?.value || '';
+    if (!email || !password) {
+      showMsg(msgEl, 'Please enter both email and password.', 'err');
+      return;
+    }
+
+    const { data, error } = await sb.auth.signInWithPassword({ email, password });
+    if (error) {
+      showMsg(msgEl, error.message, 'err');
+      return;
+    }
+
+    $('signin-email').value = '';
+    $('signin-password').value = '';
+    showMsg(msgEl, 'Signed in.', 'ok');
+    await toSignedIn(data.user);
+  } catch (err) {
+    console.error('Sign-in crash:', err);
+    showMsg($('signin-msg'), `Sign-in failed: ${err.message}`, 'err');
   }
-
-  $('signin-email').value = '';
-  $('signin-password').value = '';
-  showMsg($('signin-msg'), 'Signed in.', 'ok');
-  await toSignedIn(data.user);
 }
 
 async function handleSignUp() {
@@ -645,7 +779,11 @@ async function handleSignUp() {
     email,
     password,
     options: {
-      data: { full_name, year_group: signupRole === 'student' ? year_group : null, signup_role: signupRole }
+      data: {
+        full_name,
+        signup_role: signupRole,
+        year_group: signupRole === 'student' ? year_group : null
+      }
     }
   });
 
@@ -673,21 +811,21 @@ async function bootstrap() {
   $('config-warning').classList.add('hidden');
   sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  $('btn-signin').addEventListener('click', handleSignIn);
-  $('btn-signup').addEventListener('click', handleSignUp);
-  $('btn-signout').addEventListener('click', async () => {
+  safeBind('btn-signin', 'click', handleSignIn);
+  safeBind('btn-signup', 'click', handleSignUp);
+  safeBind('btn-signout', 'click', async () => {
     await sb.auth.signOut();
     toSignedOut();
   });
-  $('btn-refresh').addEventListener('click', async () => {
+  safeBind('btn-refresh', 'click', async () => {
     if (!currentUser) return;
     await renderAppForRole();
   });
-  $('btn-create-asg').addEventListener('click', createAssignment);
-  $('btn-link-parent').addEventListener('click', linkParentToStudent);
 
-  bindStudentActions();
-  bindTutorActions();
+  safeBind('btn-create-asg', 'click', createAssignment);
+  safeBind('btn-link-parent', 'click', linkParentToStudent);
+
+  bindListActions();
 
   const { data } = await sb.auth.getUser();
   if (data?.user) {
