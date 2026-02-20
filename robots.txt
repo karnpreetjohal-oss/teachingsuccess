@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://www.teachingsuccess.co.uk/sitemap.xml
