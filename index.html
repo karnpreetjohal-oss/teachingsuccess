@@ -169,6 +169,34 @@ body{font-family:'Outfit',sans-serif;background:var(--cream);color:var(--ink);ov
 .ttav{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.78rem;color:white;flex-shrink:0}
 .ttnm{font-weight:700;font-size:.83rem}
 .ttinf{font-size:.73rem;color:var(--muted)}
+.reviews-cycler{margin-top:3rem}
+.reviews-head{display:flex;justify-content:space-between;align-items:center;gap:1rem;margin-bottom:.9rem;flex-wrap:wrap}
+.reviews-meta{font-size:.85rem;color:var(--muted)}
+.review-dots{display:flex;gap:.4rem}
+.review-dot{width:10px;height:10px;border-radius:50%;border:1px solid var(--border);background:transparent;cursor:pointer}
+.review-dot.active{background:var(--gold);border-color:var(--gold)}
+.review-link{font-size:.83rem;color:var(--green2);font-weight:700;text-decoration:none}
+
+/* LOCATOR */
+.locator-box{margin-top:2.2rem;border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.07);background:#fff}
+gmpx-store-locator{
+  width:100%;
+  height:460px;
+  --gmpx-color-surface:#fff;
+  --gmpx-color-on-surface:#212121;
+  --gmpx-color-on-surface-variant:#757575;
+  --gmpx-color-primary:#1967d2;
+  --gmpx-color-outline:#e0e0e0;
+  --gmpx-fixed-panel-width-row-layout:28.5em;
+  --gmpx-fixed-panel-height-column-layout:65%;
+  --gmpx-font-family-base:"Roboto",sans-serif;
+  --gmpx-font-family-headings:"Roboto",sans-serif;
+  --gmpx-font-size-base:.875rem;
+  --gmpx-hours-color-open:#188038;
+  --gmpx-hours-color-closed:#d50000;
+  --gmpx-rating-color:#ffb300;
+  --gmpx-rating-color-empty:#e0e0e0;
+}
 
 /* CTA */
 .ctaband{background:#2c3a52;padding:4rem;text-align:center}
@@ -553,6 +581,7 @@ body{font-family:'Outfit',sans-serif;background:var(--cream);color:var(--ink);ov
   .aamt {
     font-size: 1.28rem;
   }
+  gmpx-store-locator{height:520px}
 }
 
 @media (max-width: 480px) {
@@ -755,25 +784,24 @@ body{font-family:'Outfit',sans-serif;background:var(--cream);color:var(--ink);ov
 <section id="reviews" class="section">
   <div class="eyebrow">What Families Say</div>
   <h2 class="sec-h2">Student &amp; Parent Reviews</h2>
-  <div class="ttgrid">
-    <div class="tte">
-      <div class="ttsubj">📐 GCSE Maths — Kevin</div>
-      <div class="ttstars">★★★★★</div>
-      <p class="ttbody">My son went up two full grades in one term. Kevin explains things so clearly and really understands how students think. Absolutely worth every penny.</p>
-      <div class="ttauth"><div class="ttav" style="background:var(--green)">PH</div><div><div class="ttnm">Priya H.</div><div class="ttinf">Parent · Year 11</div></div></div>
+  <div class="reviews-cycler">
+    <div class="reviews-head">
+      <div class="reviews-meta" id="reviews-meta">Loading Google reviews...</div>
+      <a class="review-link" id="reviews-link" href="https://g.page/r/CcTE3rGkQhnOEBM/review" target="_blank" rel="noopener">Leave a Google Review →</a>
     </div>
-    <div class="tte">
-      <div class="ttsubj">📖 Primary Reading — Serena</div>
-      <div class="ttstars">★★★★★</div>
-      <p class="ttbody">Serena is outstanding. My daughter was really struggling with reading and in just a few months she's flying. Her patience and warmth make every session a joy.</p>
-      <div class="ttauth"><div class="ttav" style="background:var(--sky)">CW</div><div><div class="ttnm">Claire W.</div><div class="ttinf">Parent · Year 2</div></div></div>
-    </div>
-    <div class="tte">
-      <div class="ttsubj">🔬 A-Level Biology — Kevin</div>
-      <div class="ttstars">★★★★★</div>
-      <p class="ttbody">I needed a B to study medicine and ended up with an A*. Kevin's knowledge of the A-Level spec is exceptional. I can't thank Teaching Success enough.</p>
-      <div class="ttauth"><div class="ttav" style="background:var(--rose)">RA</div><div><div class="ttnm">Rohan A.</div><div class="ttinf">Student · Year 13</div></div></div>
-    </div>
+    <div class="tte" id="review-slide"></div>
+    <div class="review-dots" id="review-dots" aria-label="Review navigation"></div>
+  </div>
+</section>
+
+<!-- LOCATION -->
+<section id="location" class="section">
+  <div class="eyebrow">Find Us</div>
+  <h2 class="sec-h2">Visit Teaching Success</h2>
+  <p class="sec-sub">66 Hales Lane, Smethwick, Birmingham, B67 6RS.</p>
+  <div class="locator-box">
+    <gmpx-api-loader id="gmpx-loader" key="YOUR_API_KEY_HERE" solution-channel="GMP_QB_locatorplus_v11_cABD"></gmpx-api-loader>
+    <gmpx-store-locator id="ts-locator" map-id="DEMO_MAP_ID"></gmpx-store-locator>
   </div>
 </section>
 
@@ -1087,11 +1115,175 @@ const RES=[
   {id:15,t:'A-Level Chemistry: Organic Mechanisms',d:'Curly arrow mechanisms for SN1, SN2, electrophilic addition, elimination — all exam boards.',s:'science',ag:'alevel',al:'A-Level',ico:'⚗️',typ:'Notes',sz:'12 pages'}
 ];
 let cu=null,qQs=[],qAs={},qDone=false;
+const GOOGLE_PLACE_ID='ChIJIXBcemG9cEgRBMTesaRCGc4';
+const GOOGLE_MAPS_API_KEY='YOUR_API_KEY_HERE'; // Replace with your real Google Maps API key
+const FALLBACK_REVIEWS=[
+  {author_name:'Priya H.',rating:5,text:'My son went up two full grades in one term. Kevin explains things so clearly and really understands how students think. Absolutely worth every penny.',relative_time_description:'Parent · Year 11'},
+  {author_name:'Claire W.',rating:5,text:'Serena is outstanding. My daughter was really struggling with reading and in just a few months she is flying. Her patience and warmth make every session a joy.',relative_time_description:'Parent · Year 2'},
+  {author_name:'Rohan A.',rating:5,text:'I needed a B to study medicine and ended up with an A*. Kevin’s knowledge of the A-Level spec is exceptional. I cannot thank Teaching Success enough.',relative_time_description:'Student · Year 13'}
+];
+let REVIEWS_STATE={items:[],index:0,timer:null,placeUrl:'https://g.page/r/CcTE3rGkQhnOEBM/review',totalRatings:null,rating:null};
 
 function trackGAEvent(eventName, params={}){
   if(typeof gtag==='function'){
     gtag('event', eventName, params);
   }
+}
+
+function escapeHtml(s=''){
+  return String(s)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#39;');
+}
+
+function truncateText(text,max=340){
+  const t=(text||'').trim();
+  if(t.length<=max)return t;
+  return `${t.slice(0,max-1).trimEnd()}…`;
+}
+
+function renderReviewCard(){
+  const host=document.getElementById('review-slide');
+  const meta=document.getElementById('reviews-meta');
+  const link=document.getElementById('reviews-link');
+  const dotsWrap=document.getElementById('review-dots');
+  if(!host||!meta||!link||!dotsWrap)return;
+  if(!REVIEWS_STATE.items.length)return;
+  const r=REVIEWS_STATE.items[REVIEWS_STATE.index];
+  const initials=(r.author_name||'TS').split(' ').map(w=>w[0]||'').join('').slice(0,2).toUpperCase();
+  const stars='★'.repeat(Math.max(1,Math.min(5,Math.round(Number(r.rating)||5))));
+  host.innerHTML=`
+    <div class="ttsubj">Google Review</div>
+    <div class="ttstars">${stars}</div>
+    <p class="ttbody">${escapeHtml(truncateText(r.text))}</p>
+    <div class="ttauth">
+      <div class="ttav" style="background:var(--green)">${escapeHtml(initials)}</div>
+      <div>
+        <div class="ttnm">${escapeHtml(r.author_name||'Anonymous')}</div>
+        <div class="ttinf">${escapeHtml(r.relative_time_description||'Google')}</div>
+      </div>
+    </div>
+  `;
+  const count=REVIEWS_STATE.items.length;
+  meta.textContent=REVIEWS_STATE.totalRatings
+    ? `${REVIEWS_STATE.totalRatings} Google reviews · ${REVIEWS_STATE.rating?.toFixed?.(1) || REVIEWS_STATE.rating}★`
+    : `${count} reviews loaded`;
+  link.href=REVIEWS_STATE.placeUrl||link.href;
+  dotsWrap.innerHTML=REVIEWS_STATE.items.map((_,i)=>`<button class="review-dot ${i===REVIEWS_STATE.index?'active':''}" aria-label="Go to review ${i+1}" onclick="showReviewAt(${i})"></button>`).join('');
+}
+
+function showReviewAt(i){
+  if(!REVIEWS_STATE.items.length)return;
+  REVIEWS_STATE.index=(i+REVIEWS_STATE.items.length)%REVIEWS_STATE.items.length;
+  renderReviewCard();
+}
+
+function startReviewCycle(){
+  if(REVIEWS_STATE.timer)clearInterval(REVIEWS_STATE.timer);
+  if(REVIEWS_STATE.items.length<2)return;
+  REVIEWS_STATE.timer=setInterval(()=>{
+    showReviewAt(REVIEWS_STATE.index+1);
+  },5000);
+}
+
+function loadMapsJs(apiKey){
+  return new Promise((resolve,reject)=>{
+    if(window.google?.maps?.places){resolve();return;}
+    const existing=document.getElementById('gmaps-places-js');
+    if(existing){
+      existing.addEventListener('load',resolve,{once:true});
+      existing.addEventListener('error',reject,{once:true});
+      return;
+    }
+    const s=document.createElement('script');
+    s.id='gmaps-places-js';
+    s.async=true;
+    s.src=`https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(apiKey)}&libraries=places&v=weekly`;
+    s.onload=resolve;
+    s.onerror=reject;
+    document.head.appendChild(s);
+  });
+}
+
+async function fetchGooglePlaceReviews(){
+  if(!GOOGLE_MAPS_API_KEY || GOOGLE_MAPS_API_KEY==='YOUR_API_KEY_HERE'){
+    throw new Error('Missing Google Maps API key');
+  }
+  await loadMapsJs(GOOGLE_MAPS_API_KEY);
+  return new Promise((resolve,reject)=>{
+    const service=new google.maps.places.PlacesService(document.createElement('div'));
+    service.getDetails({
+      placeId:GOOGLE_PLACE_ID,
+      fields:['name','rating','user_ratings_total','reviews','url']
+    },(place,status)=>{
+      if(status!==google.maps.places.PlacesServiceStatus.OK||!place){
+        reject(new Error(`Places API failed: ${status}`));
+        return;
+      }
+      resolve(place);
+    });
+  });
+}
+
+async function initReviews(){
+  try{
+    const place=await fetchGooglePlaceReviews();
+    REVIEWS_STATE.items=(place.reviews||[]).filter(r=>r?.text).sort((a,b)=>(b.time||0)-(a.time||0));
+    REVIEWS_STATE.placeUrl=place.url||REVIEWS_STATE.placeUrl;
+    REVIEWS_STATE.totalRatings=place.user_ratings_total||null;
+    REVIEWS_STATE.rating=place.rating||null;
+    if(!REVIEWS_STATE.items.length){
+      REVIEWS_STATE.items=[...FALLBACK_REVIEWS];
+    }
+  }catch(_err){
+    REVIEWS_STATE.items=[...FALLBACK_REVIEWS];
+  }
+  REVIEWS_STATE.index=0;
+  renderReviewCard();
+  startReviewCycle();
+}
+
+async function initLocator(){
+  const loader=document.getElementById('gmpx-loader');
+  const locator=document.getElementById('ts-locator');
+  if(!loader||!locator)return;
+  const key=(GOOGLE_MAPS_API_KEY&&GOOGLE_MAPS_API_KEY!=='YOUR_API_KEY_HERE')?GOOGLE_MAPS_API_KEY:'YOUR_API_KEY_HERE';
+  loader.setAttribute('key',key);
+  await customElements.whenDefined('gmpx-store-locator');
+  const configuration={
+    locations:[
+      {
+        title:'Teaching Success',
+        address1:'66 Hales Ln',
+        address2:'Smethwick B67 6RS, UK',
+        coords:{lat:52.48926340131497,lng:-1.978355977909858},
+        placeId:GOOGLE_PLACE_ID
+      }
+    ],
+    mapOptions:{
+      center:{lat:52.48926340131497,lng:-1.978355977909858},
+      fullscreenControl:true,
+      mapTypeControl:false,
+      streetViewControl:false,
+      zoom:12,
+      zoomControl:true,
+      maxZoom:17,
+      mapId:''
+    },
+    mapsApiKey:key,
+    capabilities:{
+      input:true,
+      autocomplete:true,
+      directions:false,
+      distanceMatrix:true,
+      details:false,
+      actions:false
+    }
+  };
+  locator.configureFromQuickBuilder(configuration);
 }
 
 document.querySelectorAll('a[href^="tel:"]').forEach(a=>{
@@ -1282,6 +1474,12 @@ function doBook(){
 }
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),3400);}
 
+document.addEventListener('DOMContentLoaded',()=>{
+  initReviews();
+  initLocator();
+});
+
 </script>
+<script type="module" src="https://ajax.googleapis.com/ajax/libs/@googlemaps/extended-component-library/0.6.11/index.min.js"></script>
 </body>
 </html>
