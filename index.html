@@ -177,31 +177,6 @@ body{font-family:'Outfit',sans-serif;background:var(--cream);color:var(--ink);ov
 .review-dot.active{background:var(--gold);border-color:var(--gold)}
 .review-link{font-size:.83rem;color:var(--green2);font-weight:700;text-decoration:none}
 
-/* LOCATOR */
-.locator-box{margin-top:2.2rem;border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.07);background:#fff}
-.locator-fallback{margin-top:1rem;border:1px solid var(--border);border-radius:14px;padding:1rem 1.1rem;background:#fff}
-.locator-fallback p{margin:.2rem 0;color:var(--muted)}
-.locator-fallback a{color:var(--green2);font-weight:700;text-decoration:none}
-.locator-fallback a:hover{text-decoration:underline}
-gmpx-store-locator{
-  width:100%;
-  height:460px;
-  --gmpx-color-surface:#fff;
-  --gmpx-color-on-surface:#212121;
-  --gmpx-color-on-surface-variant:#757575;
-  --gmpx-color-primary:#1967d2;
-  --gmpx-color-outline:#e0e0e0;
-  --gmpx-fixed-panel-width-row-layout:28.5em;
-  --gmpx-fixed-panel-height-column-layout:65%;
-  --gmpx-font-family-base:"Roboto",sans-serif;
-  --gmpx-font-family-headings:"Roboto",sans-serif;
-  --gmpx-font-size-base:.875rem;
-  --gmpx-hours-color-open:#188038;
-  --gmpx-hours-color-closed:#d50000;
-  --gmpx-rating-color:#ffb300;
-  --gmpx-rating-color-empty:#e0e0e0;
-}
-
 /* CTA */
 .ctaband{background:#2c3a52;padding:4rem;text-align:center}
 .ctaband h2{font-family:'Fraunces',serif;font-size:2.4rem;font-weight:900;color:white;margin-bottom:.65rem}
@@ -585,7 +560,6 @@ gmpx-store-locator{
   .aamt {
     font-size: 1.28rem;
   }
-  gmpx-store-locator{height:520px}
 }
 
 @media (max-width: 480px) {
@@ -795,21 +769,6 @@ gmpx-store-locator{
     </div>
     <div class="tte" id="review-slide"></div>
     <div class="review-dots" id="review-dots" aria-label="Review navigation"></div>
-  </div>
-</section>
-
-<!-- LOCATION -->
-<section id="location" class="section">
-  <div class="eyebrow">Find Us</div>
-  <h2 class="sec-h2">Visit Teaching Success</h2>
-  <p class="sec-sub">66 Hales Lane, Smethwick, Birmingham, B67 6RS.</p>
-  <div class="locator-box">
-    <gmpx-store-locator id="ts-locator" map-id="DEMO_MAP_ID" style="display:none"></gmpx-store-locator>
-  </div>
-  <div id="locator-fallback" class="locator-fallback" style="display:none">
-    <strong>We are based in Smethwick.</strong>
-    <p>66 Hales Ln, Smethwick, Birmingham, B67 6RS</p>
-    <a href="https://www.google.com/maps?q=66+Hales+Ln,+Smethwick+B67+6RS" target="_blank" rel="noopener">Open in Google Maps</a>
   </div>
 </section>
 
@@ -1254,65 +1213,6 @@ async function initReviews(){
   startReviewCycle();
 }
 
-async function initLocator(){
-  const locator=document.getElementById('ts-locator');
-  const fallback=document.getElementById('locator-fallback');
-  if(!locator)return;
-  const key=(GOOGLE_MAPS_API_KEY&&GOOGLE_MAPS_API_KEY!=='YOUR_API_KEY_HERE')?GOOGLE_MAPS_API_KEY:'';
-  if(!key){
-    locator.style.display='none';
-    if(fallback)fallback.style.display='block';
-    return;
-  }
-  let loader=document.getElementById('gmpx-loader');
-  if(!loader){
-    loader=document.createElement('gmpx-api-loader');
-    loader.id='gmpx-loader';
-    loader.setAttribute('solution-channel','GMP_QB_locatorplus_v11_cABD');
-    locator.parentElement.insertBefore(loader,locator);
-  }
-  loader.setAttribute('key',key);
-  try{
-    await customElements.whenDefined('gmpx-store-locator');
-  const configuration={
-    locations:[
-      {
-        title:'Teaching Success',
-        address1:'66 Hales Ln',
-        address2:'Smethwick B67 6RS, UK',
-        coords:{lat:52.48926340131497,lng:-1.978355977909858},
-        placeId:GOOGLE_PLACE_ID
-      }
-    ],
-    mapOptions:{
-      center:{lat:52.48926340131497,lng:-1.978355977909858},
-      fullscreenControl:true,
-      mapTypeControl:false,
-      streetViewControl:false,
-      zoom:12,
-      zoomControl:true,
-      maxZoom:17,
-      mapId:''
-    },
-    mapsApiKey:key,
-    capabilities:{
-      input:true,
-      autocomplete:true,
-      directions:false,
-      distanceMatrix:true,
-      details:false,
-      actions:false
-    }
-  };
-  locator.configureFromQuickBuilder(configuration);
-    locator.style.display='block';
-    if(fallback)fallback.style.display='none';
-  }catch(_err){
-    locator.style.display='none';
-    if(fallback)fallback.style.display='block';
-  }
-}
-
 document.querySelectorAll('a[href^="tel:"]').forEach(a=>{
   a.addEventListener('click',()=>{
     trackGAEvent('phone_click',{
@@ -1503,10 +1403,8 @@ function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t
 
 document.addEventListener('DOMContentLoaded',()=>{
   initReviews();
-  initLocator();
 });
 
 </script>
-<script type="module" src="https://ajax.googleapis.com/ajax/libs/@googlemaps/extended-component-library/0.6.11/index.min.js"></script>
 </body>
 </html>
