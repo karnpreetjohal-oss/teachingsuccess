@@ -423,6 +423,130 @@ body{font-family:'Outfit',sans-serif;background:var(--cream);color:var(--ink);ov
   flex-wrap: nowrap;
   white-space: nowrap;
 }
+
+/* Extra responsive cleanup */
+@media (max-width: 980px) {
+  .navbar {
+    flex-wrap: wrap;
+    row-gap: .75rem;
+    align-items: flex-start;
+  }
+  .nnav {
+    order: 3;
+    width: 100%;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: .55rem;
+  }
+  .nlinks {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: .65rem .95rem;
+  }
+  .nlinks-side {
+    width: 100%;
+    border-left: 0;
+    padding-left: 0;
+    flex-wrap: wrap;
+    gap: .5rem .9rem;
+  }
+  .nacts {
+    margin-left: auto;
+  }
+  .hero {
+    min-height: 68vh;
+  }
+}
+
+@media (max-width: 768px) {
+  .navbar,
+  .section,
+  .hiw,
+  .ctaband,
+  .footer {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  .nlogo-txt {
+    font-size: 1.08rem;
+  }
+  .nphone {
+    font-size: .82rem;
+  }
+  .nlinks a,
+  .nlinks-side a {
+    font-size: .8rem;
+  }
+  .hero {
+    min-height: auto;
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+  }
+  .hero-l {
+    align-items: stretch;
+    justify-content: flex-start;
+  }
+  .hero-glass {
+    position: relative;
+    top: auto;
+    left: auto;
+    right: auto;
+    max-width: 100%;
+    margin: 0 0 .75rem;
+    padding: .9rem 1rem;
+  }
+  .hero-glass h1 {
+    font-size: 2rem;
+    line-height: 1.1;
+  }
+  .hero-price-top {
+    font-size: .95rem;
+    padding: .42rem .85rem;
+    white-space: normal;
+  }
+  .hero-cta-row {
+    position: relative;
+    bottom: auto;
+    left: auto;
+    transform: none;
+    margin-top: .75rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    white-space: normal;
+  }
+  .hero-cta-row .btn {
+    width: 100%;
+    justify-content: center;
+  }
+  .ac-top h3 {
+    font-size: 1rem;
+  }
+  .aamt {
+    font-size: 1.28rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .nacts {
+    width: 100%;
+    margin-left: 0;
+  }
+  .nphone {
+    display: inline-flex;
+    width: 100%;
+    justify-content: center;
+    padding: .35rem .6rem;
+    border: 1px solid rgba(255,255,255,.22);
+    border-radius: 8px;
+    background: rgba(255,255,255,.08);
+  }
+  .hero-glass h1 {
+    font-size: 1.72rem;
+  }
+  .sec-h2 {
+    font-size: 1.9rem;
+  }
+}
 </style>
 </head>
 <body>
