@@ -937,6 +937,21 @@ const RES=[
 ];
 let cu=null,qQs=[],qAs={},qDone=false;
 
+function trackGAEvent(eventName, params={}){
+  if(typeof gtag==='function'){
+    gtag('event', eventName, params);
+  }
+}
+
+document.querySelectorAll('a[href^="tel:"]').forEach(a=>{
+  a.addEventListener('click',()=>{
+    trackGAEvent('phone_click',{
+      event_category:'lead',
+      event_label:(a.getAttribute('href')||'').replace('tel:','')
+    });
+  });
+});
+
 function doLogin(){
   toast('Student portal is temporarily disabled while we set it up.');
   return;
@@ -994,6 +1009,9 @@ function openM(id){
   if(id==='login'){
     toast('Student portal is temporarily disabled while we set it up.');
     return;
+  }
+  if(id==='book'){
+    trackGAEvent('book_trial_open',{event_category:'lead'});
   }
   document.getElementById('modal-'+id).classList.add('open');
 }
@@ -1092,11 +1110,25 @@ function sendWhatsAppMessage(){
   const ta=document.getElementById('wa-msg');
   const msg=(ta?.value||'').trim();
   if(!msg){toast('⚠️ Please write a message first.');return;}
+  trackGAEvent('whatsapp_send',{
+    event_category:'lead',
+    event_label:'website_widget'
+  });
   const text=encodeURIComponent(`Website enquiry:\\n${msg}`);
   window.open(`https://wa.me/${number}?text=${text}`,'_blank');
   ta.value='';
 }
-function doBook(){closeM('book');toast('✅ Enquiry sent! Kevin or Serena will be in touch within 24 hours.');}
+function doBook(){
+  const subject=(document.getElementById('book-subject')?.value||'');
+  const year=(document.getElementById('book-year')?.value||'');
+  trackGAEvent('book_trial_submit',{
+    event_category:'lead',
+    subject:subject,
+    year_group:year
+  });
+  closeM('book');
+  toast('✅ Enquiry sent! Kevin or Serena will be in touch within 24 hours.');
+}
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),3400);}
 
 </script>
