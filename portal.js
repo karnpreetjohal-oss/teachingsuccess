@@ -57,6 +57,167 @@ const SCIENCE_UNITS = {
     'Key ideas (Physics)'
   ]
 };
+const DEFAULT_EXAM_BOARD_OPTIONS = [
+  { value: '', label: 'Select exam board first' },
+  { value: 'aqa', label: 'AQA' },
+  { value: 'edexcel', label: 'Edexcel' },
+  { value: 'ocr', label: 'OCR' },
+  { value: 'wjec', label: 'WJEC' },
+  { value: 'ccea', label: 'CCEA' },
+  { value: 'none', label: 'No exam board / General' }
+];
+const MATHS_GRADE_TOPICS = {
+  'Grade 1': [
+    'Addition and Subtraction',
+    'Multiplication and Division',
+    'Time',
+    'Metric Conversions',
+    'Writing, Simplifying and Ordering Fractions',
+    'Place Value',
+    'Rounding',
+    'Negative Numbers',
+    'Powers and Roots',
+    'BIDMAS',
+    'Factors and Multiples',
+    'Coordinates',
+    'Pictograms'
+  ],
+  'Grade 2': [
+    'Calculation Problems',
+    'Using a Calculator',
+    'Systematic Listing',
+    'Fractions of an Amount',
+    'Fractions, Decimals and Percentages',
+    'Simplifying Algebra',
+    'Writing an Expression',
+    'Function Machines',
+    'Solving One Step Equations',
+    'Angles',
+    'Area and Perimeter',
+    'Probability',
+    'Frequency Polygons',
+    'Averages',
+    'Bar Charts',
+    'Stem and Leaf',
+    'Pie Charts'
+  ],
+  'Grade 3': [
+    'Error Intervals',
+    'Fractions',
+    'Estimating',
+    'Writing and Simplifying Ratio',
+    'Ratio',
+    'Proportion',
+    'Percentages',
+    'Percentage Change',
+    'Exchange Rates',
+    'Conversions and Units',
+    'Scale Drawings',
+    'Best Buy Questions',
+    'Substitution',
+    'Solving Equations',
+    'Drawing Linear Graphs',
+    'Area and Circumference of Circles',
+    'Transformations',
+    'Area of Compound Shapes',
+    'Frequency Trees',
+    'Two Way Tables'
+  ],
+  'Grade 4': [
+    'Compound Interest and Depreciation',
+    'Indices',
+    'Prime Factors, HCF and LCM',
+    'Real Life and Distance Time Graphs',
+    'Inequalities',
+    'Forming and Solving Equations',
+    'Sequences (Nth Term)',
+    'Expanding and Factorising',
+    'Pythagoras',
+    'Angles in Parallel Lines',
+    'Angles in Polygons',
+    'Surface Area',
+    'Volume of a Prism',
+    'Cylinders',
+    'Loci and Construction',
+    'Bearings',
+    'Plans and Elevations',
+    'Averages from Frequency Tables',
+    'Probability',
+    'Scatter Graphs'
+  ],
+  'Grade 5': [
+    'Writing a Ratio as a Fraction or Linear Function',
+    'Direct and Inverse Proportion',
+    'Reverse Percentages',
+    'Standard Form',
+    'Speed and Density',
+    'Changing the Subject of a Formula',
+    'Expanding and Factorising Quadratics',
+    'Solving Quadratics',
+    'Drawing Quadratic Graphs',
+    'Drawing Other Graphs: Cubic/Reciprocal',
+    'Simultaneous Equations',
+    'Solving Simultaneous Equations Graphically',
+    'Midpoint of a Line Segment',
+    'Gradient of a Line',
+    'Equation of a Line',
+    'Spheres and Cones',
+    'Sector Areas and Arc Lengths',
+    'Similar Shapes (Lengths)',
+    'SOHCAHTOA (Trigonometry)',
+    'Exact trig values',
+    'Vectors',
+    'Probability Trees',
+    'Venn Diagrams'
+  ],
+  'Grade 6': [
+    'Recurring Decimals to Fractions',
+    'Fractional and Negative Indices',
+    'The Product Rule for Counting',
+    'Repeated Percentage Change',
+    'Expanding Triple Brackets',
+    'Parallel and Perpendicular Lines',
+    'Inequalities on Graphs',
+    'Similar Shapes (Area and Volume)',
+    'Enlarging with Negative Scale Factors',
+    'Circle Theorems',
+    'Cumulative Frequency',
+    'Box Plots',
+    'Capture Recapture'
+  ],
+  'Grade 7': [
+    'Surds',
+    'Bounds',
+    'Direct and Inverse Proportion',
+    'Quadratic Formula',
+    'Factorising Harder Quadratics',
+    'Algebraic Fractions',
+    'Rearranging Harder Formulae',
+    'Trigonometric and Exponential Graphs',
+    'Inverse and Composite Functions',
+    'Iteration',
+    'Finding the Area of Any Triangle',
+    'The Sine Rule',
+    'The Cosine Rule',
+    'Congruent Triangles',
+    '3d Pythagoras and Trigonometry',
+    'Histograms',
+    'Conditional Probability'
+  ],
+  'Grade 8/9': [
+    'Quadratic Simultaneous Equations',
+    'Transforming Graphs y=f(x)',
+    'Proof',
+    'Completing the Square',
+    'The Nth Term of a Quadratic Sequence',
+    'Quadratic Inequalities',
+    'Velocity Time Graphs',
+    'Proof of the Circle Theorems',
+    'Perpendicular Lines and the equation of a tangent',
+    'Vectors Proof Questions',
+    'Probability Equation Questions'
+  ]
+};
 
 function showMsg(el, text, type = 'ok') {
   if (!el) return;
@@ -152,7 +313,9 @@ function updateTierVisibility() {
 }
 
 async function handleSubjectChange() {
+  updateExamBoardOptionsBySubject();
   updateScienceComponentVisibility();
+  updateTopicVisibility();
   updateTierVisibility();
   await loadUnitsForAssignmentForm();
 }
@@ -168,6 +331,20 @@ function updateScienceComponentVisibility() {
   }
   wrap.style.display = 'none';
   select.value = '';
+}
+
+function updateTopicVisibility() {
+  const subject = normalizeSubject($('asg-subject')?.value || '');
+  const wrap = $('asg-topic-wrap');
+  const topicSelect = $('asg-topic');
+  if (!wrap || !topicSelect) return;
+  if (subject === 'maths') {
+    wrap.style.display = '';
+    return;
+  }
+  wrap.style.display = 'none';
+  topicSelect.value = '';
+  setSelectOptions(topicSelect, [], 'Select a unit first');
 }
 
 function countWords(text) {
@@ -254,6 +431,21 @@ function setSelectOptions(el, options, emptyLabel) {
     o.textContent = opt.label;
     el.appendChild(o);
   });
+}
+
+function updateExamBoardOptionsBySubject() {
+  const subject = normalizeSubject($('asg-subject')?.value || '');
+  const examSelect = $('asg-exam-board');
+  if (!examSelect) return;
+
+  if (subject === 'maths') {
+    setSelectOptions(examSelect, [{ value: 'edexcel', label: 'Edexcel' }], 'Edexcel');
+    examSelect.value = 'edexcel';
+    return;
+  }
+
+  setSelectOptions(examSelect, DEFAULT_EXAM_BOARD_OPTIONS, 'Select exam board first');
+  examSelect.value = '';
 }
 
 function setActiveSection(section) {
@@ -388,6 +580,19 @@ async function loadUnitsForAssignmentForm() {
     return;
   }
 
+  if (subjectNorm === 'maths') {
+    const gradeUnits = Object.keys(MATHS_GRADE_TOPICS).map((grade) => ({
+      value: `manual::${grade}`,
+      label: grade
+    }));
+    setSelectOptions(unitSelect, gradeUnits, 'No grades found');
+    if (gradeUnits.length) {
+      unitSelect.value = gradeUnits[0].value;
+      updateMathsTopicOptions();
+    }
+    return;
+  }
+
   if (subjectNorm === 'science') {
     if (!scienceComponent) {
       setSelectOptions(unitSelect, [], 'Select Biology, Chemistry or Physics first');
@@ -443,6 +648,25 @@ async function loadUnitsForAssignmentForm() {
 
   setSelectOptions(unitSelect, options, 'No matching units for this student/subject');
   if (options.length) unitSelect.value = options[0].value;
+  updateMathsTopicOptions();
+}
+
+function updateMathsTopicOptions() {
+  const subjectNorm = normalizeSubject($('asg-subject')?.value || '');
+  const unitVal = String($('asg-unit')?.value || '');
+  const topicSelect = $('asg-topic');
+  if (!topicSelect) return;
+
+  if (subjectNorm !== 'maths') {
+    setSelectOptions(topicSelect, [], 'Select a unit first');
+    return;
+  }
+
+  const grade = unitVal.startsWith('manual::') ? unitVal.replace('manual::', '') : '';
+  const topics = MATHS_GRADE_TOPICS[grade] || [];
+  const options = topics.map((topic) => ({ value: topic, label: topic }));
+  setSelectOptions(topicSelect, options, 'No topics for this grade');
+  if (options.length) topicSelect.value = options[0].value;
 }
 
 async function loadParentsForTutor() {
@@ -865,13 +1089,16 @@ async function createAssignment() {
   const examBoardRaw = $('asg-exam-board') ? String($('asg-exam-board').value || '').trim().toLowerCase() : '';
   const examBoard = examBoardRaw && examBoardRaw !== 'none' ? examBoardRaw : null;
   const unitId = $('asg-unit')?.value || null;
+  const topic = String($('asg-topic')?.value || '').trim();
   const file = $('asg-file')?.files?.[0] || null;
   const selectedUnitValue = String(unitId || '');
   const manualUnit = selectedUnitValue.startsWith('manual::') ? selectedUnitValue.replace('manual::', '') : '';
   const dbUnitId = manualUnit ? null : unitId;
+  const subjectNorm = normalizeSubject(subject);
   const assignmentDescription = [
     tier ? `Tier: ${tier}` : '',
     manualUnit ? `Unit: ${manualUnit}` : '',
+    (subjectNorm === 'maths' && topic) ? `Topic: ${topic}` : '',
     description
   ].filter(Boolean).join('\n') || null;
 
@@ -887,6 +1114,11 @@ async function createAssignment() {
 
   if (subjectNeedsTier(subject) && !tier) {
     showMsg($('asg-msg'), 'Select a tier (Foundation or Higher).', 'err');
+    return;
+  }
+
+  if (subjectNorm === 'maths' && !topic) {
+    showMsg($('asg-msg'), 'Select a maths topic.', 'err');
     return;
   }
 
@@ -948,9 +1180,12 @@ async function createAssignment() {
   if ($('asg-exam-board')) $('asg-exam-board').value = '';
   if ($('asg-science-component')) $('asg-science-component').value = '';
   if ($('asg-tier')) $('asg-tier').value = '';
+  if ($('asg-topic')) $('asg-topic').value = '';
   if ($('asg-file')) $('asg-file').value = '';
   if ($('asg-unit')) $('asg-unit').value = '';
+  updateExamBoardOptionsBySubject();
   updateScienceComponentVisibility();
+  updateTopicVisibility();
   updateTierVisibility();
   await loadUnitsForAssignmentForm();
 
@@ -1415,7 +1650,10 @@ async function bootstrap() {
   safeBind('asg-subject', 'change', handleSubjectChange);
   safeBind('asg-exam-board', 'change', loadUnitsForAssignmentForm);
   safeBind('asg-science-component', 'change', loadUnitsForAssignmentForm);
+  safeBind('asg-unit', 'change', updateMathsTopicOptions);
+  updateExamBoardOptionsBySubject();
   updateScienceComponentVisibility();
+  updateTopicVisibility();
   updateTierVisibility();
 
   bindListActions();
