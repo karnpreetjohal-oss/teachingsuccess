@@ -22,6 +22,41 @@ let currentProfile = null;
 let tutorStudentsById = new Map();
 let unitLoadSeq = 0;
 let activeSection = 'dashboard';
+const SCIENCE_UNITS = {
+  biology: [
+    'Cell biology',
+    'Organisation',
+    'Infection and response',
+    'Bioenergetics',
+    'Homeostasis and response',
+    'Inheritance, variation and evolution',
+    'Ecology',
+    'Key ideas (Biology)'
+  ],
+  chemistry: [
+    'Atomic structure and the periodic table',
+    'Bonding, structure, and the properties of matter',
+    'Quantitative chemistry',
+    'Chemical changes',
+    'Energy changes',
+    'The rate and extent of chemical change',
+    'Organic chemistry',
+    'Chemical analysis',
+    'Chemistry of the atmosphere',
+    'Using resources',
+    'Key ideas (Chemistry)'
+  ],
+  physics: [
+    'Energy',
+    'Electricity',
+    'Particle model of matter',
+    'Atomic structure',
+    'Forces',
+    'Waves',
+    'Magnetism and electromagnetism',
+    'Key ideas (Physics)'
+  ]
+};
 
 function showMsg(el, text, type = 'ok') {
   if (!el) return;
@@ -117,8 +152,22 @@ function updateTierVisibility() {
 }
 
 async function handleSubjectChange() {
+  updateScienceComponentVisibility();
   updateTierVisibility();
   await loadUnitsForAssignmentForm();
+}
+
+function updateScienceComponentVisibility() {
+  const subject = normalizeSubject($('asg-subject')?.value || '');
+  const wrap = $('asg-science-component-wrap');
+  const select = $('asg-science-component');
+  if (!wrap || !select) return;
+  if (subject === 'science') {
+    wrap.style.display = '';
+    return;
+  }
+  wrap.style.display = 'none';
+  select.value = '';
 }
 
 function countWords(text) {
@@ -321,7 +370,9 @@ async function loadUnitsForAssignmentForm() {
   const loadSeq = ++unitLoadSeq;
   const studentId = $('asg-student')?.value || '';
   const subjectRaw = $('asg-subject')?.value || '';
+  const subjectNorm = normalizeSubject(subjectRaw);
   const examBoardRaw = String($('asg-exam-board')?.value || '').trim().toLowerCase();
+  const scienceComponent = String($('asg-science-component')?.value || '').trim().toLowerCase();
   const unitSelect = $('asg-unit');
 
   // Clear dependent selectors immediately so stale options disappear as soon as inputs change.
@@ -334,6 +385,20 @@ async function loadUnitsForAssignmentForm() {
 
   if (!examBoardRaw) {
     setSelectOptions(unitSelect, [], 'Select exam board first');
+    return;
+  }
+
+  if (subjectNorm === 'science') {
+    if (!scienceComponent) {
+      setSelectOptions(unitSelect, [], 'Select Biology, Chemistry or Physics first');
+      return;
+    }
+    const manual = (SCIENCE_UNITS[scienceComponent] || []).map((name) => ({
+      value: `manual::${name}`,
+      label: name
+    }));
+    setSelectOptions(unitSelect, manual, 'No units found');
+    if (manual.length) unitSelect.value = manual[0].value;
     return;
   }
 
@@ -373,7 +438,7 @@ async function loadUnitsForAssignmentForm() {
 
   const options = filteredUnits.map((u) => ({
     value: u.id,
-    label: `Y${u.year_group} · ${u.unit_title}${u.course ? ` · ${u.course}` : ''}`
+    label: `${String(u.unit_title || '').replace(/^\s*\d+(?:\.\d+)*\s*/, '')}${u.course ? ` · ${u.course}` : ''}`
   }));
 
   setSelectOptions(unitSelect, options, 'No matching units for this student/subject');
@@ -801,7 +866,14 @@ async function createAssignment() {
   const examBoard = examBoardRaw && examBoardRaw !== 'none' ? examBoardRaw : null;
   const unitId = $('asg-unit')?.value || null;
   const file = $('asg-file')?.files?.[0] || null;
-  const assignmentDescription = tier ? `Tier: ${tier}\n${description}`.trim() : (description || null);
+  const selectedUnitValue = String(unitId || '');
+  const manualUnit = selectedUnitValue.startsWith('manual::') ? selectedUnitValue.replace('manual::', '') : '';
+  const dbUnitId = manualUnit ? null : unitId;
+  const assignmentDescription = [
+    tier ? `Tier: ${tier}` : '',
+    manualUnit ? `Unit: ${manualUnit}` : '',
+    description
+  ].filter(Boolean).join('\n') || null;
 
   if (!studentId || !title) {
     showMsg($('asg-msg'), 'Select a student and add a title.', 'err');
@@ -832,7 +904,7 @@ async function createAssignment() {
     resource_url: resourceUrl || null,
     year_group: parseYearGroupInt(studentProfile?.year_group),
     exam_board: examBoard || null,
-    unit_id: unitId || null,
+    unit_id: dbUnitId || null,
     automark_enabled: automarkEnabled,
     automark_keywords: parseKeywordCsv(automarkKeywordsCsv),
     automark_target_words: automarkTargetWordsRaw === '' ? null : Number(automarkTargetWordsRaw)
@@ -874,9 +946,11 @@ async function createAssignment() {
   if ($('asg-automark-keywords')) $('asg-automark-keywords').value = '';
   if ($('asg-automark-target-words')) $('asg-automark-target-words').value = '';
   if ($('asg-exam-board')) $('asg-exam-board').value = '';
+  if ($('asg-science-component')) $('asg-science-component').value = '';
   if ($('asg-tier')) $('asg-tier').value = '';
   if ($('asg-file')) $('asg-file').value = '';
   if ($('asg-unit')) $('asg-unit').value = '';
+  updateScienceComponentVisibility();
   updateTierVisibility();
   await loadUnitsForAssignmentForm();
 
@@ -1340,6 +1414,8 @@ async function bootstrap() {
   safeBind('asg-student', 'change', loadUnitsForAssignmentForm);
   safeBind('asg-subject', 'change', handleSubjectChange);
   safeBind('asg-exam-board', 'change', loadUnitsForAssignmentForm);
+  safeBind('asg-science-component', 'change', loadUnitsForAssignmentForm);
+  updateScienceComponentVisibility();
   updateTierVisibility();
 
   bindListActions();

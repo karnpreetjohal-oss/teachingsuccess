@@ -199,10 +199,13 @@ textarea{min-height:84px;resize:vertical}
                 <option value="none">No exam board / General</option>
               </select>
             </div>
-            <div>
-              <label>Curriculum Unit</label>
-              <select id="asg-unit">
-                <option value="">Select exam board first</option>
+            <div id="asg-science-component-wrap" style="display:none">
+              <label>Science</label>
+              <select id="asg-science-component">
+                <option value="">Select science first</option>
+                <option value="biology">Biology</option>
+                <option value="chemistry">Chemistry</option>
+                <option value="physics">Physics</option>
               </select>
             </div>
             <div id="asg-tier-wrap">
@@ -211,6 +214,12 @@ textarea{min-height:84px;resize:vertical}
                 <option value="">Select tier</option>
                 <option value="foundation">Foundation</option>
                 <option value="higher">Higher</option>
+              </select>
+            </div>
+            <div>
+              <label>Units</label>
+              <select id="asg-unit">
+                <option value="">Select exam board first</option>
               </select>
             </div>
             <div><label>Title</label><input id="asg-title" type="text" placeholder="e.g. Algebra worksheet set"></div>
