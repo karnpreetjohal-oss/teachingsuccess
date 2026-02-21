@@ -218,6 +218,99 @@ const MATHS_GRADE_TOPICS = {
     'Probability Equation Questions'
   ]
 };
+const DEFAULT_SUBJECT_OPTIONS = [
+  { value: 'Maths', label: 'Maths' },
+  { value: 'English', label: 'English' },
+  { value: 'Science', label: 'Science' },
+  { value: '11+', label: '11+' },
+  { value: 'General', label: 'General' }
+];
+const PRIMARY_SUBJECT_OPTIONS = [
+  { value: 'Maths', label: 'Maths' },
+  { value: 'English', label: 'English' }
+];
+const PRIMARY_CURRICULUM = {
+  2: {
+    maths: {
+      'Number and Place Value': ['Count in steps of 2, 3, 5 and 10', 'Read and write numbers to 100', 'Compare and order numbers'],
+      'Addition and Subtraction': ['Add two 2-digit numbers', 'Subtract with exchanging', 'Solve one-step and two-step problems'],
+      'Multiplication and Division': ['Understand arrays and equal groups', 'Use 2, 5 and 10 times tables', 'Solve division as sharing and grouping'],
+      Fractions: ['Recognise 1/3, 1/4, 2/4 and 3/4', 'Find fractions of shapes and amounts', 'Compare simple fractions'],
+      'Measurement and Time': ['Tell time to 5 minutes', 'Compare length, mass and temperature', 'Solve money problems with pounds and pence']
+    },
+    english: {
+      Reading: ['Apply phonics to decode words', 'Build fluency and expression', 'Answer retrieval questions from short texts'],
+      Writing: ['Use capital letters and full stops correctly', 'Write expanded noun phrases', 'Plan and write short narratives'],
+      Grammar: ['Use present and past tense consistently', 'Use commas in lists', 'Use apostrophes for contraction and possession'],
+      Spelling: ['Common exception words', 'Suffixes: -ment, -ness, -ful, -less', 'Homophones and near-homophones'],
+      'Speaking and Listening': ['Retell stories confidently', 'Ask and answer questions clearly', 'Present ideas in full sentences']
+    }
+  },
+  3: {
+    maths: {
+      'Number and Place Value': ['Read and write numbers to 1000', 'Round to nearest 10 and 100', 'Count forwards/backwards in multiples'],
+      'Addition and Subtraction': ['Column addition and subtraction', 'Estimate and check answers', 'Solve multi-step word problems'],
+      'Multiplication and Division': ['3, 4 and 8 times tables', 'Written multiplication methods', 'Short division with remainders'],
+      Fractions: ['Recognise and compare fractions', 'Add/subtract fractions with same denominator', 'Find unit and non-unit fractions of amounts'],
+      'Measurement and Geometry': ['Perimeter of simple shapes', 'Time to nearest minute', 'Identify and classify 2D/3D shapes']
+    },
+    english: {
+      Reading: ['Develop vocabulary through context', 'Infer meaning from evidence', 'Summarise key events and ideas'],
+      Writing: ['Write paragraphs around a theme', 'Use fronted adverbials', 'Draft and improve writing for effect'],
+      Grammar: ['Use conjunctions: when, if, because, although', 'Use direct speech punctuation', 'Use present perfect form'],
+      Spelling: ['Prefixes: dis-, mis-, in-, il-, im-', 'Suffix rules for vowels/consonants', 'Year 3/4 statutory word list'],
+      'Comprehension and Discussion': ['Explain word choices', 'Predict from details in text', 'Justify answers with evidence']
+    }
+  },
+  4: {
+    maths: {
+      'Number and Place Value': ['Count in multiples up to 10,000', 'Round to nearest 10, 100, 1000', 'Read Roman numerals to 100'],
+      'Addition and Subtraction': ['Efficient written methods', 'Estimate and inverse checking', 'Solve two-step contextual problems'],
+      'Multiplication and Division': ['Recall times tables up to 12x12', 'Multiply 2- and 3-digit by 1-digit', 'Use factor pairs and short division'],
+      Fractions: ['Equivalent fractions', 'Add/subtract fractions with same denominator', 'Decimal equivalents of tenths/hundredths'],
+      'Measurement, Geometry and Statistics': ['Area by counting squares', 'Convert between units', 'Interpret bar charts and line graphs']
+    },
+    english: {
+      Reading: ['Read a wider range of fiction/non-fiction', 'Identify themes and conventions', 'Retrieve and infer with evidence'],
+      Writing: ['Organise writing into coherent paragraphs', 'Use expanded noun phrases and adverbials', 'Write for purpose and audience'],
+      Grammar: ['Use apostrophes accurately', 'Standard English verb forms', 'Punctuate direct speech correctly'],
+      Spelling: ['Further prefixes and suffixes', 'Possessive apostrophes with plurals', 'Year 4 statutory word list'],
+      'Editing and Performance': ['Proofread for grammar/spelling', 'Improve sentence variety', 'Read aloud with expression']
+    }
+  },
+  5: {
+    maths: {
+      'Number and Place Value': ['Read/write numbers to 1,000,000', 'Round within 1,000,000', 'Interpret negative numbers in context'],
+      'Addition and Subtraction': ['Add/subtract large numbers', 'Use mental strategies efficiently', 'Solve multi-step problems with reasoning'],
+      'Multiplication and Division': ['Multiply up to 4 digits by 1/2 digits', 'Divide up to 4 digits by 1 digit', 'Solve scaling and correspondence problems'],
+      Fractions: ['Equivalent and mixed/improper fractions', 'Add/subtract fractions with related denominators', 'Multiply fractions by whole numbers'],
+      'Decimals, Percentages and Measurement': ['Read/write decimals to 3 places', 'Percentages and fraction equivalents', 'Perimeter/area and metric conversion']
+    },
+    english: {
+      Reading: ['Develop inference and author intent', 'Compare characters/settings/themes', 'Retrieve and summarise accurately'],
+      Writing: ['Use cohesion across paragraphs', 'Use varied sentence structures', 'Write balanced arguments and narratives'],
+      Grammar: ['Modal verbs and adverbs of possibility', 'Relative clauses', 'Parenthesis using brackets/dashes/commas'],
+      Spelling: ['Words ending -able/-ible and -ably/-ibly', 'Silent letters', 'Year 5/6 statutory words'],
+      'Composition and Editing': ['Plan-draft-edit-publish cycle', 'Evaluate own writing', 'Improve precision and vocabulary']
+    }
+  },
+  6: {
+    maths: {
+      'Number and Place Value': ['Use numbers up to 10,000,000', 'Round and estimate in complex contexts', 'Order and compare integers/decimals/fractions'],
+      'Four Operations and Reasoning': ['Long multiplication and division', 'Multi-step word problems', 'BIDMAS and inverse operations'],
+      Fractions: ['Simplify and compare fractions', 'Add/subtract/multiply/divide fractions', 'Fraction-decimal-percentage conversions'],
+      Algebra: ['Generate and describe sequences', 'Use simple formulae', 'Solve one- and two-step equations'],
+      'Geometry, Measure and Statistics': ['Angles in triangles/quadrilaterals/circles', 'Area/volume of shapes', 'Interpret pie charts and calculate mean']
+    },
+    english: {
+      Reading: ['Analyse language, structure and viewpoint', 'Compare across texts', 'Support inferences with quotations'],
+      Writing: ['Write with controlled tone and register', 'Use cohesive devices across longer texts', 'Craft effective openings/endings'],
+      Grammar: ['Active and passive voice', 'Formal/informal structures', 'Punctuation for clarity and effect'],
+      Spelling: ['Confusable words and morphology', 'Hyphen rules', 'Secure Year 5/6 statutory words'],
+      'SATs Preparation': ['Reading test techniques', 'SPaG accuracy and speed', 'Extended writing under timed conditions']
+    }
+  }
+};
 
 function showMsg(el, text, type = 'ok') {
   if (!el) return;
@@ -267,6 +360,16 @@ function parseYearGroupInt(value) {
   return Number.isFinite(n) ? n : null;
 }
 
+function getSelectedStudentYearInt() {
+  const studentId = $('asg-student')?.value || '';
+  const student = tutorStudentsById.get(studentId);
+  return parseYearGroupInt(student?.year_group);
+}
+
+function isPrimaryYear(yearInt) {
+  return Number.isFinite(yearInt) && yearInt >= 2 && yearInt <= 6;
+}
+
 function escapeHtml(value) {
   return String(value ?? '')
     .replaceAll('&', '&amp;')
@@ -296,6 +399,7 @@ function parseKeywordCsv(value) {
 
 function subjectNeedsTier(value) {
   const s = normalizeSubject(value);
+  if (isPrimaryYear(getSelectedStudentYearInt())) return false;
   return s === 'maths' || s === 'science';
 }
 
@@ -323,10 +427,11 @@ async function handleSubjectChange() {
 
 function updateScienceComponentVisibility() {
   const subject = normalizeSubject($('asg-subject')?.value || '');
+  const primary = isPrimaryYear(getSelectedStudentYearInt());
   const wrap = $('asg-science-component-wrap');
   const select = $('asg-science-component');
   if (!wrap || !select) return;
-  if (subject === 'science') {
+  if (!primary && subject === 'science') {
     wrap.style.display = '';
     return;
   }
@@ -336,10 +441,11 @@ function updateScienceComponentVisibility() {
 
 function updateEnglishTypeVisibility() {
   const subject = normalizeSubject($('asg-subject')?.value || '');
+  const primary = isPrimaryYear(getSelectedStudentYearInt());
   const wrap = $('asg-english-type-wrap');
   const select = $('asg-english-type');
   if (!wrap || !select) return;
-  if (subject === 'english') {
+  if (!primary && subject === 'english') {
     wrap.style.display = '';
     return;
   }
@@ -349,16 +455,36 @@ function updateEnglishTypeVisibility() {
 
 function updateTopicVisibility() {
   const subject = normalizeSubject($('asg-subject')?.value || '');
+  const primary = isPrimaryYear(getSelectedStudentYearInt());
   const wrap = $('asg-topic-wrap');
   const topicSelect = $('asg-topic');
   if (!wrap || !topicSelect) return;
-  if (subject === 'maths') {
+  if (primary || subject === 'maths') {
     wrap.style.display = '';
     return;
   }
   wrap.style.display = 'none';
   topicSelect.value = '';
   setSelectOptions(topicSelect, [], 'Select a unit first');
+}
+
+function updateSubjectOptionsByYear() {
+  const subjectSelect = $('asg-subject');
+  if (!subjectSelect) return;
+  const current = subjectSelect.value || '';
+  const primary = isPrimaryYear(getSelectedStudentYearInt());
+  const opts = primary ? PRIMARY_SUBJECT_OPTIONS : DEFAULT_SUBJECT_OPTIONS;
+  setSelectOptions(subjectSelect, opts, 'Select subject');
+  if (opts.some((o) => o.value === current)) {
+    subjectSelect.value = current;
+  } else if (opts.length) {
+    subjectSelect.value = opts[0].value;
+  }
+}
+
+async function handleStudentChange() {
+  updateSubjectOptionsByYear();
+  await handleSubjectChange();
 }
 
 function countWords(text) {
@@ -449,8 +575,18 @@ function setSelectOptions(el, options, emptyLabel) {
 
 function updateExamBoardOptionsBySubject() {
   const subject = normalizeSubject($('asg-subject')?.value || '');
+  const primary = isPrimaryYear(getSelectedStudentYearInt());
   const examSelect = $('asg-exam-board');
+  const examWrap = $('asg-exam-board-wrap');
   if (!examSelect) return;
+
+  if (examWrap) examWrap.style.display = primary ? 'none' : '';
+
+  if (primary) {
+    setSelectOptions(examSelect, [{ value: '', label: 'Primary curriculum (no exam board)' }], 'Primary curriculum');
+    examSelect.value = '';
+    return;
+  }
 
   if (subject === 'maths') {
     setSelectOptions(examSelect, [{ value: 'edexcel', label: 'Edexcel' }], 'Edexcel');
@@ -578,7 +714,7 @@ async function loadStudentsForTutor() {
       reviewStudentSelect.appendChild(c);
     }
   });
-  await loadUnitsForAssignmentForm();
+  await handleStudentChange();
 }
 
 async function loadUnitsForAssignmentForm() {
@@ -586,6 +722,8 @@ async function loadUnitsForAssignmentForm() {
   const studentId = $('asg-student')?.value || '';
   const subjectRaw = $('asg-subject')?.value || '';
   const subjectNorm = normalizeSubject(subjectRaw);
+  const yearInt = getSelectedStudentYearInt();
+  const primary = isPrimaryYear(yearInt);
   const examBoardRaw = String($('asg-exam-board')?.value || '').trim().toLowerCase();
   const scienceComponent = String($('asg-science-component')?.value || '').trim().toLowerCase();
   const unitSelect = $('asg-unit');
@@ -595,11 +733,25 @@ async function loadUnitsForAssignmentForm() {
 
   if (!studentId || !subjectRaw) {
     setSelectOptions(unitSelect, [], 'Select student + subject first');
+    updateMathsTopicOptions();
+    return;
+  }
+
+  if (primary) {
+    const unitMap = PRIMARY_CURRICULUM[yearInt]?.[subjectNorm] || {};
+    const units = Object.keys(unitMap).map((unit) => ({
+      value: `manual::${unit}`,
+      label: unit
+    }));
+    setSelectOptions(unitSelect, units, 'No units found for this year/subject');
+    if (units.length) unitSelect.value = units[0].value;
+    updateMathsTopicOptions();
     return;
   }
 
   if (!examBoardRaw) {
     setSelectOptions(unitSelect, [], 'Select exam board first');
+    updateMathsTopicOptions();
     return;
   }
 
@@ -627,6 +779,7 @@ async function loadUnitsForAssignmentForm() {
     }));
     setSelectOptions(unitSelect, manual, 'No units found');
     if (manual.length) unitSelect.value = manual[0].value;
+    updateMathsTopicOptions();
     return;
   }
 
@@ -676,19 +829,26 @@ async function loadUnitsForAssignmentForm() {
 
 function updateMathsTopicOptions() {
   const subjectNorm = normalizeSubject($('asg-subject')?.value || '');
+  const yearInt = getSelectedStudentYearInt();
+  const primary = isPrimaryYear(yearInt);
   const unitVal = String($('asg-unit')?.value || '');
   const topicSelect = $('asg-topic');
   if (!topicSelect) return;
 
-  if (subjectNorm !== 'maths') {
+  if (!primary && subjectNorm !== 'maths') {
     setSelectOptions(topicSelect, [], 'Select a unit first');
     return;
   }
 
-  const grade = unitVal.startsWith('manual::') ? unitVal.replace('manual::', '') : '';
-  const topics = MATHS_GRADE_TOPICS[grade] || [];
+  const selectedUnit = unitVal.startsWith('manual::') ? unitVal.replace('manual::', '') : '';
+  let topics = [];
+  if (primary) {
+    topics = PRIMARY_CURRICULUM[yearInt]?.[subjectNorm]?.[selectedUnit] || [];
+  } else {
+    topics = MATHS_GRADE_TOPICS[selectedUnit] || [];
+  }
   const options = topics.map((topic) => ({ value: topic, label: topic }));
-  setSelectOptions(topicSelect, options, 'No topics for this grade');
+  setSelectOptions(topicSelect, options, primary ? 'No lessons for this unit' : 'No topics for this grade');
   if (options.length) topicSelect.value = options[0].value;
 }
 
@@ -1119,11 +1279,12 @@ async function createAssignment() {
   const manualUnit = selectedUnitValue.startsWith('manual::') ? selectedUnitValue.replace('manual::', '') : '';
   const dbUnitId = manualUnit ? null : unitId;
   const subjectNorm = normalizeSubject(subject);
+  const primary = isPrimaryYear(getSelectedStudentYearInt());
   const assignmentDescription = [
     tier ? `Tier: ${tier}` : '',
     (subjectNorm === 'english' && englishType) ? `English: ${englishType}` : '',
     manualUnit ? `Unit: ${manualUnit}` : '',
-    (subjectNorm === 'maths' && topic) ? `Topic: ${topic}` : '',
+    ((subjectNorm === 'maths' || primary) && topic) ? `${primary ? 'Lesson' : 'Topic'}: ${topic}` : '',
     description
   ].filter(Boolean).join('\n') || null;
 
@@ -1132,7 +1293,7 @@ async function createAssignment() {
     return;
   }
 
-  if (!examBoardRaw) {
+  if (!primary && !examBoardRaw) {
     showMsg($('asg-msg'), 'Select an exam board first.', 'err');
     return;
   }
@@ -1142,8 +1303,8 @@ async function createAssignment() {
     return;
   }
 
-  if (subjectNorm === 'maths' && !topic) {
-    showMsg($('asg-msg'), 'Select a maths topic.', 'err');
+  if ((subjectNorm === 'maths' || primary) && !topic) {
+    showMsg($('asg-msg'), primary ? 'Select a lesson.' : 'Select a maths topic.', 'err');
     return;
   }
 
@@ -1678,12 +1839,13 @@ async function bootstrap() {
   safeBind('btn-save-review', 'click', createProgressReview);
   safeBind('btn-tab-dashboard', 'click', async () => switchSection('dashboard'));
   safeBind('btn-tab-reviews', 'click', async () => switchSection('reviews'));
-  safeBind('asg-student', 'change', loadUnitsForAssignmentForm);
+  safeBind('asg-student', 'change', handleStudentChange);
   safeBind('asg-subject', 'change', handleSubjectChange);
   safeBind('asg-exam-board', 'change', loadUnitsForAssignmentForm);
   safeBind('asg-science-component', 'change', loadUnitsForAssignmentForm);
   safeBind('asg-english-type', 'change', loadUnitsForAssignmentForm);
   safeBind('asg-unit', 'change', updateMathsTopicOptions);
+  updateSubjectOptionsByYear();
   updateExamBoardOptionsBySubject();
   updateScienceComponentVisibility();
   updateEnglishTypeVisibility();
