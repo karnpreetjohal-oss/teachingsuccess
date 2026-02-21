@@ -98,6 +98,29 @@ function parseKeywordCsv(value) {
     .filter(Boolean);
 }
 
+function subjectNeedsTier(value) {
+  const s = normalizeSubject(value);
+  return s === 'maths' || s === 'science';
+}
+
+function updateTierVisibility() {
+  const subject = $('asg-subject')?.value || '';
+  const wrap = $('asg-tier-wrap');
+  const tier = $('asg-tier');
+  if (!wrap || !tier) return;
+  if (subjectNeedsTier(subject)) {
+    wrap.style.display = '';
+    return;
+  }
+  wrap.style.display = 'none';
+  tier.value = '';
+}
+
+async function handleSubjectChange() {
+  updateTierVisibility();
+  await loadUnitsForAssignmentForm();
+}
+
 function countWords(text) {
   const t = String(text || '').trim();
   if (!t) return 0;
@@ -300,28 +323,23 @@ async function loadUnitsForAssignmentForm() {
   const subjectRaw = $('asg-subject')?.value || '';
   const examBoardRaw = String($('asg-exam-board')?.value || '').trim().toLowerCase();
   const unitSelect = $('asg-unit');
-  const lessonSelect = $('asg-lesson');
 
   // Clear dependent selectors immediately so stale options disappear as soon as inputs change.
   setSelectOptions(unitSelect, [], 'Loading units...');
-  setSelectOptions(lessonSelect, [], 'Select a unit first');
 
   if (!studentId || !subjectRaw) {
     setSelectOptions(unitSelect, [], 'Select student + subject first');
-    setSelectOptions(lessonSelect, [], 'Select a unit first');
     return;
   }
 
   if (!examBoardRaw) {
     setSelectOptions(unitSelect, [], 'Select exam board first');
-    setSelectOptions(lessonSelect, [], 'Select a unit first');
     return;
   }
 
   const subjectList = subjectVariants(subjectRaw);
   if (!subjectList.length) {
     setSelectOptions(unitSelect, [], 'No units for selected subject');
-    setSelectOptions(lessonSelect, [], 'Select a unit first');
     return;
   }
 
@@ -347,7 +365,6 @@ async function loadUnitsForAssignmentForm() {
   if (error) {
     console.warn('loadUnitsForAssignmentForm error:', error.message);
     setSelectOptions(unitSelect, [], 'Could not load units');
-    setSelectOptions(lessonSelect, [], 'Select a unit first');
     return;
   }
 
@@ -360,42 +377,7 @@ async function loadUnitsForAssignmentForm() {
   }));
 
   setSelectOptions(unitSelect, options, 'No matching units for this student/subject');
-  setSelectOptions(lessonSelect, [], 'Select a unit first');
-  if (options.length) {
-    unitSelect.value = options[0].value;
-    await loadLessonsForAssignmentForm();
-  }
-}
-
-async function loadLessonsForAssignmentForm() {
-  const loadSeq = ++unitLoadSeq;
-  const unitId = $('asg-unit')?.value || '';
-  const lessonSelect = $('asg-lesson');
-  setSelectOptions(lessonSelect, [], 'Loading lessons...');
-  if (!unitId) {
-    setSelectOptions(lessonSelect, [], 'Select a unit first');
-    return;
-  }
-
-  const { data, error } = await sb
-    .from('curriculum_lessons')
-    .select('id,lesson_order,lesson_title')
-    .eq('unit_id', unitId)
-    .order('lesson_order', { ascending: true })
-    .order('lesson_title', { ascending: true });
-
-  if (loadSeq !== unitLoadSeq) return; // ignore stale async responses
-  if (error) {
-    console.warn('loadLessonsForAssignmentForm error:', error.message);
-    setSelectOptions(lessonSelect, [], 'Could not load lessons');
-    return;
-  }
-
-  const options = (data || []).map((l) => ({
-    value: l.id,
-    label: `L${l.lesson_order} · ${l.lesson_title}`
-  }));
-  setSelectOptions(lessonSelect, options, 'No lessons in this unit');
+  if (options.length) unitSelect.value = options[0].value;
 }
 
 async function loadParentsForTutor() {
@@ -809,6 +791,7 @@ async function createAssignment() {
   const title = $('asg-title').value.trim();
   const dueDate = $('asg-due').value || null;
   const description = $('asg-desc').value.trim();
+  const tier = $('asg-tier')?.value || '';
   const resourceTitle = $('asg-resource-title').value.trim();
   const resourceUrl = $('asg-resource-url').value.trim();
   const automarkEnabled = Boolean($('asg-automark-enabled')?.checked);
@@ -817,8 +800,8 @@ async function createAssignment() {
   const examBoardRaw = $('asg-exam-board') ? String($('asg-exam-board').value || '').trim().toLowerCase() : '';
   const examBoard = examBoardRaw && examBoardRaw !== 'none' ? examBoardRaw : null;
   const unitId = $('asg-unit')?.value || null;
-  const lessonId = $('asg-lesson')?.value || null;
   const file = $('asg-file')?.files?.[0] || null;
+  const assignmentDescription = tier ? `Tier: ${tier}\n${description}`.trim() : (description || null);
 
   if (!studentId || !title) {
     showMsg($('asg-msg'), 'Select a student and add a title.', 'err');
@@ -830,6 +813,11 @@ async function createAssignment() {
     return;
   }
 
+  if (subjectNeedsTier(subject) && !tier) {
+    showMsg($('asg-msg'), 'Select a tier (Foundation or Higher).', 'err');
+    return;
+  }
+
   const studentProfile = tutorStudentsById.get(studentId) || null;
 
   const payload = {
@@ -837,7 +825,7 @@ async function createAssignment() {
     student_id: studentId,
     subject,
     title,
-    description: description || null,
+    description: assignmentDescription,
     due_date: dueDate,
     status: 'assigned',
     resource_title: resourceTitle || null,
@@ -845,7 +833,6 @@ async function createAssignment() {
     year_group: parseYearGroupInt(studentProfile?.year_group),
     exam_board: examBoard || null,
     unit_id: unitId || null,
-    lesson_id: lessonId || null,
     automark_enabled: automarkEnabled,
     automark_keywords: parseKeywordCsv(automarkKeywordsCsv),
     automark_target_words: automarkTargetWordsRaw === '' ? null : Number(automarkTargetWordsRaw)
@@ -887,9 +874,10 @@ async function createAssignment() {
   if ($('asg-automark-keywords')) $('asg-automark-keywords').value = '';
   if ($('asg-automark-target-words')) $('asg-automark-target-words').value = '';
   if ($('asg-exam-board')) $('asg-exam-board').value = '';
+  if ($('asg-tier')) $('asg-tier').value = '';
   if ($('asg-file')) $('asg-file').value = '';
   if ($('asg-unit')) $('asg-unit').value = '';
-  if ($('asg-lesson')) $('asg-lesson').value = '';
+  updateTierVisibility();
   await loadUnitsForAssignmentForm();
 
   showMsg($('asg-msg'), 'Assignment created.', 'ok');
@@ -1350,9 +1338,9 @@ async function bootstrap() {
   safeBind('btn-tab-dashboard', 'click', async () => switchSection('dashboard'));
   safeBind('btn-tab-reviews', 'click', async () => switchSection('reviews'));
   safeBind('asg-student', 'change', loadUnitsForAssignmentForm);
-  safeBind('asg-subject', 'change', loadUnitsForAssignmentForm);
+  safeBind('asg-subject', 'change', handleSubjectChange);
   safeBind('asg-exam-board', 'change', loadUnitsForAssignmentForm);
-  safeBind('asg-unit', 'change', loadLessonsForAssignmentForm);
+  updateTierVisibility();
 
   bindListActions();
 
