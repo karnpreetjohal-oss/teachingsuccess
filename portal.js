@@ -20,6 +20,8 @@ let sb = null;
 let currentUser = null;
 let currentProfile = null;
 let tutorStudentsById = new Map();
+let unitLoadSeq = 0;
+let activeSection = 'dashboard';
 
 function showMsg(el, text, type = 'ok') {
   if (!el) return;
@@ -47,6 +49,12 @@ function formatDate(value) {
   if (!value) return 'No due date';
   const d = new Date(`${value}T00:00:00`);
   return d.toLocaleDateString();
+}
+
+function formatDateTime(value) {
+  if (!value) return '-';
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? '-' : d.toLocaleString();
 }
 
 function safeFileName(name) {
@@ -83,10 +91,61 @@ function normalizeSubject(value) {
   return raw;
 }
 
+function parseKeywordCsv(value) {
+  return String(value || '')
+    .split(',')
+    .map((x) => x.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+function countWords(text) {
+  const t = String(text || '').trim();
+  if (!t) return 0;
+  return t.split(/\s+/).filter(Boolean).length;
+}
+
+function autoGradeFromPercent(percent) {
+  const p = Number(percent);
+  if (p >= 90) return 'A*';
+  if (p >= 80) return 'A';
+  if (p >= 70) return 'B';
+  if (p >= 60) return 'C';
+  if (p >= 50) return 'D';
+  return 'E';
+}
+
+function calculateAutoMark(notes, keywords, targetWords) {
+  const normalized = String(notes || '').toLowerCase();
+  const words = countWords(notes);
+  const kw = Array.isArray(keywords) ? keywords.filter(Boolean) : [];
+  const hits = kw.filter((k) => normalized.includes(k));
+  const keywordRatio = kw.length ? (hits.length / kw.length) : 1;
+  const keywordScore = keywordRatio * 70;
+  const wcTarget = Number(targetWords || 0);
+  const wcRatio = wcTarget > 0 ? Math.min(words / wcTarget, 1) : 1;
+  const lengthScore = wcRatio * 30;
+  const score = Math.max(0, Math.min(100, Math.round(keywordScore + lengthScore)));
+
+  const feedbackParts = [];
+  if (kw.length) feedbackParts.push(`Keywords matched: ${hits.length}/${kw.length}`);
+  if (wcTarget > 0) feedbackParts.push(`Word count: ${words}/${wcTarget}`);
+  if (!feedbackParts.length) feedbackParts.push(`Word count: ${words}`);
+
+  return {
+    score,
+    grade: autoGradeFromPercent(score),
+    feedback: `Auto-mark: ${feedbackParts.join(' · ')}`,
+    keywordHits: hits,
+    wordCount: words
+  };
+}
+
 function subjectVariants(value) {
   const s = normalizeSubject(value);
-  if (s === 'maths') return ['maths', 'math'];
-  if (s === '11+') return ['11+', '11 plus', 'eleven_plus', 'eleven plus'];
+  if (s === 'maths') return ['maths', 'math', 'mathematics'];
+  if (s === 'english') return ['english', 'eng'];
+  if (s === 'science') return ['science', 'combined_science', 'combined science', 'biology', 'chemistry', 'physics'];
+  if (s === '11+') return ['11+', '11 plus', 'eleven_plus', 'eleven plus', '11plus'];
   return s ? [s] : [];
 }
 
@@ -123,6 +182,14 @@ function setSelectOptions(el, options, emptyLabel) {
     o.textContent = opt.label;
     el.appendChild(o);
   });
+}
+
+function setActiveSection(section) {
+  activeSection = section;
+  $('section-dashboard')?.classList.toggle('hidden', section !== 'dashboard');
+  $('section-reviews')?.classList.toggle('hidden', section !== 'reviews');
+  $('btn-tab-dashboard')?.classList.toggle('active', section === 'dashboard');
+  $('btn-tab-reviews')?.classList.toggle('active', section === 'reviews');
 }
 
 async function ensureProfile(user) {
@@ -192,13 +259,16 @@ async function loadStudentsForTutor() {
   if (error) throw error;
   const studentSelect = $('asg-student');
   const linkStudentSelect = $('link-student');
+  const reviewStudentSelect = $('review-student');
   tutorStudentsById = new Map((data || []).map((x) => [x.id, x]));
   studentSelect.innerHTML = '';
   linkStudentSelect.innerHTML = '';
+  if (reviewStudentSelect) reviewStudentSelect.innerHTML = '';
 
   if (!data.length) {
     studentSelect.innerHTML = '<option value="">No student accounts yet</option>';
     linkStudentSelect.innerHTML = '<option value="">No student accounts yet</option>';
+    if (reviewStudentSelect) reviewStudentSelect.innerHTML = '<option value="">No student accounts yet</option>';
     return;
   }
 
@@ -213,19 +283,37 @@ async function loadStudentsForTutor() {
     b.value = st.id;
     b.textContent = txt;
     linkStudentSelect.appendChild(b);
+
+    if (reviewStudentSelect) {
+      const c = document.createElement('option');
+      c.value = st.id;
+      c.textContent = txt;
+      reviewStudentSelect.appendChild(c);
+    }
   });
   await loadUnitsForAssignmentForm();
 }
 
 async function loadUnitsForAssignmentForm() {
+  const loadSeq = ++unitLoadSeq;
   const studentId = $('asg-student')?.value || '';
   const subjectRaw = $('asg-subject')?.value || '';
   const examBoardRaw = String($('asg-exam-board')?.value || '').trim().toLowerCase();
   const unitSelect = $('asg-unit');
   const lessonSelect = $('asg-lesson');
 
+  // Clear dependent selectors immediately so stale options disappear as soon as inputs change.
+  setSelectOptions(unitSelect, [], 'Loading units...');
+  setSelectOptions(lessonSelect, [], 'Select a unit first');
+
   if (!studentId || !subjectRaw) {
     setSelectOptions(unitSelect, [], 'Select student + subject first');
+    setSelectOptions(lessonSelect, [], 'Select a unit first');
+    return;
+  }
+
+  if (!examBoardRaw) {
+    setSelectOptions(unitSelect, [], 'Select exam board first');
     setSelectOptions(lessonSelect, [], 'Select a unit first');
     return;
   }
@@ -243,15 +331,19 @@ async function loadUnitsForAssignmentForm() {
   let query = sb
     .from('curriculum_units')
     .select('id,year_group,subject,unit_title,unit_order,exam_board,course')
-    .in('subject', subjectList)
     .order('year_group', { ascending: true })
     .order('unit_order', { ascending: true, nullsFirst: false })
     .order('unit_title', { ascending: true });
 
   if (years.length) query = query.in('year_group', years);
-  if (examBoardRaw) query = query.ilike('exam_board', examBoardRaw);
+  if (examBoardRaw === 'none') {
+    query = query.is('exam_board', null);
+  } else {
+    query = query.ilike('exam_board', examBoardRaw);
+  }
 
   const { data, error } = await query;
+  if (loadSeq !== unitLoadSeq) return; // ignore stale async responses
   if (error) {
     console.warn('loadUnitsForAssignmentForm error:', error.message);
     setSelectOptions(unitSelect, [], 'Could not load units');
@@ -259,9 +351,12 @@ async function loadUnitsForAssignmentForm() {
     return;
   }
 
-  const options = (data || []).map((u) => ({
+  const allowedSubjects = new Set(subjectList.map((x) => normalizeSubject(x)));
+  const filteredUnits = (data || []).filter((u) => allowedSubjects.has(normalizeSubject(u.subject)));
+
+  const options = filteredUnits.map((u) => ({
     value: u.id,
-    label: `Y${u.year_group} · ${u.unit_title}${u.exam_board ? ` · ${String(u.exam_board).toUpperCase()}` : ''}${u.course ? ` · ${u.course}` : ''}`
+    label: `Y${u.year_group} · ${u.unit_title}${u.course ? ` · ${u.course}` : ''}`
   }));
 
   setSelectOptions(unitSelect, options, 'No matching units for this student/subject');
@@ -273,8 +368,10 @@ async function loadUnitsForAssignmentForm() {
 }
 
 async function loadLessonsForAssignmentForm() {
+  const loadSeq = ++unitLoadSeq;
   const unitId = $('asg-unit')?.value || '';
   const lessonSelect = $('asg-lesson');
+  setSelectOptions(lessonSelect, [], 'Loading lessons...');
   if (!unitId) {
     setSelectOptions(lessonSelect, [], 'Select a unit first');
     return;
@@ -287,6 +384,7 @@ async function loadLessonsForAssignmentForm() {
     .order('lesson_order', { ascending: true })
     .order('lesson_title', { ascending: true });
 
+  if (loadSeq !== unitLoadSeq) return; // ignore stale async responses
   if (error) {
     console.warn('loadLessonsForAssignmentForm error:', error.message);
     setSelectOptions(lessonSelect, [], 'Could not load lessons');
@@ -358,6 +456,9 @@ function tutorItemHtml(a) {
     ? `
       <div style="margin-top:.65rem;border-top:1px solid var(--border);padding-top:.65rem">
         <p class="muted" style="margin-bottom:.35rem"><b>Student Notes:</b> ${a.submission.notes || 'No notes added.'}</p>
+        ${a.submission.auto_mark !== null && a.submission.auto_mark !== undefined
+          ? `<p class="muted" style="margin-bottom:.35rem"><b>Auto-Mark Suggestion:</b> ${a.submission.auto_mark}% (${a.submission.auto_grade || '-'}) · ${a.submission.auto_feedback || ''}</p>`
+          : ''}
         <div class="row">
           <div><label>Mark (%)</label><input id="mark-${a.id}" type="number" min="0" max="100" step="0.1" value="${a.submission.mark ?? ''}"></div>
           <div><label>Grade</label><input id="grade-${a.id}" type="text" placeholder="e.g. 7 / B+ / A*" value="${a.submission.grade || ''}"></div>
@@ -397,6 +498,9 @@ function studentItemHtml(a) {
   const gradeHtml = a.submission
     ? `
       <p class="muted" style="margin:.35rem 0"><b>Mark:</b> ${a.submission.mark ?? '-'} · <b>Grade:</b> ${a.submission.grade || '-'}</p>
+      ${a.submission.auto_mark !== null && a.submission.auto_mark !== undefined
+        ? `<p class="muted" style="margin:.25rem 0"><b>Auto-Mark:</b> ${a.submission.auto_mark}% (${a.submission.auto_grade || '-'})</p>`
+        : ''}
       <p class="muted" style="margin-bottom:.45rem"><b>Tutor Feedback:</b> ${a.submission.tutor_feedback || 'No feedback yet.'}</p>
     `
     : '';
@@ -450,6 +554,9 @@ function parentItemHtml(a) {
       <p class="muted">${desc}</p>
       ${attachmentButtonHtml(a, 'parent')}
       <p class="muted" style="margin:.35rem 0"><b>Mark:</b> ${a.submission?.mark ?? '-'} · <b>Grade:</b> ${a.submission?.grade || '-'}</p>
+      ${a.submission?.auto_mark !== null && a.submission?.auto_mark !== undefined
+        ? `<p class="muted" style="margin:.25rem 0"><b>Auto-Mark:</b> ${a.submission.auto_mark}% (${a.submission.auto_grade || '-'})</p>`
+        : ''}
       <p class="muted" style="margin-bottom:.35rem"><b>Tutor Feedback:</b> ${a.submission?.tutor_feedback || 'No feedback yet.'}</p>
     </article>
   `;
@@ -462,6 +569,25 @@ function parentLinkItemHtml(link) {
     <article class="item">
       <h3>${p}</h3>
       <div class="meta"><span class="tag">Linked student: ${s}</span></div>
+    </article>
+  `;
+}
+
+function reviewItemHtml(r, showStudent = false) {
+  const studentLabel = r.student?.full_name || r.student?.email || r.student_id;
+  const confidence = r.confidence_pct === null || r.confidence_pct === undefined ? '-' : `${Math.round(Number(r.confidence_pct))}%`;
+  return `
+    <article class="item">
+      <h3>${escapeHtml(r.predicted_grade || 'Predicted grade not set')}</h3>
+      <div class="meta">
+        ${showStudent ? `<span class="tag">${escapeHtml(studentLabel)}</span>` : ''}
+        <span class="tag">Period: ${escapeHtml(r.period_label || 'General')}</span>
+        <span class="tag">Confidence: ${escapeHtml(confidence)}</span>
+        <span class="tag">Updated: ${escapeHtml(formatDateTime(r.created_at))}</span>
+      </div>
+      <p class="muted"><b>Doing Well:</b> ${escapeHtml(r.doing_well || 'Not specified')}</p>
+      <p class="muted"><b>Needs Help:</b> ${escapeHtml(r.needs_help || 'Not specified')}</p>
+      <p class="muted"><b>Next Steps:</b> ${escapeHtml(r.action_plan || 'Not specified')}</p>
     </article>
   `;
 }
@@ -480,6 +606,60 @@ async function renderParentLinksForTutor() {
   $('parent-links-list').innerHTML = (data || []).length
     ? data.map(parentLinkItemHtml).join('')
     : '<p class="muted">No parent links yet.</p>';
+}
+
+async function renderTutorReviews() {
+  const { data, error } = await sb
+    .from('student_progress_reviews')
+    .select(`
+      id,tutor_id,student_id,period_label,predicted_grade,confidence_pct,doing_well,needs_help,action_plan,created_at,
+      student:profiles!student_progress_reviews_student_id_fkey(full_name,email,year_group)
+    `)
+    .eq('tutor_id', currentUser.id)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  $('tutor-reviews-list').innerHTML = (data || []).length
+    ? data.map((r) => reviewItemHtml(r, true)).join('')
+    : '<p class="muted">No progress reviews yet.</p>';
+}
+
+async function renderStudentReviews() {
+  const { data, error } = await sb
+    .from('student_progress_reviews')
+    .select('id,student_id,period_label,predicted_grade,confidence_pct,doing_well,needs_help,action_plan,created_at')
+    .eq('student_id', currentUser.id)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  $('student-reviews-list').innerHTML = (data || []).length
+    ? data.map((r) => reviewItemHtml(r, false)).join('')
+    : '<p class="muted">No progress reviews yet.</p>';
+}
+
+async function renderParentReviews() {
+  const { data: links, error: linksErr } = await sb
+    .from('parent_student_links')
+    .select('student_id')
+    .eq('parent_id', currentUser.id);
+  if (linksErr) throw linksErr;
+  const studentIds = [...new Set((links || []).map((x) => x.student_id).filter(Boolean))];
+  if (!studentIds.length) {
+    $('parent-reviews-list').innerHTML = '<p class="muted">No linked students yet.</p>';
+    return;
+  }
+
+  const { data, error } = await sb
+    .from('student_progress_reviews')
+    .select(`
+      id,tutor_id,student_id,period_label,predicted_grade,confidence_pct,doing_well,needs_help,action_plan,created_at,
+      student:profiles!student_progress_reviews_student_id_fkey(full_name,email,year_group)
+    `)
+    .in('student_id', studentIds)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+
+  $('parent-reviews-list').innerHTML = (data || []).length
+    ? data.map((r) => reviewItemHtml(r, true)).join('')
+    : '<p class="muted">No progress reviews for linked students yet.</p>';
 }
 
 async function renderTutorDashboard() {
@@ -506,7 +686,7 @@ async function renderTutorDashboard() {
   if (assignmentIds.length) {
     const { data: subs, error: subErr } = await sb
       .from('submissions')
-      .select('assignment_id,notes,submitted_at,mark,grade,tutor_feedback,graded_at')
+      .select('assignment_id,notes,submitted_at,mark,grade,tutor_feedback,graded_at,auto_mark,auto_grade,auto_feedback,auto_graded_at')
       .in('assignment_id', assignmentIds);
     if (subErr) throw subErr;
     submissionMap = new Map((subs || []).map((s) => [s.assignment_id, s]));
@@ -541,7 +721,7 @@ async function renderStudentAssignments() {
   if (assignmentIds.length) {
     const { data: subs, error: subErr } = await sb
       .from('submissions')
-      .select('assignment_id,notes,submitted_at,mark,grade,tutor_feedback,graded_at')
+      .select('assignment_id,notes,submitted_at,mark,grade,tutor_feedback,graded_at,auto_mark,auto_grade,auto_feedback,auto_graded_at')
       .eq('student_id', currentUser.id)
       .in('assignment_id', assignmentIds);
     if (subErr) throw subErr;
@@ -604,7 +784,7 @@ async function renderParentTracker() {
   if (assignmentIds.length) {
     const { data: subs, error: subErr } = await sb
       .from('submissions')
-      .select('assignment_id,notes,submitted_at,mark,grade,tutor_feedback,graded_at')
+      .select('assignment_id,notes,submitted_at,mark,grade,tutor_feedback,graded_at,auto_mark,auto_grade,auto_feedback,auto_graded_at')
       .in('assignment_id', assignmentIds);
     if (subErr) throw subErr;
     submissionMap = new Map((subs || []).map((s) => [s.assignment_id, s]));
@@ -631,13 +811,22 @@ async function createAssignment() {
   const description = $('asg-desc').value.trim();
   const resourceTitle = $('asg-resource-title').value.trim();
   const resourceUrl = $('asg-resource-url').value.trim();
-  const examBoard = $('asg-exam-board') ? String($('asg-exam-board').value || '').trim().toLowerCase() : null;
+  const automarkEnabled = Boolean($('asg-automark-enabled')?.checked);
+  const automarkKeywordsCsv = $('asg-automark-keywords')?.value?.trim() || '';
+  const automarkTargetWordsRaw = $('asg-automark-target-words')?.value?.trim() || '';
+  const examBoardRaw = $('asg-exam-board') ? String($('asg-exam-board').value || '').trim().toLowerCase() : '';
+  const examBoard = examBoardRaw && examBoardRaw !== 'none' ? examBoardRaw : null;
   const unitId = $('asg-unit')?.value || null;
   const lessonId = $('asg-lesson')?.value || null;
   const file = $('asg-file')?.files?.[0] || null;
 
   if (!studentId || !title) {
     showMsg($('asg-msg'), 'Select a student and add a title.', 'err');
+    return;
+  }
+
+  if (!examBoardRaw) {
+    showMsg($('asg-msg'), 'Select an exam board first.', 'err');
     return;
   }
 
@@ -656,7 +845,10 @@ async function createAssignment() {
     year_group: parseYearGroupInt(studentProfile?.year_group),
     exam_board: examBoard || null,
     unit_id: unitId || null,
-    lesson_id: lessonId || null
+    lesson_id: lessonId || null,
+    automark_enabled: automarkEnabled,
+    automark_keywords: parseKeywordCsv(automarkKeywordsCsv),
+    automark_target_words: automarkTargetWordsRaw === '' ? null : Number(automarkTargetWordsRaw)
   };
 
   const { data: created, error: insErr } = await sb
@@ -691,6 +883,9 @@ async function createAssignment() {
   $('asg-desc').value = '';
   $('asg-resource-title').value = '';
   $('asg-resource-url').value = '';
+  if ($('asg-automark-enabled')) $('asg-automark-enabled').checked = false;
+  if ($('asg-automark-keywords')) $('asg-automark-keywords').value = '';
+  if ($('asg-automark-target-words')) $('asg-automark-target-words').value = '';
   if ($('asg-exam-board')) $('asg-exam-board').value = '';
   if ($('asg-file')) $('asg-file').value = '';
   if ($('asg-unit')) $('asg-unit').value = '';
@@ -699,6 +894,62 @@ async function createAssignment() {
 
   showMsg($('asg-msg'), 'Assignment created.', 'ok');
   await renderTutorDashboard();
+}
+
+async function createProgressReview() {
+  clearMsg($('review-msg'));
+  const studentId = $('review-student')?.value || '';
+  const period = $('review-period')?.value?.trim() || null;
+  const predictedGrade = $('review-predicted-grade')?.value?.trim() || null;
+  const confidenceRaw = $('review-confidence')?.value?.trim() || '';
+  const strengths = $('review-strengths')?.value?.trim() || null;
+  const support = $('review-support')?.value?.trim() || null;
+  const nextSteps = $('review-next-steps')?.value?.trim() || null;
+
+  if (!studentId) {
+    showMsg($('review-msg'), 'Select a student first.', 'err');
+    return;
+  }
+  if (!predictedGrade) {
+    showMsg($('review-msg'), 'Add a predicted grade.', 'err');
+    return;
+  }
+
+  let confidence = null;
+  if (confidenceRaw !== '') {
+    confidence = Number(confidenceRaw);
+    if (!Number.isFinite(confidence) || confidence < 0 || confidence > 100) {
+      showMsg($('review-msg'), 'Confidence must be between 0 and 100.', 'err');
+      return;
+    }
+  }
+
+  const payload = {
+    tutor_id: currentUser.id,
+    student_id: studentId,
+    period_label: period,
+    predicted_grade: predictedGrade,
+    confidence_pct: confidence,
+    doing_well: strengths,
+    needs_help: support,
+    action_plan: nextSteps
+  };
+
+  const { error } = await sb.from('student_progress_reviews').insert(payload);
+  if (error) {
+    showMsg($('review-msg'), error.message, 'err');
+    return;
+  }
+
+  $('review-period').value = '';
+  $('review-predicted-grade').value = '';
+  $('review-confidence').value = '';
+  $('review-strengths').value = '';
+  $('review-support').value = '';
+  $('review-next-steps').value = '';
+
+  showMsg($('review-msg'), 'Progress review saved.', 'ok');
+  await renderTutorReviews();
 }
 
 async function linkParentToStudent() {
@@ -726,6 +977,54 @@ async function linkParentToStudent() {
 
 async function submitStudentWork(assignmentId) {
   const notes = ($(`notes-${assignmentId}`)?.value || '').trim();
+  const { data: assignment, error: asgErr } = await sb
+    .from('assignments')
+    .select('id,student_id,automark_enabled,automark_keywords,automark_target_words')
+    .eq('id', assignmentId)
+    .eq('student_id', currentUser.id)
+    .maybeSingle();
+  if (asgErr) {
+    alert(`Could not load assignment: ${asgErr.message}`);
+    return;
+  }
+  if (!assignment) {
+    alert('Assignment not found.');
+    return;
+  }
+
+  const { data: existingSubmission, error: exSubErr } = await sb
+    .from('submissions')
+    .select('mark,grade,tutor_feedback')
+    .eq('assignment_id', assignmentId)
+    .eq('student_id', currentUser.id)
+    .maybeSingle();
+  if (exSubErr) {
+    alert(`Could not load current submission: ${exSubErr.message}`);
+    return;
+  }
+
+  let autoFields = {};
+  if (assignment.automark_enabled) {
+    const result = calculateAutoMark(
+      notes,
+      assignment.automark_keywords || [],
+      assignment.automark_target_words || 0
+    );
+    autoFields = {
+      auto_mark: result.score,
+      auto_grade: result.grade,
+      auto_feedback: result.feedback,
+      auto_graded_at: new Date().toISOString()
+    };
+
+    if (!existingSubmission?.mark && existingSubmission?.mark !== 0) {
+      autoFields.mark = result.score;
+      autoFields.grade = result.grade;
+      if (!existingSubmission?.tutor_feedback) {
+        autoFields.tutor_feedback = `Auto-mark generated on submission. ${result.feedback}`;
+      }
+    }
+  }
 
   const { error: submitErr } = await sb
     .from('submissions')
@@ -734,7 +1033,8 @@ async function submitStudentWork(assignmentId) {
         assignment_id: assignmentId,
         student_id: currentUser.id,
         notes: notes || null,
-        submitted_at: new Date().toISOString()
+        submitted_at: new Date().toISOString(),
+        ...autoFields
       },
       { onConflict: 'assignment_id,student_id' }
     );
@@ -873,10 +1173,7 @@ function bindListActions() {
   });
 }
 
-async function renderAppForRole() {
-  $('who-name').textContent = currentProfile.full_name || currentUser.email;
-  $('who-role').textContent = `Role: ${currentProfile.role}`;
-
+async function renderDashboardForRole() {
   if (currentProfile.role === 'tutor') {
     $('tutor-view').classList.remove('hidden');
     $('student-view').classList.add('hidden');
@@ -900,6 +1197,46 @@ async function renderAppForRole() {
   $('student-view').classList.remove('hidden');
   $('parent-view').classList.add('hidden');
   await renderStudentAssignments();
+}
+
+async function renderReviewsForRole() {
+  if (currentProfile.role === 'tutor') {
+    $('tutor-reviews-view').classList.remove('hidden');
+    $('student-reviews-view').classList.add('hidden');
+    $('parent-reviews-view').classList.add('hidden');
+    await loadStudentsForTutor();
+    await renderTutorReviews();
+    return;
+  }
+
+  if (currentProfile.role === 'parent') {
+    $('tutor-reviews-view').classList.add('hidden');
+    $('student-reviews-view').classList.add('hidden');
+    $('parent-reviews-view').classList.remove('hidden');
+    await renderParentReviews();
+    return;
+  }
+
+  $('tutor-reviews-view').classList.add('hidden');
+  $('student-reviews-view').classList.remove('hidden');
+  $('parent-reviews-view').classList.add('hidden');
+  await renderStudentReviews();
+}
+
+async function switchSection(section) {
+  if (section === 'reviews') {
+    await renderReviewsForRole();
+    setActiveSection('reviews');
+    return;
+  }
+  await renderDashboardForRole();
+  setActiveSection('dashboard');
+}
+
+async function renderAppForRole() {
+  $('who-name').textContent = currentProfile.full_name || currentUser.email;
+  $('who-role').textContent = `Role: ${currentProfile.role}`;
+  await switchSection(activeSection || 'dashboard');
 }
 
 async function toSignedIn(user) {
@@ -1004,11 +1341,14 @@ async function bootstrap() {
   });
   safeBind('btn-refresh', 'click', async () => {
     if (!currentUser) return;
-    await renderAppForRole();
+    await switchSection(activeSection);
   });
 
   safeBind('btn-create-asg', 'click', createAssignment);
   safeBind('btn-link-parent', 'click', linkParentToStudent);
+  safeBind('btn-save-review', 'click', createProgressReview);
+  safeBind('btn-tab-dashboard', 'click', async () => switchSection('dashboard'));
+  safeBind('btn-tab-reviews', 'click', async () => switchSection('reviews'));
   safeBind('asg-student', 'change', loadUnitsForAssignmentForm);
   safeBind('asg-subject', 'change', loadUnitsForAssignmentForm);
   safeBind('asg-exam-board', 'change', loadUnitsForAssignmentForm);
