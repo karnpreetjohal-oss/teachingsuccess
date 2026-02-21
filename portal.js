@@ -315,6 +315,7 @@ function updateTierVisibility() {
 async function handleSubjectChange() {
   updateExamBoardOptionsBySubject();
   updateScienceComponentVisibility();
+  updateEnglishTypeVisibility();
   updateTopicVisibility();
   updateTierVisibility();
   await loadUnitsForAssignmentForm();
@@ -326,6 +327,19 @@ function updateScienceComponentVisibility() {
   const select = $('asg-science-component');
   if (!wrap || !select) return;
   if (subject === 'science') {
+    wrap.style.display = '';
+    return;
+  }
+  wrap.style.display = 'none';
+  select.value = '';
+}
+
+function updateEnglishTypeVisibility() {
+  const subject = normalizeSubject($('asg-subject')?.value || '');
+  const wrap = $('asg-english-type-wrap');
+  const select = $('asg-english-type');
+  if (!wrap || !select) return;
+  if (subject === 'english') {
     wrap.style.display = '';
     return;
   }
@@ -441,6 +455,15 @@ function updateExamBoardOptionsBySubject() {
   if (subject === 'maths') {
     setSelectOptions(examSelect, [{ value: 'edexcel', label: 'Edexcel' }], 'Edexcel');
     examSelect.value = 'edexcel';
+    return;
+  }
+
+  if (subject === 'english') {
+    setSelectOptions(examSelect, [
+      { value: 'aqa', label: 'AQA' },
+      { value: 'edexcel', label: 'Edexcel' }
+    ], 'Select exam board first');
+    examSelect.value = '';
     return;
   }
 
@@ -1081,6 +1104,7 @@ async function createAssignment() {
   const dueDate = $('asg-due').value || null;
   const description = $('asg-desc').value.trim();
   const tier = $('asg-tier')?.value || '';
+  const englishType = String($('asg-english-type')?.value || '').trim();
   const resourceTitle = $('asg-resource-title').value.trim();
   const resourceUrl = $('asg-resource-url').value.trim();
   const automarkEnabled = Boolean($('asg-automark-enabled')?.checked);
@@ -1097,6 +1121,7 @@ async function createAssignment() {
   const subjectNorm = normalizeSubject(subject);
   const assignmentDescription = [
     tier ? `Tier: ${tier}` : '',
+    (subjectNorm === 'english' && englishType) ? `English: ${englishType}` : '',
     manualUnit ? `Unit: ${manualUnit}` : '',
     (subjectNorm === 'maths' && topic) ? `Topic: ${topic}` : '',
     description
@@ -1119,6 +1144,11 @@ async function createAssignment() {
 
   if (subjectNorm === 'maths' && !topic) {
     showMsg($('asg-msg'), 'Select a maths topic.', 'err');
+    return;
+  }
+
+  if (subjectNorm === 'english' && !englishType) {
+    showMsg($('asg-msg'), 'Select Language or Literature.', 'err');
     return;
   }
 
@@ -1179,12 +1209,14 @@ async function createAssignment() {
   if ($('asg-automark-target-words')) $('asg-automark-target-words').value = '';
   if ($('asg-exam-board')) $('asg-exam-board').value = '';
   if ($('asg-science-component')) $('asg-science-component').value = '';
+  if ($('asg-english-type')) $('asg-english-type').value = '';
   if ($('asg-tier')) $('asg-tier').value = '';
   if ($('asg-topic')) $('asg-topic').value = '';
   if ($('asg-file')) $('asg-file').value = '';
   if ($('asg-unit')) $('asg-unit').value = '';
   updateExamBoardOptionsBySubject();
   updateScienceComponentVisibility();
+  updateEnglishTypeVisibility();
   updateTopicVisibility();
   updateTierVisibility();
   await loadUnitsForAssignmentForm();
@@ -1650,9 +1682,11 @@ async function bootstrap() {
   safeBind('asg-subject', 'change', handleSubjectChange);
   safeBind('asg-exam-board', 'change', loadUnitsForAssignmentForm);
   safeBind('asg-science-component', 'change', loadUnitsForAssignmentForm);
+  safeBind('asg-english-type', 'change', loadUnitsForAssignmentForm);
   safeBind('asg-unit', 'change', updateMathsTopicOptions);
   updateExamBoardOptionsBySubject();
   updateScienceComponentVisibility();
+  updateEnglishTypeVisibility();
   updateTopicVisibility();
   updateTierVisibility();
 
