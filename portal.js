@@ -1715,12 +1715,21 @@ async function renderReviewsForRole() {
 
 async function switchSection(section) {
   if (section === 'reviews') {
-    await renderReviewsForRole();
     setActiveSection('reviews');
+    try {
+      await renderReviewsForRole();
+    } catch (err) {
+      console.error('Failed to render reviews section:', err);
+    }
     return;
   }
-  await renderDashboardForRole();
+
   setActiveSection('dashboard');
+  try {
+    await renderDashboardForRole();
+  } catch (err) {
+    console.error('Failed to render dashboard section:', err);
+  }
 }
 
 async function renderAppForRole() {
