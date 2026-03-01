@@ -190,6 +190,12 @@ body{font-family:'Outfit',sans-serif;background:var(--cream);color:var(--ink);ov
 .review-dot.active{background:var(--gold);border-color:var(--gold)}
 .review-link{font-size:.83rem;color:var(--green2);font-weight:700;text-decoration:none}
 
+/* FAQ */
+.faq-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem;margin-top:2rem}
+.faq-item{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.1rem 1.2rem}
+.faq-item h3{font-size:1rem;line-height:1.4;margin-bottom:.45rem}
+.faq-item p{color:var(--muted);font-size:.9rem;line-height:1.65}
+
 /* CTA */
 .ctaband{background:#2c3a52;padding:4rem;text-align:center}
 .ctaband h2{font-family:'Fraunces',serif;font-size:2.4rem;font-weight:900;color:white;margin-bottom:.65rem}
@@ -231,6 +237,7 @@ body{font-family:'Outfit',sans-serif;background:var(--cream);color:var(--ink);ov
   .nlinks-side{gap:.65rem;padding-left:.75rem}
   .hero{min-height:60vh}
   .agrid{grid-template-columns:1fr 1fr}.hgrid{grid-template-columns:1fr 1fr}
+  .faq-grid{grid-template-columns:1fr}
   .tgrid,.ttgrid{grid-template-columns:1fr}
 }
 @media(max-width:768px){
@@ -478,6 +485,78 @@ body{font-family:'Outfit',sans-serif;background:var(--cream);color:var(--ink);ov
   "founder":[{"@type":"Person","name":"Kevin Johal"},{"@type":"Person","name":"Serena Johal"}]
 }
 </script>
+<script type="application/ld+json">
+{
+  "@context":"https://schema.org",
+  "@type":"FAQPage",
+  "mainEntity":[
+    {
+      "@type":"Question",
+      "name":"How much does private tuition cost?",
+      "acceptedAnswer":{
+        "@type":"Answer",
+        "text":"Prices start from 15 pounds per hour. Most families book weekly sessions, and exact pricing depends on year group, subject and level. Call 07909 274901 for a tailored quote."
+      }
+    },
+    {
+      "@type":"Question",
+      "name":"Do you have after-school and weekend availability?",
+      "acceptedAnswer":{
+        "@type":"Answer",
+        "text":"Yes. We offer after-school, evening and weekend tuition slots, subject to current availability. The fastest way to secure a preferred time is to book a free trial lesson."
+      }
+    },
+    {
+      "@type":"Question",
+      "name":"Which areas do you cover?",
+      "acceptedAnswer":{
+        "@type":"Answer",
+        "text":"Teaching Success supports families in Smethwick, Birmingham, Oldbury, Bearwood and West Bromwich, with online lessons also available for students further away."
+      }
+    },
+    {
+      "@type":"Question",
+      "name":"Do you offer online and in-person tutoring?",
+      "acceptedAnswer":{
+        "@type":"Answer",
+        "text":"Yes. You can choose online tuition, in-person tuition, or a blended approach depending on your child's needs and your schedule."
+      }
+    },
+    {
+      "@type":"Question",
+      "name":"Is the first lesson really free?",
+      "acceptedAnswer":{
+        "@type":"Answer",
+        "text":"Yes. We offer a free 1-hour trial lesson and consultation so you can assess fit, teaching style and next steps before committing."
+      }
+    },
+    {
+      "@type":"Question",
+      "name":"Who teaches the lessons?",
+      "acceptedAnswer":{
+        "@type":"Answer",
+        "text":"Lessons are taught by Kevin and Serena Johal, both qualified and experienced teachers. Kevin leads secondary and science pathways, while Serena leads primary and English-focused support."
+      }
+    },
+    {
+      "@type":"Question",
+      "name":"How long is each tutoring session?",
+      "acceptedAnswer":{
+        "@type":"Answer",
+        "text":"Most sessions are 60 minutes to allow teaching, practice and feedback in one lesson. We can advise on the best frequency based on your child's starting point and goals."
+      }
+    },
+    {
+      "@type":"Question",
+      "name":"How do you track student progress?",
+      "acceptedAnswer":{
+        "@type":"Answer",
+        "text":"We track progress through lesson feedback, topic mastery checks and regular review points so parents understand what has improved and what we focus on next."
+      }
+    }
+  ]
+}
+</script>
 </head>
 <body>
 
@@ -675,6 +754,47 @@ body{font-family:'Outfit',sans-serif;background:var(--cream);color:var(--ink);ov
     </div>
     <div class="tte" id="review-slide"></div>
     <div class="review-dots" id="review-dots" aria-label="Review navigation"></div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section id="faq" class="section">
+  <div class="eyebrow">Parent Questions</div>
+  <h2 class="sec-h2">Frequently Asked Questions</h2>
+  <p class="sec-sub">Clear answers on pricing, areas, lesson format and how we work with families.</p>
+  <div class="faq-grid">
+    <article class="faq-item">
+      <h3>How much does private tuition cost?</h3>
+      <p>Prices start from <strong>£15 per hour</strong>. Exact pricing depends on year group, subject and level. Call <a href="tel:07909274901">07909 274901</a> for a tailored quote.</p>
+    </article>
+    <article class="faq-item">
+      <h3>Do you have after-school and weekend availability?</h3>
+      <p>Yes. We offer after-school, evening and weekend slots, subject to current availability. Booking a free trial is the quickest way to secure your preferred time.</p>
+    </article>
+    <article class="faq-item">
+      <h3>Which areas do you cover?</h3>
+      <p>We support families across <strong>Smethwick, Birmingham, Oldbury, Bearwood and West Bromwich</strong>. We also teach online if you are outside these areas.</p>
+    </article>
+    <article class="faq-item">
+      <h3>Do you offer online and in-person tutoring?</h3>
+      <p>Yes. You can choose online lessons, in-person lessons, or a blended approach depending on your child’s needs and your family schedule.</p>
+    </article>
+    <article class="faq-item">
+      <h3>Is the first lesson really free?</h3>
+      <p>Yes. We offer a <strong>free 1-hour trial lesson</strong> and consultation so you can check fit, teaching style and next steps before committing.</p>
+    </article>
+    <article class="faq-item">
+      <h3>Who teaches the lessons?</h3>
+      <p>All lessons are taught by <strong>Kevin and Serena Johal</strong>, both qualified teachers. Kevin covers secondary and science pathways, while Serena leads primary and English support.</p>
+    </article>
+    <article class="faq-item">
+      <h3>How long is each tutoring session?</h3>
+      <p>Most sessions are 60 minutes so there is enough time for teaching, guided practice and feedback in one lesson.</p>
+    </article>
+    <article class="faq-item">
+      <h3>How do you track student progress?</h3>
+      <p>We track progress through lesson feedback, topic mastery checks and regular review points so parents can clearly see what has improved and what comes next.</p>
+    </article>
   </div>
 </section>
 
