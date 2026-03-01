@@ -1,0 +1,73 @@
+{
+  "meta": {
+    "version": "1.0",
+    "created_utc": "2026-02-19T22:27:17Z",
+    "notes": "Replace sample objectives with the full dataset. Keep objective_id unique. year_group: 2-11. subject: english|maths|science. exam_board: null except Year 11 (aqa|edexcel|ocr)."
+  },
+  "objectives": [
+    {
+      "objective_id": "ENG.Y2.READ.01",
+      "year_group": 2,
+      "subject": "english",
+      "strand": "reading",
+      "exam_board": null,
+      "objective_text": "Decode words accurately using phonics and common exception words; read with increasing fluency."
+    },
+    {
+      "objective_id": "MAT.Y2.NUM.01",
+      "year_group": 2,
+      "subject": "maths",
+      "strand": "number_place_value",
+      "exam_board": null,
+      "objective_text": "Understand place value to 100; compare and order numbers; use number lines."
+    },
+    {
+      "objective_id": "SCI.Y4.PHY.ELEC.01",
+      "year_group": 4,
+      "subject": "science",
+      "strand": "electricity",
+      "exam_board": null,
+      "objective_text": "Construct simple series circuits and identify conductors and insulators."
+    },
+    {
+      "objective_id": "ENG.Y9.WRT.ARG.01",
+      "year_group": 9,
+      "subject": "english",
+      "strand": "writing_argument",
+      "exam_board": null,
+      "objective_text": "Write a clear argument using logical paragraphing, evidence, and rhetorical devices appropriate to audience and purpose."
+    },
+    {
+      "objective_id": "MAT.Y10.ALG.QUAD.01",
+      "year_group": 10,
+      "subject": "maths",
+      "strand": "algebra_quadratics",
+      "exam_board": null,
+      "objective_text": "Expand, factorise and solve quadratic equations in simple cases; interpret quadratic graphs."
+    },
+    {
+      "objective_id": "ENG.Y11.AQA.LANG.P1.Q2",
+      "year_group": 11,
+      "subject": "english",
+      "strand": "gcse_language_paper1",
+      "exam_board": "aqa",
+      "objective_text": "AQA English Language Paper 1 Q2: analyse how writers use language (methods + effects) with embedded quotations."
+    },
+    {
+      "objective_id": "MAT.Y11.EDEXCEL.EXAM.NP",
+      "year_group": 11,
+      "subject": "maths",
+      "strand": "gcse_exam_nonnegs",
+      "exam_board": "edexcel",
+      "objective_text": "Edexcel GCSE Maths: solve non-routine multi-step problems across topics, showing full reasoning and accuracy under exam conditions."
+    },
+    {
+      "objective_id": "SCI.Y11.OCR.GWY.CHE.C6.01",
+      "year_group": 11,
+      "subject": "science",
+      "strand": "gcse_chemistry",
+      "exam_board": "ocr",
+      "objective_text": "OCR Gateway Chemistry: apply chemical analysis concepts (e.g., tests for gases/ions) and interpret results using scientific reasoning."
+    }
+  ]
+}

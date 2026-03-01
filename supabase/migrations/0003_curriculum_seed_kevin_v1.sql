@@ -1,0 +1,1237 @@
+-- Seed curriculum objectives from supabase/seeds/curriculum_seed_kevin_v1.json
+-- Replaces prior objective set with Kevin v1 list
+
+do $$
+declare
+  col_type text;
+begin
+  select data_type
+  into col_type
+  from information_schema.columns
+  where table_schema = 'public'
+    and table_name = 'curriculum_objectives'
+    and column_name = 'objective_id';
+
+  if col_type is distinct from 'text' then
+    alter table public.assignment_objectives
+      drop constraint if exists assignment_objectives_objective_id_fkey;
+
+    alter table public.objective_mastery
+      drop constraint if exists objective_mastery_objective_id_fkey;
+
+    alter table public.curriculum_objectives
+      alter column objective_id type text using objective_id::text;
+
+    alter table public.assignment_objectives
+      alter column objective_id type text using objective_id::text;
+
+    alter table public.objective_mastery
+      alter column objective_id type text using objective_id::text;
+
+    alter table public.assignment_objectives
+      add constraint assignment_objectives_objective_id_fkey
+      foreign key (objective_id)
+      references public.curriculum_objectives(objective_id)
+      on delete cascade;
+
+    alter table public.objective_mastery
+      add constraint objective_mastery_objective_id_fkey
+      foreign key (objective_id)
+      references public.curriculum_objectives(objective_id)
+      on delete cascade;
+  end if;
+end $$;
+
+with payload as (
+  select $seed$
+{
+  "meta": {
+    "version": "kevin_v1_from_prompt",
+    "created_utc": "2026-02-19T22:39:16Z",
+    "source": "User-provided outline; wildcard IDs expanded to *.01 single objectives per line."
+  },
+  "objectives": [
+    {
+      "objective_id": "ENG.Y2.READ.01",
+      "year_group": 2,
+      "subject": "english",
+      "strand": "reading_word_reading",
+      "exam_board": null,
+      "objective_text": "Word reading: decode accurately; fluency and expression"
+    },
+    {
+      "objective_id": "ENG.Y2.READ.02",
+      "year_group": 2,
+      "subject": "english",
+      "strand": "reading_comprehension",
+      "exam_board": null,
+      "objective_text": "Comprehension: retrieve information; infer from clues; predict; explain vocabulary; discuss books/poems"
+    },
+    {
+      "objective_id": "ENG.Y2.WRT.01",
+      "year_group": 2,
+      "subject": "english",
+      "strand": "writing_composition",
+      "exam_board": null,
+      "objective_text": "Composition: write narratives & real texts; plan/say/write; edit for sense and accuracy"
+    },
+    {
+      "objective_id": "ENG.Y2.WRT.02",
+      "year_group": 2,
+      "subject": "english",
+      "strand": "writing_grammar_punctuation",
+      "exam_board": null,
+      "objective_text": "Grammar & punctuation: expanded noun phrases; conjunctions; tense consistency; apostrophes; sentence types"
+    },
+    {
+      "objective_id": "ENG.Y2.WRT.03",
+      "year_group": 2,
+      "subject": "english",
+      "strand": "writing_transcription",
+      "exam_board": null,
+      "objective_text": "Transcription: spelling patterns; common exception words; handwriting consistency"
+    },
+    {
+      "objective_id": "ENG.Y2.SPK.01",
+      "year_group": 2,
+      "subject": "english",
+      "strand": "spoken_language",
+      "exam_board": null,
+      "objective_text": "Participate in discussions; ask/answer; speak clearly and in full sentences"
+    },
+    {
+      "objective_id": "MAT.Y2.NUM.01",
+      "year_group": 2,
+      "subject": "maths",
+      "strand": "number_place_value",
+      "exam_board": null,
+      "objective_text": "Place value to 100; compare/order; number lines"
+    },
+    {
+      "objective_id": "MAT.Y2.NUM.02",
+      "year_group": 2,
+      "subject": "maths",
+      "strand": "number_add_subtract",
+      "exam_board": null,
+      "objective_text": "Add/sub (2-digit); mental + written methods"
+    },
+    {
+      "objective_id": "MAT.Y2.NUM.03",
+      "year_group": 2,
+      "subject": "maths",
+      "strand": "number_mult_div_foundations",
+      "exam_board": null,
+      "objective_text": "Multiplication/division foundations (2,5,10); arrays; repeated addition"
+    },
+    {
+      "objective_id": "MAT.Y2.FRA.01",
+      "year_group": 2,
+      "subject": "maths",
+      "strand": "fractions_unit",
+      "exam_board": null,
+      "objective_text": "Fractions: 1/2, 1/4, 1/3 of shapes/quantities"
+    },
+    {
+      "objective_id": "MAT.Y2.MEA.01",
+      "year_group": 2,
+      "subject": "maths",
+      "strand": "measurement",
+      "exam_board": null,
+      "objective_text": "Measure/compare/record length, mass, volume, time; money"
+    },
+    {
+      "objective_id": "MAT.Y2.GEO.01",
+      "year_group": 2,
+      "subject": "maths",
+      "strand": "geometry",
+      "exam_board": null,
+      "objective_text": "2D/3D properties; symmetry; position/direction"
+    },
+    {
+      "objective_id": "MAT.Y2.STA.01",
+      "year_group": 2,
+      "subject": "maths",
+      "strand": "statistics",
+      "exam_board": null,
+      "objective_text": "Simple pictograms/tally/charts"
+    },
+    {
+      "objective_id": "SCI.Y2.BIO.01",
+      "year_group": 2,
+      "subject": "science",
+      "strand": "biology_living_things_habitats",
+      "exam_board": null,
+      "objective_text": "Living things & habitats: basic needs, food chains"
+    },
+    {
+      "objective_id": "SCI.Y2.BIO.02",
+      "year_group": 2,
+      "subject": "science",
+      "strand": "biology_plants",
+      "exam_board": null,
+      "objective_text": "Plants: what plants need; growth"
+    },
+    {
+      "objective_id": "SCI.Y2.BIO.03",
+      "year_group": 2,
+      "subject": "science",
+      "strand": "biology_animals_incl_humans",
+      "exam_board": null,
+      "objective_text": "Animals incl. humans: survival needs; health basics"
+    },
+    {
+      "objective_id": "SCI.Y2.CHE.01",
+      "year_group": 2,
+      "subject": "science",
+      "strand": "chemistry_materials",
+      "exam_board": null,
+      "objective_text": "Uses of everyday materials"
+    },
+    {
+      "objective_id": "SCI.Y2.PHY.01",
+      "year_group": 2,
+      "subject": "science",
+      "strand": "physics_forces",
+      "exam_board": null,
+      "objective_text": "Simple forces: pushes/pulls; movement"
+    },
+    {
+      "objective_id": "SCI.Y2.WS.01",
+      "year_group": 2,
+      "subject": "science",
+      "strand": "working_scientifically",
+      "exam_board": null,
+      "objective_text": "Working scientifically: observe, ask questions, simple tests, record, explain"
+    },
+    {
+      "objective_id": "ENG.Y3.READ.01",
+      "year_group": 3,
+      "subject": "english",
+      "strand": "reading",
+      "exam_board": null,
+      "objective_text": "Read a wider range; infer meaning; discuss author choices; use dictionaries"
+    },
+    {
+      "objective_id": "ENG.Y3.WRT.01",
+      "year_group": 3,
+      "subject": "english",
+      "strand": "writing_paragraphs",
+      "exam_board": null,
+      "objective_text": "Organise writing into paragraphs; narratives + non-fiction"
+    },
+    {
+      "objective_id": "ENG.Y3.WRT.02",
+      "year_group": 3,
+      "subject": "english",
+      "strand": "writing_grammar",
+      "exam_board": null,
+      "objective_text": "Grammar: conjunctions/adverbs/prepositions; direct speech punctuation (intro); varied sentence openings"
+    },
+    {
+      "objective_id": "ENG.Y3.WRT.03",
+      "year_group": 3,
+      "subject": "english",
+      "strand": "writing_spelling",
+      "exam_board": null,
+      "objective_text": "Spelling: prefixes, suffixes; homophones; handwriting joins"
+    },
+    {
+      "objective_id": "MAT.Y3.NUM.01",
+      "year_group": 3,
+      "subject": "maths",
+      "strand": "number",
+      "exam_board": null,
+      "objective_text": "Place value to 1000; add/sub; multiplication tables (2,3,4,5,8,10); formal methods begin"
+    },
+    {
+      "objective_id": "MAT.Y3.FRA.01",
+      "year_group": 3,
+      "subject": "maths",
+      "strand": "fractions",
+      "exam_board": null,
+      "objective_text": "Fractions of amounts; equivalence (simple)"
+    },
+    {
+      "objective_id": "MAT.Y3.MEA.01",
+      "year_group": 3,
+      "subject": "maths",
+      "strand": "measurement",
+      "exam_board": null,
+      "objective_text": "Measure; perimeter; time; money"
+    },
+    {
+      "objective_id": "MAT.Y3.GEO.01",
+      "year_group": 3,
+      "subject": "maths",
+      "strand": "geometry",
+      "exam_board": null,
+      "objective_text": "Angles as turns; properties; right angles"
+    },
+    {
+      "objective_id": "MAT.Y3.STA.01",
+      "year_group": 3,
+      "subject": "maths",
+      "strand": "statistics",
+      "exam_board": null,
+      "objective_text": "Bar charts, pictograms; interpret data"
+    },
+    {
+      "objective_id": "SCI.Y3.BIO.01",
+      "year_group": 3,
+      "subject": "science",
+      "strand": "biology",
+      "exam_board": null,
+      "objective_text": "Plants functions; nutrition; skeletons/muscles"
+    },
+    {
+      "objective_id": "SCI.Y3.CHE.01",
+      "year_group": 3,
+      "subject": "science",
+      "strand": "chemistry",
+      "exam_board": null,
+      "objective_text": "Rocks/soils; fossils; simple material properties"
+    },
+    {
+      "objective_id": "SCI.Y3.PHY.01",
+      "year_group": 3,
+      "subject": "science",
+      "strand": "physics",
+      "exam_board": null,
+      "objective_text": "Light (shadows, reflection basics); Forces & magnets"
+    },
+    {
+      "objective_id": "SCI.Y3.WS.01",
+      "year_group": 3,
+      "subject": "science",
+      "strand": "working_scientifically",
+      "exam_board": null,
+      "objective_text": "Fair tests; measure; record; conclude"
+    },
+    {
+      "objective_id": "ENG.Y4.READ.01",
+      "year_group": 4,
+      "subject": "english",
+      "strand": "reading",
+      "exam_board": null,
+      "objective_text": "Retrieval + inference; summarise; identify themes; talk about language choices"
+    },
+    {
+      "objective_id": "ENG.Y4.WRT.01",
+      "year_group": 4,
+      "subject": "english",
+      "strand": "writing_paragraphing",
+      "exam_board": null,
+      "objective_text": "Paragraphing for effect; edit/redraft; expand noun phrases"
+    },
+    {
+      "objective_id": "ENG.Y4.WRT.02",
+      "year_group": 4,
+      "subject": "english",
+      "strand": "writing_grammar",
+      "exam_board": null,
+      "objective_text": "Grammar: fronted adverbials; apostrophes (plural possession); speech punctuation secure"
+    },
+    {
+      "objective_id": "ENG.Y4.WRT.03",
+      "year_group": 4,
+      "subject": "english",
+      "strand": "writing_spelling",
+      "exam_board": null,
+      "objective_text": "Spelling rules; handwriting fluency"
+    },
+    {
+      "objective_id": "MAT.Y4.NUM.01",
+      "year_group": 4,
+      "subject": "maths",
+      "strand": "number",
+      "exam_board": null,
+      "objective_text": "Place value to 10,000; 4 operations; times tables to 12×12"
+    },
+    {
+      "objective_id": "MAT.Y4.FRA.01",
+      "year_group": 4,
+      "subject": "maths",
+      "strand": "fractions",
+      "exam_board": null,
+      "objective_text": "Equivalent fractions; add/sub same denominator; decimals (tenths/hundredths) intro"
+    },
+    {
+      "objective_id": "MAT.Y4.MEA.01",
+      "year_group": 4,
+      "subject": "maths",
+      "strand": "measurement",
+      "exam_board": null,
+      "objective_text": "Area; measure; time conversions"
+    },
+    {
+      "objective_id": "MAT.Y4.GEO.01",
+      "year_group": 4,
+      "subject": "maths",
+      "strand": "geometry",
+      "exam_board": null,
+      "objective_text": "Angles; symmetry; coordinates"
+    },
+    {
+      "objective_id": "MAT.Y4.STA.01",
+      "year_group": 4,
+      "subject": "maths",
+      "strand": "statistics",
+      "exam_board": null,
+      "objective_text": "Tables/charts; interpret and solve problems"
+    },
+    {
+      "objective_id": "SCI.Y4.BIO.01",
+      "year_group": 4,
+      "subject": "science",
+      "strand": "biology",
+      "exam_board": null,
+      "objective_text": "Living things/habitats (classification intro); digestion/teeth; food chains"
+    },
+    {
+      "objective_id": "SCI.Y4.CHE.01",
+      "year_group": 4,
+      "subject": "science",
+      "strand": "chemistry",
+      "exam_board": null,
+      "objective_text": "States of matter; heating/cooling; water cycle"
+    },
+    {
+      "objective_id": "SCI.Y4.PHY.01",
+      "year_group": 4,
+      "subject": "science",
+      "strand": "physics",
+      "exam_board": null,
+      "objective_text": "Electricity (simple circuits); sound (vibration, pitch, volume)"
+    },
+    {
+      "objective_id": "SCI.Y4.WS.01",
+      "year_group": 4,
+      "subject": "science",
+      "strand": "working_scientifically",
+      "exam_board": null,
+      "objective_text": "Compare; classify; record accurately"
+    },
+    {
+      "objective_id": "ENG.Y5.READ.01",
+      "year_group": 5,
+      "subject": "english",
+      "strand": "reading",
+      "exam_board": null,
+      "objective_text": "Mature inference; justify with evidence; compare texts; evaluate language/structure"
+    },
+    {
+      "objective_id": "ENG.Y5.WRT.01",
+      "year_group": 5,
+      "subject": "english",
+      "strand": "writing_audience_purpose",
+      "exam_board": null,
+      "objective_text": "Audience/purpose control; cohesive devices; varied formality"
+    },
+    {
+      "objective_id": "ENG.Y5.WRT.02",
+      "year_group": 5,
+      "subject": "english",
+      "strand": "writing_grammar",
+      "exam_board": null,
+      "objective_text": "Grammar: relative clauses; modal verbs; parenthesis; punctuation range"
+    },
+    {
+      "objective_id": "ENG.Y5.WRT.03",
+      "year_group": 5,
+      "subject": "english",
+      "strand": "writing_spelling",
+      "exam_board": null,
+      "objective_text": "Spellings incl. statutory word lists; handwriting presentation"
+    },
+    {
+      "objective_id": "MAT.Y5.NUM.01",
+      "year_group": 5,
+      "subject": "maths",
+      "strand": "number",
+      "exam_board": null,
+      "objective_text": "Place value to 1,000,000; long add/sub; long mult; division with remainders"
+    },
+    {
+      "objective_id": "MAT.Y5.FRA.01",
+      "year_group": 5,
+      "subject": "maths",
+      "strand": "fractions_decimals_percentages",
+      "exam_board": null,
+      "objective_text": "Add/sub different denominators (linked); decimals; percentages"
+    },
+    {
+      "objective_id": "MAT.Y5.MEA.01",
+      "year_group": 5,
+      "subject": "maths",
+      "strand": "measurement",
+      "exam_board": null,
+      "objective_text": "Conversions; volume; shape properties"
+    },
+    {
+      "objective_id": "MAT.Y5.GEO.01",
+      "year_group": 5,
+      "subject": "maths",
+      "strand": "geometry",
+      "exam_board": null,
+      "objective_text": "Angles (acute/obtuse/reflex); coordinates; transformations"
+    },
+    {
+      "objective_id": "MAT.Y5.STA.01",
+      "year_group": 5,
+      "subject": "maths",
+      "strand": "statistics",
+      "exam_board": null,
+      "objective_text": "Interpret tables/graphs; averages (intro)"
+    },
+    {
+      "objective_id": "SCI.Y5.BIO.01",
+      "year_group": 5,
+      "subject": "science",
+      "strand": "biology",
+      "exam_board": null,
+      "objective_text": "Life cycles (plants/animals); reproduction; changes in humans"
+    },
+    {
+      "objective_id": "SCI.Y5.CHE.01",
+      "year_group": 5,
+      "subject": "science",
+      "strand": "chemistry",
+      "exam_board": null,
+      "objective_text": "Properties/changes of materials; dissolving; separation; reversible/irreversible changes"
+    },
+    {
+      "objective_id": "SCI.Y5.PHY.01",
+      "year_group": 5,
+      "subject": "science",
+      "strand": "physics",
+      "exam_board": null,
+      "objective_text": "Earth & space; Forces (gravity, friction, air/water resistance); mechanisms"
+    },
+    {
+      "objective_id": "SCI.Y5.WS.01",
+      "year_group": 5,
+      "subject": "science",
+      "strand": "working_scientifically",
+      "exam_board": null,
+      "objective_text": "Plan investigations; control variables; report findings"
+    },
+    {
+      "objective_id": "ENG.Y6.READ.01",
+      "year_group": 6,
+      "subject": "english",
+      "strand": "reading",
+      "exam_board": null,
+      "objective_text": "Compare, summarise, evaluate; distinguish fact/opinion; discuss themes/intent"
+    },
+    {
+      "objective_id": "ENG.Y6.WRT.01",
+      "year_group": 6,
+      "subject": "english",
+      "strand": "writing_tone_voice",
+      "exam_board": null,
+      "objective_text": "Control tone/voice; formal/informal shifts; cohesive structure across whole text"
+    },
+    {
+      "objective_id": "ENG.Y6.WRT.02",
+      "year_group": 6,
+      "subject": "english",
+      "strand": "writing_grammar",
+      "exam_board": null,
+      "objective_text": "Grammar: passive voice; subjunctive (where taught); punctuation mastery"
+    },
+    {
+      "objective_id": "ENG.Y6.WRT.03",
+      "year_group": 6,
+      "subject": "english",
+      "strand": "writing_spelling_editing",
+      "exam_board": null,
+      "objective_text": "Spelling accuracy; fluent handwriting; editing independence"
+    },
+    {
+      "objective_id": "MAT.Y6.NUM.01",
+      "year_group": 6,
+      "subject": "maths",
+      "strand": "number",
+      "exam_board": null,
+      "objective_text": "Place value to 10,000,000; long division; order of operations"
+    },
+    {
+      "objective_id": "MAT.Y6.FRA.01",
+      "year_group": 6,
+      "subject": "maths",
+      "strand": "fractions_decimals_percentages_ratio",
+      "exam_board": null,
+      "objective_text": "Fractions/decimals/percentages interchange; ratio intro"
+    },
+    {
+      "objective_id": "MAT.Y6.ALG.01",
+      "year_group": 6,
+      "subject": "maths",
+      "strand": "algebra",
+      "exam_board": null,
+      "objective_text": "Simple formulae; sequences; unknowns"
+    },
+    {
+      "objective_id": "MAT.Y6.MEA.01",
+      "year_group": 6,
+      "subject": "maths",
+      "strand": "measurement",
+      "exam_board": null,
+      "objective_text": "Area/volume; conversions; circle basics"
+    },
+    {
+      "objective_id": "MAT.Y6.GEO.01",
+      "year_group": 6,
+      "subject": "maths",
+      "strand": "geometry",
+      "exam_board": null,
+      "objective_text": "Angles in shapes; coordinates; transformations"
+    },
+    {
+      "objective_id": "MAT.Y6.STA.01",
+      "year_group": 6,
+      "subject": "maths",
+      "strand": "statistics",
+      "exam_board": null,
+      "objective_text": "Interpret graphs; mean; problem solving"
+    },
+    {
+      "objective_id": "SCI.Y6.BIO.01",
+      "year_group": 6,
+      "subject": "science",
+      "strand": "biology",
+      "exam_board": null,
+      "objective_text": "Evolution/adaptation; classification; microbes/health (as per KS2 strands)"
+    },
+    {
+      "objective_id": "SCI.Y6.CHE.01",
+      "year_group": 6,
+      "subject": "science",
+      "strand": "chemistry",
+      "exam_board": null,
+      "objective_text": "Materials (application); electricity in circuits (application)"
+    },
+    {
+      "objective_id": "SCI.Y6.PHY.01",
+      "year_group": 6,
+      "subject": "science",
+      "strand": "physics",
+      "exam_board": null,
+      "objective_text": "Light (how we see; shadows); Electricity (symbols, series circuits)"
+    },
+    {
+      "objective_id": "SCI.Y6.WS.01",
+      "year_group": 6,
+      "subject": "science",
+      "strand": "working_scientifically",
+      "exam_board": null,
+      "objective_text": "Design fair tests; interpret data; evaluate reliability"
+    },
+    {
+      "objective_id": "ENG.Y7.READ.01",
+      "year_group": 7,
+      "subject": "english",
+      "strand": "reading",
+      "exam_board": null,
+      "objective_text": "Read whole texts; inference; language/structure basics; rhetoric intro"
+    },
+    {
+      "objective_id": "ENG.Y7.WRT.01",
+      "year_group": 7,
+      "subject": "english",
+      "strand": "writing",
+      "exam_board": null,
+      "objective_text": "Accurate sentences; paragraphing; descriptive + transactional writing"
+    },
+    {
+      "objective_id": "ENG.Y7.SPK.01",
+      "year_group": 7,
+      "subject": "english",
+      "strand": "spoken_language",
+      "exam_board": null,
+      "objective_text": "Formal talk, discussion, debate conventions"
+    },
+    {
+      "objective_id": "MAT.Y7.NUM.01",
+      "year_group": 7,
+      "subject": "maths",
+      "strand": "number",
+      "exam_board": null,
+      "objective_text": "Integer arithmetic; fractions/decimals/percentages; indices intro"
+    },
+    {
+      "objective_id": "MAT.Y7.ALG.01",
+      "year_group": 7,
+      "subject": "maths",
+      "strand": "algebra",
+      "exam_board": null,
+      "objective_text": "Expressions, substitution, simplifying, solving 1-step/2-step"
+    },
+    {
+      "objective_id": "MAT.Y7.GEO.01",
+      "year_group": 7,
+      "subject": "maths",
+      "strand": "geometry",
+      "exam_board": null,
+      "objective_text": "Angles; constructions; area/perimeter"
+    },
+    {
+      "objective_id": "MAT.Y7.STA.01",
+      "year_group": 7,
+      "subject": "maths",
+      "strand": "statistics_probability",
+      "exam_board": null,
+      "objective_text": "Data displays; probability language"
+    },
+    {
+      "objective_id": "SCI.Y7.BIO.01",
+      "year_group": 7,
+      "subject": "science",
+      "strand": "biology",
+      "exam_board": null,
+      "objective_text": "Cells; organisation; reproduction basics; ecosystems intro"
+    },
+    {
+      "objective_id": "SCI.Y7.CHE.01",
+      "year_group": 7,
+      "subject": "science",
+      "strand": "chemistry",
+      "exam_board": null,
+      "objective_text": "Particle model; elements/compounds/mixtures; separation"
+    },
+    {
+      "objective_id": "SCI.Y7.PHY.01",
+      "year_group": 7,
+      "subject": "science",
+      "strand": "physics",
+      "exam_board": null,
+      "objective_text": "Energy stores/transfers; forces basics; waves/light intro"
+    },
+    {
+      "objective_id": "SCI.Y7.WS.01",
+      "year_group": 7,
+      "subject": "science",
+      "strand": "working_scientifically",
+      "exam_board": null,
+      "objective_text": "Variables; measurement; graphs"
+    },
+    {
+      "objective_id": "ENG.Y8.READ.01",
+      "year_group": 8,
+      "subject": "english",
+      "strand": "reading",
+      "exam_board": null,
+      "objective_text": "Compare texts; writer’s purpose/viewpoint; evaluation"
+    },
+    {
+      "objective_id": "ENG.Y8.WRT.01",
+      "year_group": 8,
+      "subject": "english",
+      "strand": "writing",
+      "exam_board": null,
+      "objective_text": "Controlled narrative viewpoint; argument/speech writing; punctuation variety"
+    },
+    {
+      "objective_id": "ENG.Y8.SPK.01",
+      "year_group": 8,
+      "subject": "english",
+      "strand": "spoken_language",
+      "exam_board": null,
+      "objective_text": "Presentations + responding to questions"
+    },
+    {
+      "objective_id": "MAT.Y8.NUM.01",
+      "year_group": 8,
+      "subject": "maths",
+      "strand": "number_ratio_accuracy",
+      "exam_board": null,
+      "objective_text": "Ratio/proportion basics; standard form intro; rounding/accuracy"
+    },
+    {
+      "objective_id": "MAT.Y8.ALG.01",
+      "year_group": 8,
+      "subject": "maths",
+      "strand": "algebra_graphs",
+      "exam_board": null,
+      "objective_text": "Linear graphs; sequences; equations/inequalities"
+    },
+    {
+      "objective_id": "MAT.Y8.GEO.01",
+      "year_group": 8,
+      "subject": "maths",
+      "strand": "geometry",
+      "exam_board": null,
+      "objective_text": "Transformations; Pythagoras intro; circles basics"
+    },
+    {
+      "objective_id": "MAT.Y8.STA.01",
+      "year_group": 8,
+      "subject": "maths",
+      "strand": "statistics_probability",
+      "exam_board": null,
+      "objective_text": "Averages; scatter graphs; probability models"
+    },
+    {
+      "objective_id": "SCI.Y8.BIO.01",
+      "year_group": 8,
+      "subject": "science",
+      "strand": "biology",
+      "exam_board": null,
+      "objective_text": "Breathing/circulation; digestion; immunity basics"
+    },
+    {
+      "objective_id": "SCI.Y8.CHE.01",
+      "year_group": 8,
+      "subject": "science",
+      "strand": "chemistry",
+      "exam_board": null,
+      "objective_text": "Reactions; acids/alkalis; metals; combustion"
+    },
+    {
+      "objective_id": "SCI.Y8.PHY.01",
+      "year_group": 8,
+      "subject": "science",
+      "strand": "physics",
+      "exam_board": null,
+      "objective_text": "Electricity basics; magnetism; sound; wave properties"
+    },
+    {
+      "objective_id": "SCI.Y8.WS.01",
+      "year_group": 8,
+      "subject": "science",
+      "strand": "working_scientifically",
+      "exam_board": null,
+      "objective_text": "Evaluate methods; anomalies; data quality"
+    },
+    {
+      "objective_id": "ENG.Y9.READ.01",
+      "year_group": 9,
+      "subject": "english",
+      "strand": "reading",
+      "exam_board": null,
+      "objective_text": "Unseen analysis; synthesis; critical evaluation; rhetoric"
+    },
+    {
+      "objective_id": "ENG.Y9.WRT.01",
+      "year_group": 9,
+      "subject": "english",
+      "strand": "writing_exam_style",
+      "exam_board": null,
+      "objective_text": "Exam-style transactional writing; crafting structure for effect; editing under time"
+    },
+    {
+      "objective_id": "ENG.Y9.SPK.01",
+      "year_group": 9,
+      "subject": "english",
+      "strand": "spoken_language",
+      "exam_board": null,
+      "objective_text": "Debate; persuasive speaking"
+    },
+    {
+      "objective_id": "MAT.Y9.NUM.01",
+      "year_group": 9,
+      "subject": "maths",
+      "strand": "number_proportion_bounds",
+      "exam_board": null,
+      "objective_text": "Proportion; compound measures; bounds/error intervals intro"
+    },
+    {
+      "objective_id": "MAT.Y9.ALG.01",
+      "year_group": 9,
+      "subject": "maths",
+      "strand": "algebra",
+      "exam_board": null,
+      "objective_text": "Simultaneous equations; factorising; quadratics intro"
+    },
+    {
+      "objective_id": "MAT.Y9.GEO.01",
+      "year_group": 9,
+      "subject": "maths",
+      "strand": "geometry",
+      "exam_board": null,
+      "objective_text": "Trigonometry intro; similarity; circle theorems intro"
+    },
+    {
+      "objective_id": "MAT.Y9.STA.01",
+      "year_group": 9,
+      "subject": "maths",
+      "strand": "statistics_probability",
+      "exam_board": null,
+      "objective_text": "Cumulative frequency; probability trees intro"
+    },
+    {
+      "objective_id": "SCI.Y9.BIO.01",
+      "year_group": 9,
+      "subject": "science",
+      "strand": "biology",
+      "exam_board": null,
+      "objective_text": "Photosynthesis/respiration; inheritance; adaptation"
+    },
+    {
+      "objective_id": "SCI.Y9.CHE.01",
+      "year_group": 9,
+      "subject": "science",
+      "strand": "chemistry",
+      "exam_board": null,
+      "objective_text": "Atomic structure; periodic table; bonding intro"
+    },
+    {
+      "objective_id": "SCI.Y9.PHY.01",
+      "year_group": 9,
+      "subject": "science",
+      "strand": "physics",
+      "exam_board": null,
+      "objective_text": "Energy calculations; forces & motion; particle model"
+    },
+    {
+      "objective_id": "SCI.Y9.WS.01",
+      "year_group": 9,
+      "subject": "science",
+      "strand": "working_scientifically",
+      "exam_board": null,
+      "objective_text": "Required-practical skill build: variables, precision, graphs, conclusions"
+    },
+    {
+      "objective_id": "ENG.Y10.LANG.01",
+      "year_group": 10,
+      "subject": "english",
+      "strand": "gcse_language",
+      "exam_board": null,
+      "objective_text": "Reading skills (AO1–AO4); writing craft (AO5–AO6); exam question types practice"
+    },
+    {
+      "objective_id": "ENG.Y10.LIT.01",
+      "year_group": 10,
+      "subject": "english",
+      "strand": "gcse_literature",
+      "exam_board": null,
+      "objective_text": "Shakespeare + 19th-century novel + modern text + poetry anthology + unseen methods (depending on school choices)"
+    },
+    {
+      "objective_id": "MAT.Y10.DOM.01",
+      "year_group": 10,
+      "subject": "maths",
+      "strand": "gcse_domains",
+      "exam_board": null,
+      "objective_text": "Build across the 6 GCSE domains (Number; Algebra; Ratio/Proportion/Rates; Geometry/Measures; Probability; Statistics)"
+    },
+    {
+      "objective_id": "SCI.Y10.DOM.01",
+      "year_group": 10,
+      "subject": "science",
+      "strand": "gcse_topics",
+      "exam_board": null,
+      "objective_text": "GCSE topics pass 1 + practical skills + maths in science (varies by board and Combined vs Separate)"
+    },
+    {
+      "objective_id": "ENG.Y11.AQA.LANG.AO.01",
+      "year_group": 11,
+      "subject": "english",
+      "strand": "gcse_language_ao",
+      "exam_board": "aqa",
+      "objective_text": "Master AO1–AO4 reading and AO5–AO6 writing + Spoken Language endorsement"
+    },
+    {
+      "objective_id": "ENG.Y11.AQA.LANG.P1.01",
+      "year_group": 11,
+      "subject": "english",
+      "strand": "gcse_language_paper1",
+      "exam_board": "aqa",
+      "objective_text": "Paper 1: fiction reading + creative writing"
+    },
+    {
+      "objective_id": "ENG.Y11.AQA.LANG.P2.01",
+      "year_group": 11,
+      "subject": "english",
+      "strand": "gcse_language_paper2",
+      "exam_board": "aqa",
+      "objective_text": "Paper 2: non-fiction comparison + viewpoint writing"
+    },
+    {
+      "objective_id": "ENG.Y11.AQA.LIT.COMP.01",
+      "year_group": 11,
+      "subject": "english",
+      "strand": "gcse_literature",
+      "exam_board": "aqa",
+      "objective_text": "Paper structure: Shakespeare + 19th-century novel + modern text + poetry anthology + unseen poetry"
+    },
+    {
+      "objective_id": "ENG.Y11.EDEXCEL.LANG.COMP.01",
+      "year_group": 11,
+      "subject": "english",
+      "strand": "gcse_language",
+      "exam_board": "edexcel",
+      "objective_text": "Fiction + non-fiction reading; transactional + imaginative writing; Spoken Language endorsement (structure differs from AQA)"
+    },
+    {
+      "objective_id": "ENG.Y11.EDEXCEL.LIT.COMP.01",
+      "year_group": 11,
+      "subject": "english",
+      "strand": "gcse_literature",
+      "exam_board": "edexcel",
+      "objective_text": "Shakespeare; post-1914 text; 19th-century novel; poetry anthology + unseen (Edexcel anthology differs from AQA)"
+    },
+    {
+      "objective_id": "ENG.Y11.OCR.LANG.COMP.01",
+      "year_group": 11,
+      "subject": "english",
+      "strand": "gcse_language",
+      "exam_board": "ocr",
+      "objective_text": "Reading comprehension/analysis; writing; Spoken Language endorsement; OCR paper structure differs but same core reading/writing skills"
+    },
+    {
+      "objective_id": "ENG.Y11.OCR.LIT.COMP.01",
+      "year_group": 11,
+      "subject": "english",
+      "strand": "gcse_literature",
+      "exam_board": "ocr",
+      "objective_text": "OCR component structure across modern + heritage texts + poetry/unseen (OCR text/poetry routes differ)"
+    },
+    {
+      "objective_id": "MAT.Y11.AQA.DOM.01",
+      "year_group": 11,
+      "subject": "maths",
+      "strand": "gcse_domains",
+      "exam_board": "aqa",
+      "objective_text": "6 domains: Number; Algebra; Ratio/Proportion/Rates; Geometry/Measures; Probability; Statistics"
+    },
+    {
+      "objective_id": "MAT.Y11.AQA.EXAM.01",
+      "year_group": 11,
+      "subject": "maths",
+      "strand": "gcse_exam",
+      "exam_board": "aqa",
+      "objective_text": "Final mastery: mixed-topic problem solving, reasoning, and accuracy under time"
+    },
+    {
+      "objective_id": "MAT.Y11.EDEXCEL.DOM.01",
+      "year_group": 11,
+      "subject": "maths",
+      "strand": "gcse_domains",
+      "exam_board": "edexcel",
+      "objective_text": "Same broad domain model; tiering and exam structure differ from AQA but content coverage is comparable"
+    },
+    {
+      "objective_id": "MAT.Y11.EDEXCEL.EXAM.01",
+      "year_group": 11,
+      "subject": "maths",
+      "strand": "gcse_exam",
+      "exam_board": "edexcel",
+      "objective_text": "Build fluency in Edexcel-style multi-step problems and functional contexts"
+    },
+    {
+      "objective_id": "MAT.Y11.OCR.DOM.01",
+      "year_group": 11,
+      "subject": "maths",
+      "strand": "gcse_domains",
+      "exam_board": "ocr",
+      "objective_text": "Same GCSE maths content areas organised in OCR’s specification style"
+    },
+    {
+      "objective_id": "MAT.Y11.OCR.EXAM.01",
+      "year_group": 11,
+      "subject": "maths",
+      "strand": "gcse_exam",
+      "exam_board": "ocr",
+      "objective_text": "OCR-style reasoning and problem solving practice"
+    },
+    {
+      "objective_id": "SCI.Y11.AQA.KNOW.01",
+      "year_group": 11,
+      "subject": "science",
+      "strand": "gcse_knowledge",
+      "exam_board": "aqa",
+      "objective_text": "Knowledge topics (Bio/Chem/Phys) + required content coverage"
+    },
+    {
+      "objective_id": "SCI.Y11.AQA.PRACT.01",
+      "year_group": 11,
+      "subject": "science",
+      "strand": "gcse_practicals",
+      "exam_board": "aqa",
+      "objective_text": "Required practicals / practical skills"
+    },
+    {
+      "objective_id": "SCI.Y11.AQA.MATHS.01",
+      "year_group": 11,
+      "subject": "science",
+      "strand": "gcse_maths_in_science",
+      "exam_board": "aqa",
+      "objective_text": "Maths in science skills"
+    },
+    {
+      "objective_id": "SCI.Y11.AQA.EXAM.01",
+      "year_group": 11,
+      "subject": "science",
+      "strand": "gcse_exam",
+      "exam_board": "aqa",
+      "objective_text": "Paper-specific revision blocks"
+    },
+    {
+      "objective_id": "SCI.Y11.AQA.CS.TOPICS.01",
+      "year_group": 11,
+      "subject": "science",
+      "strand": "combined_science",
+      "exam_board": "aqa",
+      "objective_text": "Combined Science topic sets + required practicals + exam paper mapping"
+    },
+    {
+      "objective_id": "SCI.Y11.AQA.SEP.TOPICS.01",
+      "year_group": 11,
+      "subject": "science",
+      "strand": "separate_science",
+      "exam_board": "aqa",
+      "objective_text": "Separate Science deeper coverage per discipline"
+    },
+    {
+      "objective_id": "SCI.Y11.EDEXCEL.KNOW.01",
+      "year_group": 11,
+      "subject": "science",
+      "strand": "gcse_knowledge",
+      "exam_board": "edexcel",
+      "objective_text": "Knowledge topics (Bio/Chem/Phys) + required content coverage"
+    },
+    {
+      "objective_id": "SCI.Y11.EDEXCEL.PRACT.01",
+      "year_group": 11,
+      "subject": "science",
+      "strand": "gcse_practicals",
+      "exam_board": "edexcel",
+      "objective_text": "Required practicals / practical skills"
+    },
+    {
+      "objective_id": "SCI.Y11.EDEXCEL.MATHS.01",
+      "year_group": 11,
+      "subject": "science",
+      "strand": "gcse_maths_in_science",
+      "exam_board": "edexcel",
+      "objective_text": "Maths in science skills"
+    },
+    {
+      "objective_id": "SCI.Y11.EDEXCEL.EXAM.01",
+      "year_group": 11,
+      "subject": "science",
+      "strand": "gcse_exam",
+      "exam_board": "edexcel",
+      "objective_text": "Paper-specific revision blocks"
+    },
+    {
+      "objective_id": "SCI.Y11.EDEXCEL.CS.TOPICS.01",
+      "year_group": 11,
+      "subject": "science",
+      "strand": "combined_science",
+      "exam_board": "edexcel",
+      "objective_text": "Edexcel Combined Science content structure + practical/scientific enquiry focus"
+    },
+    {
+      "objective_id": "SCI.Y11.EDEXCEL.SEP.TOPICS.01",
+      "year_group": 11,
+      "subject": "science",
+      "strand": "separate_science",
+      "exam_board": "edexcel",
+      "objective_text": "Separate Biology/Chem/Phys topic organisation"
+    },
+    {
+      "objective_id": "SCI.Y11.OCR.KNOW.01",
+      "year_group": 11,
+      "subject": "science",
+      "strand": "gcse_knowledge",
+      "exam_board": "ocr",
+      "objective_text": "Knowledge topics (Bio/Chem/Phys) + required content coverage"
+    },
+    {
+      "objective_id": "SCI.Y11.OCR.PRACT.01",
+      "year_group": 11,
+      "subject": "science",
+      "strand": "gcse_practicals",
+      "exam_board": "ocr",
+      "objective_text": "Required practicals / practical skills"
+    },
+    {
+      "objective_id": "SCI.Y11.OCR.MATHS.01",
+      "year_group": 11,
+      "subject": "science",
+      "strand": "gcse_maths_in_science",
+      "exam_board": "ocr",
+      "objective_text": "Maths in science skills"
+    },
+    {
+      "objective_id": "SCI.Y11.OCR.EXAM.01",
+      "year_group": 11,
+      "subject": "science",
+      "strand": "gcse_exam",
+      "exam_board": "ocr",
+      "objective_text": "Paper-specific revision blocks"
+    },
+    {
+      "objective_id": "SCI.Y11.OCR.GWY.CS.TOPICS.01",
+      "year_group": 11,
+      "subject": "science",
+      "strand": "ocr_gateway",
+      "exam_board": "ocr",
+      "objective_text": "OCR Gateway Combined Science A content + practical activity requirements"
+    },
+    {
+      "objective_id": "SCI.Y11.OCR.21C.CS.TOPICS.01",
+      "year_group": 11,
+      "subject": "science",
+      "strand": "ocr_21c",
+      "exam_board": "ocr",
+      "objective_text": "OCR 21st Century Combined Science B content + practical skills"
+    },
+    {
+      "objective_id": "SCI.Y11.OCR.21C.SEP.TOPICS.01",
+      "year_group": 11,
+      "subject": "science",
+      "strand": "ocr_21c_separate",
+      "exam_board": "ocr",
+      "objective_text": "OCR 21st Century Separate sciences in suite (e.g., Chemistry B)"
+    }
+  ]
+}$seed$::jsonb as j
+), seed as (
+  select
+    objective_id::text as objective_id,
+    year_group::int as year_group,
+    lower(subject::text) as subject,
+    strand::text as strand,
+    nullif(lower(exam_board::text), 'null') as exam_board,
+    objective_text::text as objective_text
+  from payload,
+  jsonb_to_recordset(payload.j->'objectives') as x(
+    objective_id text,
+    year_group int,
+    subject text,
+    strand text,
+    exam_board text,
+    objective_text text
+  )
+), upserted as (
+  insert into public.curriculum_objectives (objective_id, year_group, subject, strand, exam_board, objective_text)
+  select objective_id, year_group, subject, strand, exam_board, objective_text
+  from seed
+  on conflict (objective_id) do update
+  set
+    year_group = excluded.year_group,
+    subject = excluded.subject,
+    strand = excluded.strand,
+    exam_board = excluded.exam_board,
+    objective_text = excluded.objective_text
+  returning objective_id
+), remove_ids as (
+  select c.objective_id
+  from public.curriculum_objectives c
+  left join seed s on s.objective_id = c.objective_id
+  where s.objective_id is null
+), del_ao as (
+  delete from public.assignment_objectives ao
+  using remove_ids r
+  where ao.objective_id = r.objective_id
+), del_om as (
+  delete from public.objective_mastery om
+  using remove_ids r
+  where om.objective_id = r.objective_id
+)
+delete from public.curriculum_objectives c
+using remove_ids r
+where c.objective_id = r.objective_id;

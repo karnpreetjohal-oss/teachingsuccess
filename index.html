@@ -110,13 +110,13 @@ body{font-family:'Outfit',sans-serif;background:var(--cream);color:var(--ink);ov
 .sec-sub{color:var(--muted);font-size:1rem;max-width:580px;line-height:1.75}
 
 /* LOCAL PROOF */
-.proof-areas{display:flex;flex-wrap:wrap;gap:.55rem;margin-top:1.1rem}
-.area-pill{display:inline-flex;align-items:center;padding:.38rem .72rem;border-radius:999px;background:#2c3a52;color:#fff;font-size:.79rem;font-weight:700;letter-spacing:.01em}
 .proof-wrap{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.9rem;margin-top:1.2rem}
 .proof-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1.2rem 1.25rem}
 .proof-card h3{font-family:'Fraunces',serif;font-size:1.1rem;margin-bottom:.6rem}
 .proof-card p{font-size:.9rem;color:var(--muted);line-height:1.65}
 .proof-shift{display:block;margin-top:.38rem;font-weight:800;color:var(--ink);font-size:.92rem}
+.areas-banner{margin-top:1rem;padding:.8rem 1rem;background:var(--card);border:1px solid var(--border);border-radius:12px;font-size:.9rem;color:var(--muted)}
+.areas-banner strong{color:var(--ink)}
 
 /* TUTORS */
 .tgrid{display:grid;grid-template-columns:1fr 1fr;gap:2rem;margin-top:3rem}
@@ -614,41 +614,6 @@ body{font-family:'Outfit',sans-serif;background:var(--cream);color:var(--ink);ov
   <div class="si2">📋 BTEC Science</div>
 </div>
 
-<section id="local-proof" class="section">
-  <div class="eyebrow">Local Proof</div>
-  <h2 class="sec-h2">Local Results You Can See</h2>
-  <p class="sec-sub">Families across Sandwell and Birmingham choose Teaching Success for consistent progress and clear outcomes.</p>
-  <div class="proof-areas" aria-label="Areas served">
-    <span class="area-pill">Smethwick</span>
-    <span class="area-pill">Bearwood</span>
-    <span class="area-pill">Oldbury</span>
-    <span class="area-pill">West Bromwich</span>
-    <span class="area-pill">Birmingham</span>
-  </div>
-  <div class="proof-wrap">
-    <article class="proof-card">
-      <h3>Year 11 GCSE Maths</h3>
-      <p>Student support plan focused on algebra, exam technique and confidence.</p>
-      <span class="proof-shift">Grade 4 to Grade 7 in 5 months.</span>
-    </article>
-    <article class="proof-card">
-      <h3>Year 6 SATs English</h3>
-      <p>Targeted reading and writing sessions with weekly homework feedback.</p>
-      <span class="proof-shift">Working Towards to Greater Depth in one term.</span>
-    </article>
-    <article class="proof-card">
-      <h3>Year 13 A-Level Biology</h3>
-      <p>Structured revision, essay technique and past-paper coaching.</p>
-      <span class="proof-shift">C to A before final exams.</span>
-    </article>
-    <article class="proof-card">
-      <h3>11+ Verbal Reasoning</h3>
-      <p>Timed-practice programme with targeted vocab and pattern work.</p>
-      <span class="proof-shift">62% to 84% over one programme cycle.</span>
-    </article>
-  </div>
-</section>
-
 <!-- TUTORS -->
 <section id="tutors" class="section">
   <div class="eyebrow">Meet Your Tutors</div>
@@ -769,20 +734,6 @@ body{font-family:'Outfit',sans-serif;background:var(--cream);color:var(--ink);ov
   </div>
 </div>
 
-<!-- REVIEWS -->
-<section id="reviews" class="section">
-  <div class="eyebrow">What Families Say</div>
-  <h2 class="sec-h2">Student &amp; Parent Reviews</h2>
-  <div class="reviews-cycler">
-    <div class="reviews-head">
-      <div class="reviews-meta" id="reviews-meta">Loading Google reviews...</div>
-      <a class="review-link" id="reviews-link" href="https://g.page/r/CcTE3rGkQhnOEBM/review" target="_blank" rel="noopener">Leave a Google Review →</a>
-    </div>
-    <div class="tte" id="review-slide"></div>
-    <div class="review-dots" id="review-dots" aria-label="Review navigation"></div>
-  </div>
-</section>
-
 <!-- FAQ -->
 <section id="faq" class="section">
   <div class="eyebrow">Parent Questions</div>
@@ -822,6 +773,43 @@ body{font-family:'Outfit',sans-serif;background:var(--cream);color:var(--ink);ov
       <p>We track progress through lesson feedback, topic mastery checks and regular review points so parents can clearly see what has improved and what comes next.</p>
     </article>
   </div>
+</section>
+
+<!-- REVIEWS + LOCAL RESULTS -->
+<section id="reviews" class="section">
+  <div class="eyebrow">What Families Say</div>
+  <h2 class="sec-h2">Student &amp; Parent Reviews</h2>
+  <div class="reviews-cycler">
+    <div class="reviews-head">
+      <div class="reviews-meta" id="reviews-meta">Loading Google reviews...</div>
+      <a class="review-link" id="reviews-link" href="https://g.page/r/CcTE3rGkQhnOEBM/review" target="_blank" rel="noopener">Leave a Google Review →</a>
+    </div>
+    <div class="tte" id="review-slide"></div>
+    <div class="review-dots" id="review-dots" aria-label="Review navigation"></div>
+  </div>
+  <div class="proof-wrap" style="margin-top:2.2rem">
+    <article class="proof-card">
+      <h3>Year 11 GCSE Maths</h3>
+      <p>Student support plan focused on algebra, exam technique and confidence.</p>
+      <span class="proof-shift">Grade 4 to Grade 7 in 5 months.</span>
+    </article>
+    <article class="proof-card">
+      <h3>Year 6 SATs English</h3>
+      <p>Targeted reading and writing sessions with weekly homework feedback.</p>
+      <span class="proof-shift">Working Towards Greater Depth in one term.</span>
+    </article>
+    <article class="proof-card">
+      <h3>Year 13 A-Level Biology</h3>
+      <p>Structured revision, essay technique and past-paper coaching.</p>
+      <span class="proof-shift">C to A before final exams.</span>
+    </article>
+    <article class="proof-card">
+      <h3>11+ Verbal Reasoning</h3>
+      <p>Timed-practice programme with targeted vocabulary and pattern work.</p>
+      <span class="proof-shift">62% to 84% over one programme cycle.</span>
+    </article>
+  </div>
+  <p class="areas-banner"><strong>Areas served:</strong> Smethwick, Bearwood, Oldbury, West Bromwich and Birmingham.</p>
 </section>
 
 <!-- CTA -->
