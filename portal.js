@@ -802,8 +802,36 @@ function setActiveSection(section) {
   activeSection = section;
   $('section-dashboard')?.classList.toggle('hidden', section !== 'dashboard');
   $('section-reviews')?.classList.toggle('hidden', section !== 'reviews');
+  $('section-settings')?.classList.toggle('hidden', section !== 'settings');
   $('btn-tab-dashboard')?.classList.toggle('active', section === 'dashboard');
   $('btn-tab-reviews')?.classList.toggle('active', section === 'reviews');
+  $('btn-tab-settings')?.classList.toggle('active', section === 'settings');
+}
+
+function updateSectionHeader(section) {
+  const role = String(currentProfile?.role || 'student');
+  const titleEl = $('app-section-title');
+  const subtitleEl = $('app-section-subtitle');
+  if (!titleEl || !subtitleEl) return;
+
+  if (section === 'reviews') {
+    titleEl.textContent = 'Progress Reviews';
+    subtitleEl.textContent = role === 'tutor'
+      ? 'Create and track learner progress snapshots.'
+      : 'View progress snapshots and action plans.';
+    return;
+  }
+  if (section === 'settings') {
+    titleEl.textContent = 'Settings';
+    subtitleEl.textContent = 'Account details and portal guidance.';
+    return;
+  }
+  titleEl.textContent = 'Dashboard';
+  subtitleEl.textContent = role === 'tutor'
+    ? 'Assignments, submissions and marking workflow.'
+    : (role === 'parent'
+      ? 'Linked student assignments and outcomes.'
+      : 'Current assignments, quick upload and latest feedback.');
 }
 
 async function ensureProfile(user) {
@@ -2542,7 +2570,23 @@ async function renderReviewsForRole() {
   await renderStudentReviews();
 }
 
+function renderSettingsForRole() {
+  if ($('settings-name')) $('settings-name').textContent = currentProfile?.full_name || currentUser?.email || '-';
+  if ($('settings-email')) $('settings-email').textContent = currentUser?.email || '-';
+  if ($('settings-role')) $('settings-role').textContent = currentProfile?.role || '-';
+  $('settings-tutor')?.classList.toggle('hidden', currentProfile?.role !== 'tutor');
+  $('settings-student')?.classList.toggle('hidden', currentProfile?.role !== 'student');
+  $('settings-parent')?.classList.toggle('hidden', currentProfile?.role !== 'parent');
+}
+
 async function switchSection(section) {
+  updateSectionHeader(section);
+  if (section === 'settings') {
+    setActiveSection('settings');
+    renderSettingsForRole();
+    return;
+  }
+
   if (section === 'reviews') {
     setActiveSection('reviews');
     try {
@@ -2678,6 +2722,7 @@ async function bootstrap() {
   safeBind('btn-save-review', 'click', createProgressReview);
   safeBind('btn-tab-dashboard', 'click', async () => switchSection('dashboard'));
   safeBind('btn-tab-reviews', 'click', async () => switchSection('reviews'));
+  safeBind('btn-tab-settings', 'click', async () => switchSection('settings'));
   safeBind('btn-analysis-close', 'click', closeAnalysisModal);
   safeBind('btn-quick-submit-photos', 'click', submitQuickUploadPhotos);
   safeBind('quick-subject', 'change', updateQuickMarkingModeDefault);
