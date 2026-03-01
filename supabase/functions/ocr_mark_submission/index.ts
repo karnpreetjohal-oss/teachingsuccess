@@ -220,6 +220,22 @@ Deno.serve(async (req) => {
     });
   } catch (err: any) {
     console.error("ocr_mark_submission failed:", err);
+    try {
+      const body = await req.clone().json();
+      const submissionId = body?.submission_id;
+      if (submissionId) {
+        await supabase
+          .from("submissions")
+          .update({
+            ocr_processing: false,
+            auto_feedback: `Processing error: ${err.message}`,
+            auto_graded_at: new Date().toISOString(),
+          })
+          .eq("id", submissionId);
+      }
+    } catch (_inner) {
+      // Ignore secondary error while returning original failure.
+    }
     return new Response(JSON.stringify({ error: err.message }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },

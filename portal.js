@@ -711,15 +711,26 @@ async function compressImageFile(file, maxDimension = 1600, quality = 0.82) {
     };
     img.onerror = () => {
       URL.revokeObjectURL(url);
-      reject(new Error('Unable to read image file'));
+      reject(new Error(`Unable to read image file (${file.type || 'unknown type'})`));
     };
     img.src = url;
   });
 }
 
-function buildSubmissionPhotoPath(studentId, assignmentId, submissionId, index) {
+function inferFileExtension(file, blob) {
+  const blobType = String(blob?.type || '').toLowerCase();
+  const fileType = String(file?.type || '').toLowerCase();
+  const name = String(file?.name || '').toLowerCase();
+  if (blobType.includes('jpeg') || fileType.includes('jpeg') || fileType.includes('jpg') || name.endsWith('.jpg') || name.endsWith('.jpeg')) return 'jpg';
+  if (blobType.includes('png') || fileType.includes('png') || name.endsWith('.png')) return 'png';
+  if (blobType.includes('webp') || fileType.includes('webp') || name.endsWith('.webp')) return 'webp';
+  if (blobType.includes('heic') || fileType.includes('heic') || name.endsWith('.heic')) return 'heic';
+  return 'jpg';
+}
+
+function buildSubmissionPhotoPath(studentId, assignmentId, submissionId, index, ext = 'jpg') {
   const ts = Date.now();
-  return `${studentId}/${assignmentId}/${submissionId}/${ts}_${index}.jpg`;
+  return `${studentId}/${assignmentId}/${submissionId}/${ts}_${index}.${ext}`;
 }
 
 async function ensureStudentSubmissionRow(assignmentId) {
@@ -749,12 +760,23 @@ async function uploadSubmissionPhotos(assignmentId, files, onProgress) {
   const submissionId = await ensureStudentSubmissionRow(assignmentId);
   for (let i = 0; i < files.length; i += 1) {
     onProgress?.(`Uploading ${i + 1} of ${files.length}...`);
-    const compressed = await compressImageFile(files[i]);
-    const path = buildSubmissionPhotoPath(currentUser.id, assignmentId, submissionId, i);
+    const original = files[i];
+    let uploadBlob = null;
+    let uploadType = '';
+    try {
+      uploadBlob = await compressImageFile(original);
+      uploadType = uploadBlob.type || 'image/jpeg';
+    } catch (_err) {
+      // Fallback for formats browsers can't decode in canvas (common on iPad/HEIC).
+      uploadBlob = original;
+      uploadType = original.type || 'application/octet-stream';
+    }
+    const ext = inferFileExtension(original, uploadBlob);
+    const path = buildSubmissionPhotoPath(currentUser.id, assignmentId, submissionId, i, ext);
 
     const { error: uploadErr } = await sb.storage
       .from(SUBMISSION_FILES_BUCKET)
-      .upload(path, compressed, { contentType: 'image/jpeg', upsert: false, cacheControl: '3600' });
+      .upload(path, uploadBlob, { contentType: uploadType, upsert: false, cacheControl: '3600' });
     if (uploadErr) throw uploadErr;
 
     const { error: rowErr } = await sb
@@ -847,6 +869,7 @@ async function submitStudentPhotos(assignmentId) {
     }
     await renderStudentAssignments();
   } catch (err) {
+    console.error('submitStudentPhotos error', err);
     if (statusEl) {
       statusEl.textContent = `Photo submit failed: ${err.message}`;
       statusEl.className = 'photo-status err';
