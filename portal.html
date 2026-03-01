@@ -319,6 +319,61 @@ textarea{min-height:84px;resize:vertical}
       <div id="student-view" class="card hidden">
         <h2>My Assignments</h2>
         <p class="muted" style="margin-bottom:.7rem">Submit notes and upload work photos. Images can be OCR-marked and feedback is saved to your portal record.</p>
+        <div class="card" style="margin-bottom:.8rem;border-style:dashed">
+          <h2 style="font-size:1.05rem">Quick Upload (No Task Needed)</h2>
+          <p class="muted" style="margin-bottom:.6rem">Use this if work was done in session but no assignment was pre-created. Choose the subject and topic so results are tracked correctly.</p>
+          <div class="row">
+            <div>
+              <label>Subject</label>
+              <select id="quick-subject">
+                <option>Maths</option>
+                <option>English</option>
+                <option>Science</option>
+                <option>11+</option>
+                <option>General</option>
+              </select>
+            </div>
+            <div>
+              <label>Topic</label>
+              <input id="quick-topic" type="text" placeholder="e.g. Algebra, Comprehension, Cell biology">
+            </div>
+            <div>
+              <label>Title (optional)</label>
+              <input id="quick-title" type="text" placeholder="e.g. Monday worksheet set">
+            </div>
+            <div>
+              <label>Marking Mode</label>
+              <select id="quick-marking-mode">
+                <option value="maths_question_marking">Maths: Question-by-question</option>
+                <option value="english_writing_feedback">English: WWW + EBI</option>
+                <option value="gcse_english_ao">GCSE English: AO-linked</option>
+                <option value="science_short_answer">Science: Keyword + concept checks</option>
+                <option value="generic_completion_review">Generic: Completion review</option>
+              </select>
+            </div>
+            <div>
+              <label>Notes (optional)</label>
+              <textarea id="quick-notes" placeholder="Anything tutor should know about this attempt"></textarea>
+            </div>
+            <details>
+              <summary class="muted" style="cursor:pointer">Advanced auto-mark settings (optional)</summary>
+              <div style="margin-top:.5rem" class="row">
+                <div><label>Keywords (comma separated)</label><input id="quick-keywords" type="text" placeholder="e.g. simultaneous equations, substitution"></div>
+                <div><label>Target Word Count</label><input id="quick-target-words" type="number" min="0" step="1" placeholder="e.g. 120"></div>
+              </div>
+            </details>
+            <div>
+              <label>Upload Work Photos (up to 6)</label>
+              <input id="quick-photos" type="file" accept="image/*" multiple capture="environment">
+            </div>
+            <div id="quick-photo-preview" class="photo-preview-grid"></div>
+            <p class="muted" id="quick-photo-count"></p>
+            <p class="photo-status" id="quick-photo-status"></p>
+            <div class="actions">
+              <button class="btn blue" id="btn-quick-submit-photos" type="button">Upload + Auto-Mark</button>
+            </div>
+          </div>
+        </div>
         <div id="student-list" class="list"></div>
       </div>
 
@@ -407,6 +462,6 @@ textarea{min-height:84px;resize:vertical}
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="portal.js?v=20260301-1"></script>
+  <script src="portal.js?v=20260301-2"></script>
 </body>
 </html>

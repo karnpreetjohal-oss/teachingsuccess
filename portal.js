@@ -577,6 +577,14 @@ function updateMarkingModeDefault() {
   if (hasOption) modeEl.value = suggested;
 }
 
+function updateQuickMarkingModeDefault() {
+  const modeEl = $('quick-marking-mode');
+  if (!modeEl) return;
+  const suggested = getDefaultMarkingMode($('quick-subject')?.value || '');
+  const hasOption = [...modeEl.options].some((o) => o.value === suggested);
+  if (hasOption) modeEl.value = suggested;
+}
+
 function subjectNeedsTier(value) {
   const s = normalizeSubject(value);
   if (isPrimaryYear(getSelectedStudentYearInt())) return false;
@@ -935,8 +943,8 @@ async function ensureStudentSubmissionRow(assignmentId) {
   return created.id;
 }
 
-async function uploadSubmissionPhotos(assignmentId, files, onProgress) {
-  const submissionId = await ensureStudentSubmissionRow(assignmentId);
+async function uploadSubmissionPhotos(assignmentId, files, onProgress, opts = {}) {
+  const submissionId = opts.submissionId || await ensureStudentSubmissionRow(assignmentId);
   for (let i = 0; i < files.length; i += 1) {
     onProgress?.(`Uploading ${i + 1} of ${files.length}...`);
     const original = files[i];
@@ -969,12 +977,14 @@ async function uploadSubmissionPhotos(assignmentId, files, onProgress) {
     if (rowErr) throw rowErr;
   }
 
-  const { error: statusErr } = await sb
-    .from('assignments')
-    .update({ status: 'submitted' })
-    .eq('id', assignmentId)
-    .eq('student_id', currentUser.id);
-  if (statusErr) throw statusErr;
+  if (!opts.skipAssignmentStatusUpdate) {
+    const { error: statusErr } = await sb
+      .from('assignments')
+      .update({ status: 'submitted' })
+      .eq('id', assignmentId)
+      .eq('student_id', currentUser.id);
+    if (statusErr) throw statusErr;
+  }
 
   return submissionId;
 }
@@ -1062,6 +1072,171 @@ async function submitStudentPhotos(assignmentId) {
     console.error('submitStudentPhotos error', err);
     if (statusEl) {
       statusEl.textContent = `Photo submit failed: ${err.message}`;
+      statusEl.className = 'photo-status err';
+    }
+  } finally {
+    if (submitBtn) submitBtn.disabled = false;
+  }
+}
+
+async function resolveTutorForQuickUpload() {
+  const { data: asgRows, error: asgErr } = await sb
+    .from('assignments')
+    .select('tutor_id,created_at')
+    .eq('student_id', currentUser.id)
+    .order('created_at', { ascending: false })
+    .limit(20);
+  if (asgErr) throw asgErr;
+  const tutorFromAssignments = (asgRows || []).find((r) => r.tutor_id)?.tutor_id;
+  if (tutorFromAssignments) return tutorFromAssignments;
+
+  const { data: reviewRows, error: reviewErr } = await sb
+    .from('student_progress_reviews')
+    .select('tutor_id,created_at')
+    .eq('student_id', currentUser.id)
+    .order('created_at', { ascending: false })
+    .limit(20);
+  if (reviewErr) throw reviewErr;
+  const tutorFromReviews = (reviewRows || []).find((r) => r.tutor_id)?.tutor_id;
+  if (tutorFromReviews) return tutorFromReviews;
+
+  return null;
+}
+
+async function createQuickUploadAssignmentAndSubmission() {
+  const subject = $('quick-subject')?.value || 'General';
+  const topic = ($('quick-topic')?.value || '').trim();
+  const notes = ($('quick-notes')?.value || '').trim();
+  const customTitle = ($('quick-title')?.value || '').trim();
+  const keywordsCsv = ($('quick-keywords')?.value || '').trim();
+  const targetWordsRaw = ($('quick-target-words')?.value || '').trim();
+  const markingModeRaw = String($('quick-marking-mode')?.value || '').trim();
+  const markingMode = MARKING_MODES.includes(markingModeRaw) ? markingModeRaw : getDefaultMarkingMode(subject);
+
+  if (!topic) throw new Error('Add a topic so this upload is tracked correctly.');
+
+  const tutorId = await resolveTutorForQuickUpload();
+  if (!tutorId) {
+    throw new Error('No tutor link found yet. Ask your tutor to assign one task first, then quick upload will work.');
+  }
+
+  const now = new Date();
+  const dateLabel = now.toLocaleDateString();
+  const title = customTitle
+    ? `Quick Upload: ${customTitle}`
+    : `Quick Upload: ${subject} - ${topic} (${dateLabel})`;
+  const description = [
+    `Quick upload topic: ${topic}`,
+    notes ? `Student note: ${notes}` : '',
+  ].filter(Boolean).join('\n');
+  const targetWords = targetWordsRaw === '' ? null : Number(targetWordsRaw);
+  if (targetWordsRaw !== '' && (!Number.isFinite(targetWords) || targetWords < 0)) {
+    throw new Error('Target word count must be a valid non-negative number.');
+  }
+
+  const { data: createdAssignment, error: asgInsErr } = await sb
+    .from('assignments')
+    .insert({
+      tutor_id: tutorId,
+      student_id: currentUser.id,
+      subject,
+      title,
+      description: description || null,
+      status: 'submitted',
+      due_date: null,
+      year_group: parseYearGroupInt(currentProfile?.year_group),
+      marking_mode: markingMode,
+      automark_enabled: true,
+      automark_keywords: parseKeywordCsv(keywordsCsv),
+      automark_target_words: targetWords
+    })
+    .select('id')
+    .single();
+  if (asgInsErr) throw asgInsErr;
+
+  const { data: createdSubmission, error: subInsErr } = await sb
+    .from('submissions')
+    .insert({
+      assignment_id: createdAssignment.id,
+      student_id: currentUser.id,
+      notes: notes || null,
+      submitted_at: now.toISOString()
+    })
+    .select('id')
+    .single();
+  if (subInsErr) throw subInsErr;
+
+  return { assignmentId: createdAssignment.id, submissionId: createdSubmission.id, title };
+}
+
+async function submitQuickUploadPhotos() {
+  const statusEl = $('quick-photo-status');
+  const submitBtn = $('btn-quick-submit-photos');
+  const selected = Array.from($('quick-photos')?.files || []).slice(0, MAX_SUBMISSION_PHOTOS);
+
+  if (!selected.length) {
+    if (statusEl) {
+      statusEl.textContent = 'Please choose at least one image first.';
+      statusEl.className = 'photo-status err';
+    }
+    return;
+  }
+
+  if (submitBtn) submitBtn.disabled = true;
+  if (statusEl) {
+    statusEl.textContent = 'Creating quick upload record...';
+    statusEl.className = 'photo-status warn';
+  }
+
+  try {
+    const created = await createQuickUploadAssignmentAndSubmission();
+
+    if (statusEl) {
+      statusEl.textContent = 'Uploading images...';
+      statusEl.className = 'photo-status warn';
+    }
+    await uploadSubmissionPhotos(created.assignmentId, selected, (msg) => {
+      if (statusEl) statusEl.textContent = msg;
+    }, {
+      submissionId: created.submissionId,
+      skipAssignmentStatusUpdate: true
+    });
+
+    if (statusEl) {
+      statusEl.textContent = 'Running OCR + auto-mark...';
+      statusEl.className = 'photo-status warn';
+    }
+    await triggerOcrMarking(created.submissionId);
+
+    if (statusEl) {
+      statusEl.textContent = 'Waiting for mark...';
+      statusEl.className = 'photo-status warn';
+    }
+    const result = await pollSubmissionMarking(created.submissionId);
+    if (statusEl) {
+      if (result) {
+        statusEl.textContent = `Saved to portal (${created.title}). Marked: ${result.auto_mark ?? '-'}% (${result.auto_grade || '-'})`;
+        statusEl.className = 'photo-status ok';
+      } else {
+        statusEl.textContent = `Saved to portal (${created.title}). Marking still processing, refresh shortly.`;
+        statusEl.className = 'photo-status warn';
+      }
+    }
+
+    if ($('quick-photos')) $('quick-photos').value = '';
+    if ($('quick-notes')) $('quick-notes').value = '';
+    if ($('quick-title')) $('quick-title').value = '';
+    if ($('quick-topic')) $('quick-topic').value = '';
+    if ($('quick-keywords')) $('quick-keywords').value = '';
+    if ($('quick-target-words')) $('quick-target-words').value = '';
+    if ($('quick-photo-preview')) $('quick-photo-preview').innerHTML = '';
+    if ($('quick-photo-count')) $('quick-photo-count').textContent = '';
+
+    await renderStudentAssignments();
+  } catch (err) {
+    console.error('submitQuickUploadPhotos error', err);
+    if (statusEl) {
+      statusEl.textContent = `Quick upload failed: ${err.message}`;
       statusEl.className = 'photo-status err';
     }
   } finally {
@@ -1605,14 +1780,14 @@ async function loadSubmissionFilesMap(assignmentIds) {
   return map;
 }
 
-function renderSelectedPhotoPreview(assignmentId) {
-  const input = $(`photos-${assignmentId}`);
-  const preview = $(`photo-preview-${assignmentId}`);
-  const countEl = $(`photo-count-${assignmentId}`);
+function renderPhotoPreviewFromInput(inputId, previewId, countId, limit = MAX_SUBMISSION_PHOTOS) {
+  const input = $(inputId);
+  const preview = $(previewId);
+  const countEl = $(countId);
   if (!input || !preview || !countEl) return;
-  const files = Array.from(input.files || []).slice(0, MAX_SUBMISSION_PHOTOS);
-  if ((input.files || []).length > MAX_SUBMISSION_PHOTOS) {
-    countEl.textContent = `Using first ${MAX_SUBMISSION_PHOTOS} images.`;
+  const files = Array.from(input.files || []).slice(0, limit);
+  if ((input.files || []).length > limit) {
+    countEl.textContent = `Using first ${limit} images.`;
   } else {
     countEl.textContent = files.length ? `${files.length} image(s) selected.` : '';
   }
@@ -1620,6 +1795,10 @@ function renderSelectedPhotoPreview(assignmentId) {
     const url = URL.createObjectURL(f);
     return `<img src="${url}" alt="Preview" class="photo-preview-img">`;
   }).join('');
+}
+
+function renderSelectedPhotoPreview(assignmentId) {
+  renderPhotoPreviewFromInput(`photos-${assignmentId}`, `photo-preview-${assignmentId}`, `photo-count-${assignmentId}`, MAX_SUBMISSION_PHOTOS);
 }
 
 async function renderTutorDashboard() {
@@ -2335,6 +2514,7 @@ async function renderDashboardForRole() {
   $('tutor-view').classList.add('hidden');
   $('student-view').classList.remove('hidden');
   $('parent-view').classList.add('hidden');
+  updateQuickMarkingModeDefault();
   await renderStudentAssignments();
 }
 
@@ -2499,6 +2679,8 @@ async function bootstrap() {
   safeBind('btn-tab-dashboard', 'click', async () => switchSection('dashboard'));
   safeBind('btn-tab-reviews', 'click', async () => switchSection('reviews'));
   safeBind('btn-analysis-close', 'click', closeAnalysisModal);
+  safeBind('btn-quick-submit-photos', 'click', submitQuickUploadPhotos);
+  safeBind('quick-subject', 'change', updateQuickMarkingModeDefault);
   safeBind('asg-student', 'change', handleStudentChange);
   safeBind('asg-subject', 'change', handleSubjectChange);
   safeBind('asg-exam-board', 'change', loadUnitsForAssignmentForm);
@@ -2511,8 +2693,15 @@ async function bootstrap() {
   updateEnglishTypeVisibility();
   updateTopicVisibility();
   updateTierVisibility();
+  updateQuickMarkingModeDefault();
 
   bindListActions();
+  const quickPhotosInput = $('quick-photos');
+  if (quickPhotosInput) {
+    quickPhotosInput.addEventListener('change', () => {
+      renderPhotoPreviewFromInput('quick-photos', 'quick-photo-preview', 'quick-photo-count', MAX_SUBMISSION_PHOTOS);
+    });
+  }
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') closeAnalysisModal();
   });
