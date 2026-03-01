@@ -804,7 +804,18 @@ async function triggerOcrMarking(submissionId) {
   const { data, error } = await sb.functions.invoke('ocr_mark_submission', {
     body: { submission_id: submissionId }
   });
-  if (error) throw error;
+  if (error) {
+    let message = error.message || 'Edge Function call failed';
+    try {
+      if (error.context && typeof error.context.json === 'function') {
+        const payload = await error.context.json();
+        if (payload?.error) message = payload.error;
+      }
+    } catch (_err) {
+      // Keep original message when response body is unavailable.
+    }
+    throw new Error(message);
+  }
   return data;
 }
 
