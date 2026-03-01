@@ -142,6 +142,11 @@ body{font-family:'Outfit',sans-serif;background:var(--cream);color:var(--ink);ov
 #tutors .tcard-top .qual{font-size:.984rem}
 #tutors .splist li{font-size:1.056rem}
 
+#levels .sec-sub{max-width:100%}
+#levels .levels-intro{max-width:100%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.5rem 1.25rem;list-style:none;margin:0;padding:0}
+#levels .levels-intro li{font-size:.98rem;color:var(--muted);line-height:1.65}
+#levels .levels-intro li::before{content:'✓';color:var(--gold);font-weight:800;margin-right:.5rem}
+
 /* AGE GRID */
 .agrid{display:grid;grid-template-columns:repeat(4,1fr);gap:1.2rem;margin-top:3rem}
 .ac{border-radius:14px;overflow:hidden;transition:transform .25s,box-shadow .25s}
@@ -242,6 +247,7 @@ body{font-family:'Outfit',sans-serif;background:var(--cream);color:var(--ink);ov
   .hero{min-height:60vh}
   .agrid{grid-template-columns:1fr 1fr}.hgrid{grid-template-columns:1fr 1fr}
   .proof-wrap{grid-template-columns:1fr 1fr}
+  #levels .levels-intro{grid-template-columns:1fr}
   .faq-grid{grid-template-columns:1fr}
   .tgrid,.ttgrid{grid-template-columns:1fr}
 }
@@ -662,7 +668,12 @@ body{font-family:'Outfit',sans-serif;background:var(--cream);color:var(--ink);ov
 <section id="levels" class="section">
   <div class="eyebrow">All Levels Covered</div>
   <h2 class="sec-h2">From Reception to A-Level</h2>
-  <p class="sec-sub">Primary English and Maths (Reception to Year 6), SATs support (Year 2 and Year 6), 11+ preparation (Year 4 to Year 6), GCSE English/Maths/Science (Year 10 and Year 11), and A-Level Maths, Biology, Chemistry and Physics (Year 12 and Year 13).</p>
+  <ul class="sec-sub levels-intro">
+    <li>One clear pathway from Reception through Year 13 with qualified teachers at every stage.</li>
+    <li>Focused support for SATs, 11+, GCSE and A-Level goals without switching providers.</li>
+    <li>Lessons are adapted to your child’s gaps, confidence level and exam board requirements.</li>
+    <li>Use the cards below for exact year groups, subjects and starting prices.</li>
+  </ul>
   <div class="agrid">
     <div class="ac pri">
       <div class="ac-top"><div class="ac-emo">🎒</div><h3>Primary</h3><div class="ac-rng">Reception – Year 6 · Ages 4–11</div></div>

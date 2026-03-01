@@ -6,8 +6,9 @@
 
   Setup notes:
   1) Run supabase/migrations/0001_portal.sql in Supabase SQL Editor
-  2) Create a PRIVATE storage bucket named: assignment-files
-  3) Use this page for tutor/student/parent portal flows
+  2) Run migrations up to 0009 (adds photo submissions + OCR fields)
+  3) Create private storage buckets: assignment-files, submission-files
+  4) Deploy edge function: ocr_mark_submission
 */
 
 const SUPABASE_URL = 'https://vcnophmfmzpanqglqopz.supabase.co';
@@ -22,6 +23,9 @@ let currentProfile = null;
 let tutorStudentsById = new Map();
 let unitLoadSeq = 0;
 let activeSection = 'dashboard';
+const ASSIGNMENT_FILES_BUCKET = 'assignment-files';
+const SUBMISSION_FILES_BUCKET = 'submission-files';
+const MAX_SUBMISSION_PHOTOS = 6;
 const SCIENCE_UNITS = {
   biology: [
     'Cell biology',
@@ -648,9 +652,9 @@ async function ensureProfile(user) {
   return profile;
 }
 
-async function getSignedUrl(filePath) {
+async function getSignedUrl(filePath, bucket = ASSIGNMENT_FILES_BUCKET) {
   if (!filePath) return null;
-  const { data, error } = await sb.storage.from('assignment-files').createSignedUrl(filePath, 600);
+  const { data, error } = await sb.storage.from(bucket).createSignedUrl(filePath, 600);
   if (error) {
     console.warn('Signed URL error:', error.message);
     return null;
@@ -665,11 +669,191 @@ async function uploadAssignmentFile(file, studentId, assignmentId) {
   const path = `${studentId}/${assignmentId}/${uuid}_${fileName}`;
 
   const { error } = await sb.storage
-    .from('assignment-files')
+    .from(ASSIGNMENT_FILES_BUCKET)
     .upload(path, file, { upsert: false, cacheControl: '3600' });
 
   if (error) throw error;
   return path;
+}
+
+async function compressImageFile(file, maxDimension = 1600, quality = 0.82) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      let { width, height } = img;
+      if (width > maxDimension || height > maxDimension) {
+        if (width >= height) {
+          height = Math.round((height * maxDimension) / width);
+          width = maxDimension;
+        } else {
+          width = Math.round((width * maxDimension) / height);
+          height = maxDimension;
+        }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        reject(new Error('Canvas context unavailable'));
+        return;
+      }
+      ctx.drawImage(img, 0, 0, width, height);
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          reject(new Error('Image compression failed'));
+          return;
+        }
+        resolve(blob);
+      }, 'image/jpeg', quality);
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error('Unable to read image file'));
+    };
+    img.src = url;
+  });
+}
+
+function buildSubmissionPhotoPath(studentId, assignmentId, submissionId, index) {
+  const ts = Date.now();
+  return `${studentId}/${assignmentId}/${submissionId}/${ts}_${index}.jpg`;
+}
+
+async function ensureStudentSubmissionRow(assignmentId) {
+  const { data: existing, error: existingErr } = await sb
+    .from('submissions')
+    .select('id')
+    .eq('assignment_id', assignmentId)
+    .eq('student_id', currentUser.id)
+    .maybeSingle();
+  if (existingErr) throw existingErr;
+  if (existing?.id) return existing.id;
+
+  const { data: created, error: createErr } = await sb
+    .from('submissions')
+    .insert({
+      assignment_id: assignmentId,
+      student_id: currentUser.id,
+      submitted_at: new Date().toISOString()
+    })
+    .select('id')
+    .single();
+  if (createErr) throw createErr;
+  return created.id;
+}
+
+async function uploadSubmissionPhotos(assignmentId, files, onProgress) {
+  const submissionId = await ensureStudentSubmissionRow(assignmentId);
+  for (let i = 0; i < files.length; i += 1) {
+    onProgress?.(`Uploading ${i + 1} of ${files.length}...`);
+    const compressed = await compressImageFile(files[i]);
+    const path = buildSubmissionPhotoPath(currentUser.id, assignmentId, submissionId, i);
+
+    const { error: uploadErr } = await sb.storage
+      .from(SUBMISSION_FILES_BUCKET)
+      .upload(path, compressed, { contentType: 'image/jpeg', upsert: false, cacheControl: '3600' });
+    if (uploadErr) throw uploadErr;
+
+    const { error: rowErr } = await sb
+      .from('submission_files')
+      .insert({
+        submission_id: submissionId,
+        assignment_id: assignmentId,
+        student_id: currentUser.id,
+        file_path: path
+      });
+    if (rowErr) throw rowErr;
+  }
+
+  const { error: statusErr } = await sb
+    .from('assignments')
+    .update({ status: 'submitted' })
+    .eq('id', assignmentId)
+    .eq('student_id', currentUser.id);
+  if (statusErr) throw statusErr;
+
+  return submissionId;
+}
+
+async function triggerOcrMarking(submissionId) {
+  const { data, error } = await sb.functions.invoke('ocr_mark_submission', {
+    body: { submission_id: submissionId }
+  });
+  if (error) throw error;
+  return data;
+}
+
+async function pollSubmissionMarking(submissionId, attempts = 20, intervalMs = 3000) {
+  for (let i = 0; i < attempts; i += 1) {
+    await new Promise((resolve) => setTimeout(resolve, intervalMs));
+    const { data, error } = await sb
+      .from('submissions')
+      .select('auto_mark,auto_grade,auto_feedback,auto_graded_at,ocr_processing')
+      .eq('id', submissionId)
+      .maybeSingle();
+    if (error) throw error;
+    if (data && !data.ocr_processing && data.auto_graded_at) return data;
+  }
+  return null;
+}
+
+async function submitStudentPhotos(assignmentId) {
+  const fileInput = $(`photos-${assignmentId}`);
+  const statusEl = $(`photo-status-${assignmentId}`);
+  const submitBtn = document.querySelector(`[data-action="submit-photos"][data-id="${assignmentId}"]`);
+  const selected = Array.from(fileInput?.files || []).slice(0, MAX_SUBMISSION_PHOTOS);
+
+  if (!selected.length) {
+    if (statusEl) {
+      statusEl.textContent = 'Please choose at least one image first.';
+      statusEl.className = 'photo-status err';
+    }
+    return;
+  }
+
+  if (submitBtn) submitBtn.disabled = true;
+  if (statusEl) {
+    statusEl.textContent = 'Uploading images...';
+    statusEl.className = 'photo-status warn';
+  }
+
+  try {
+    const submissionId = await uploadSubmissionPhotos(assignmentId, selected, (msg) => {
+      if (statusEl) statusEl.textContent = msg;
+    });
+
+    if (statusEl) {
+      statusEl.textContent = 'Running OCR + auto-mark...';
+      statusEl.className = 'photo-status warn';
+    }
+    await triggerOcrMarking(submissionId);
+
+    if (statusEl) {
+      statusEl.textContent = 'Waiting for mark...';
+      statusEl.className = 'photo-status warn';
+    }
+    const result = await pollSubmissionMarking(submissionId);
+    if (statusEl) {
+      if (result) {
+        statusEl.textContent = `Marked: ${result.auto_mark ?? '-'}% (${result.auto_grade || '-'})`;
+        statusEl.className = 'photo-status ok';
+      } else {
+        statusEl.textContent = 'Submitted. Marking is still processing, refresh shortly.';
+        statusEl.className = 'photo-status warn';
+      }
+    }
+    await renderStudentAssignments();
+  } catch (err) {
+    if (statusEl) {
+      statusEl.textContent = `Photo submit failed: ${err.message}`;
+      statusEl.className = 'photo-status err';
+    }
+  } finally {
+    if (submitBtn) submitBtn.disabled = false;
+  }
 }
 
 async function loadStudentsForTutor() {
@@ -892,6 +1076,24 @@ function attachmentButtonHtml(a, context) {
   return buttons.length ? `<div class="actions" style="margin-top:.45rem">${buttons.join('')}</div>` : '';
 }
 
+function submissionFilesHtml(a, context, includeOcr = false) {
+  const files = Array.isArray(a.submissionFiles) ? a.submissionFiles : [];
+  if (!files.length) return '';
+  const rows = files.map((f, idx) => `
+    <div class="submission-file-row">
+      <button class="btn ghost small" type="button" data-action="open-sub-file" data-path="${escapeHtml(f.file_path)}" data-context="${escapeHtml(context)}" data-id="${escapeHtml(a.id)}">
+        Photo ${idx + 1}
+      </button>
+      ${includeOcr ? `
+      <details class="submission-ocr">
+        <summary>View extracted text</summary>
+        <pre>${escapeHtml(f.ocr_text || 'OCR text not available yet.')}</pre>
+      </details>` : ''}
+    </div>
+  `).join('');
+  return `<div class="submission-files-wrap"><p class="muted"><b>Uploaded photos:</b> ${files.length}</p>${rows}</div>`;
+}
+
 function tutorItemHtml(a) {
   const statusClass = a.status === 'marked' || a.status === 'completed' ? 'ok' : 'warn';
   const studentName = a.student?.full_name || a.student?.email || 'Unknown student';
@@ -910,9 +1112,11 @@ function tutorItemHtml(a) {
     ? `
       <div style="margin-top:.65rem;border-top:1px solid var(--border);padding-top:.65rem">
         <p class="muted" style="margin-bottom:.35rem"><b>Student Notes:</b> ${a.submission.notes || 'No notes added.'}</p>
+        ${submissionFilesHtml(a, 'tutor', true)}
         ${a.submission.auto_mark !== null && a.submission.auto_mark !== undefined
           ? `<p class="muted" style="margin-bottom:.35rem"><b>Auto-Mark Suggestion:</b> ${a.submission.auto_mark}% (${a.submission.auto_grade || '-'}) · ${a.submission.auto_feedback || ''}</p>`
           : ''}
+        ${a.submission.ocr_processing ? '<p class="muted" style="margin-bottom:.35rem"><b>OCR Status:</b> Processing...</p>' : ''}
         <div class="row">
           <div><label>Mark (%)</label><input id="mark-${a.id}" type="number" min="0" max="100" step="0.1" value="${a.submission.mark ?? ''}"></div>
           <div><label>Grade</label><input id="grade-${a.id}" type="text" placeholder="e.g. 7 / B+ / A*" value="${a.submission.grade || ''}"></div>
@@ -956,6 +1160,7 @@ function studentItemHtml(a) {
         ? `<p class="muted" style="margin:.25rem 0"><b>Auto-Mark:</b> ${a.submission.auto_mark}% (${a.submission.auto_grade || '-'})</p>`
         : ''}
       <p class="muted" style="margin-bottom:.45rem"><b>Tutor Feedback:</b> ${a.submission.tutor_feedback || 'No feedback yet.'}</p>
+      ${a.submission.ocr_processing ? '<p class="muted" style="margin-bottom:.45rem"><b>OCR Status:</b> Processing...</p>' : ''}
     `
     : '';
 
@@ -971,11 +1176,18 @@ function studentItemHtml(a) {
       </div>
       <p class="muted" style="margin-bottom:.5rem">${desc}</p>
       ${attachmentButtonHtml(a, 'student')}
+      ${submissionFilesHtml(a, 'student', false)}
       ${gradeHtml}
       <label style="margin-top:.5rem;margin-bottom:.35rem">Submission Notes</label>
       <textarea id="notes-${a.id}" placeholder="What did you complete? Add links/evidence if needed">${a.submission?.notes || ''}</textarea>
+      <label style="margin-top:.6rem;margin-bottom:.35rem">Upload Work Photos (up to ${MAX_SUBMISSION_PHOTOS})</label>
+      <input id="photos-${a.id}" type="file" accept="image/*" multiple capture="environment">
+      <div id="photo-preview-${a.id}" class="photo-preview-grid"></div>
+      <p class="muted" id="photo-count-${a.id}" style="margin-top:.25rem"></p>
+      <p class="photo-status" id="photo-status-${a.id}"></p>
       <div class="actions" style="margin-top:.45rem">
         <button class="btn blue small" type="button" data-action="submit" data-id="${a.id}">Submit Work</button>
+        <button class="btn ghost small" type="button" data-action="submit-photos" data-id="${a.id}">Upload Photos + Auto-Mark</button>
       </div>
     </article>
   `;
@@ -1007,6 +1219,7 @@ function parentItemHtml(a) {
       </div>
       <p class="muted">${desc}</p>
       ${attachmentButtonHtml(a, 'parent')}
+      ${submissionFilesHtml(a, 'parent', false)}
       <p class="muted" style="margin:.35rem 0"><b>Mark:</b> ${a.submission?.mark ?? '-'} · <b>Grade:</b> ${a.submission?.grade || '-'}</p>
       ${a.submission?.auto_mark !== null && a.submission?.auto_mark !== undefined
         ? `<p class="muted" style="margin:.25rem 0"><b>Auto-Mark:</b> ${a.submission.auto_mark}% (${a.submission.auto_grade || '-'})</p>`
@@ -1116,6 +1329,43 @@ async function renderParentReviews() {
     : '<p class="muted">No progress reviews for linked students yet.</p>';
 }
 
+async function loadSubmissionFilesMap(assignmentIds) {
+  const map = new Map();
+  if (!assignmentIds.length) return map;
+  const { data, error } = await sb
+    .from('submission_files')
+    .select('id,assignment_id,submission_id,file_path,ocr_text,created_at')
+    .in('assignment_id', assignmentIds)
+    .order('created_at', { ascending: true });
+  if (error) {
+    console.warn('Could not load submission files:', error.message);
+    return map;
+  }
+  (data || []).forEach((row) => {
+    const arr = map.get(row.assignment_id) || [];
+    arr.push(row);
+    map.set(row.assignment_id, arr);
+  });
+  return map;
+}
+
+function renderSelectedPhotoPreview(assignmentId) {
+  const input = $(`photos-${assignmentId}`);
+  const preview = $(`photo-preview-${assignmentId}`);
+  const countEl = $(`photo-count-${assignmentId}`);
+  if (!input || !preview || !countEl) return;
+  const files = Array.from(input.files || []).slice(0, MAX_SUBMISSION_PHOTOS);
+  if ((input.files || []).length > MAX_SUBMISSION_PHOTOS) {
+    countEl.textContent = `Using first ${MAX_SUBMISSION_PHOTOS} images.`;
+  } else {
+    countEl.textContent = files.length ? `${files.length} image(s) selected.` : '';
+  }
+  preview.innerHTML = files.map((f) => {
+    const url = URL.createObjectURL(f);
+    return `<img src="${url}" alt="Preview" class="photo-preview-img">`;
+  }).join('');
+}
+
 async function renderTutorDashboard() {
   const { data: assignments, error } = await sb
     .from('assignments')
@@ -1137,18 +1387,21 @@ async function renderTutorDashboard() {
 
   const assignmentIds = (assignments || []).map((a) => a.id);
   let submissionMap = new Map();
+  let submissionFilesMap = new Map();
   if (assignmentIds.length) {
     const { data: subs, error: subErr } = await sb
       .from('submissions')
-      .select('assignment_id,notes,submitted_at,mark,grade,tutor_feedback,graded_at,auto_mark,auto_grade,auto_feedback,auto_graded_at')
+      .select('id,assignment_id,notes,submitted_at,mark,grade,tutor_feedback,graded_at,auto_mark,auto_grade,auto_feedback,auto_graded_at,ocr_processing')
       .in('assignment_id', assignmentIds);
     if (subErr) throw subErr;
     submissionMap = new Map((subs || []).map((s) => [s.assignment_id, s]));
+    submissionFilesMap = await loadSubmissionFilesMap(assignmentIds);
   }
 
   const enriched = (assignments || []).map((a) => ({
     ...a,
-    submission: submissionMap.get(a.id) || null
+    submission: submissionMap.get(a.id) || null,
+    submissionFiles: submissionFilesMap.get(a.id) || []
   }));
   $('kpi-active').textContent = String(enriched.filter((x) => x.status === 'assigned' || x.status === 'submitted').length);
   $('kpi-complete').textContent = String(enriched.filter((x) => x.status === 'marked' || x.status === 'completed').length);
@@ -1172,19 +1425,22 @@ async function renderStudentAssignments() {
 
   const assignmentIds = (assignments || []).map((a) => a.id);
   let submissionMap = new Map();
+  let submissionFilesMap = new Map();
   if (assignmentIds.length) {
     const { data: subs, error: subErr } = await sb
       .from('submissions')
-      .select('assignment_id,notes,submitted_at,mark,grade,tutor_feedback,graded_at,auto_mark,auto_grade,auto_feedback,auto_graded_at')
+      .select('id,assignment_id,notes,submitted_at,mark,grade,tutor_feedback,graded_at,auto_mark,auto_grade,auto_feedback,auto_graded_at,ocr_processing')
       .eq('student_id', currentUser.id)
       .in('assignment_id', assignmentIds);
     if (subErr) throw subErr;
     submissionMap = new Map((subs || []).map((s) => [s.assignment_id, s]));
+    submissionFilesMap = await loadSubmissionFilesMap(assignmentIds);
   }
 
   const enriched = (assignments || []).map((a) => ({
     ...a,
-    submission: submissionMap.get(a.id) || null
+    submission: submissionMap.get(a.id) || null,
+    submissionFiles: submissionFilesMap.get(a.id) || []
   }));
   $('student-list').innerHTML = enriched.length
     ? enriched.map(studentItemHtml).join('')
@@ -1235,18 +1491,21 @@ async function renderParentTracker() {
 
   const assignmentIds = (assignments || []).map((a) => a.id);
   let submissionMap = new Map();
+  let submissionFilesMap = new Map();
   if (assignmentIds.length) {
     const { data: subs, error: subErr } = await sb
       .from('submissions')
-      .select('assignment_id,notes,submitted_at,mark,grade,tutor_feedback,graded_at,auto_mark,auto_grade,auto_feedback,auto_graded_at')
+      .select('id,assignment_id,notes,submitted_at,mark,grade,tutor_feedback,graded_at,auto_mark,auto_grade,auto_feedback,auto_graded_at,ocr_processing')
       .in('assignment_id', assignmentIds);
     if (subErr) throw subErr;
     submissionMap = new Map((subs || []).map((s) => [s.assignment_id, s]));
+    submissionFilesMap = await loadSubmissionFilesMap(assignmentIds);
   }
 
   const enriched = (assignments || []).map((a) => ({
     ...a,
-    submission: submissionMap.get(a.id) || null
+    submission: submissionMap.get(a.id) || null,
+    submissionFiles: submissionFilesMap.get(a.id) || []
   }));
   $('kpi-parent-total').textContent = String(enriched.length);
   $('kpi-parent-complete').textContent = String(enriched.filter((x) => x.status === 'marked' || x.status === 'completed').length);
@@ -1607,6 +1866,15 @@ async function openAssignmentFile(path) {
   openExternalUrl(signedUrl);
 }
 
+async function openSubmissionFile(path) {
+  const signedUrl = await getSignedUrl(path, SUBMISSION_FILES_BUCKET);
+  if (!signedUrl) {
+    alert('Could not generate secure photo link.');
+    return;
+  }
+  openExternalUrl(signedUrl);
+}
+
 function bindListActions() {
   const studentList = $('student-list');
   if (studentList) studentList.addEventListener('click', async (e) => {
@@ -1625,7 +1893,27 @@ function bindListActions() {
     const fileBtn = e.target.closest('[data-action="open-file"]');
     if (fileBtn) {
       await openAssignmentFile(fileBtn.dataset.path);
+      return;
     }
+
+    const subFileBtn = e.target.closest('[data-action="open-sub-file"]');
+    if (subFileBtn) {
+      await openSubmissionFile(subFileBtn.dataset.path);
+      return;
+    }
+
+    const submitPhotosBtn = e.target.closest('[data-action="submit-photos"]');
+    if (submitPhotosBtn) {
+      await submitStudentPhotos(submitPhotosBtn.dataset.id);
+      return;
+    }
+  });
+
+  if (studentList) studentList.addEventListener('change', (e) => {
+    const input = e.target.closest('input[id^="photos-"]');
+    if (!input) return;
+    const assignmentId = input.id.replace('photos-', '');
+    renderSelectedPhotoPreview(assignmentId);
   });
 
   const tutorList = $('tutor-list');
@@ -1645,6 +1933,12 @@ function bindListActions() {
     const fileBtn = e.target.closest('[data-action="open-file"]');
     if (fileBtn) {
       await openAssignmentFile(fileBtn.dataset.path);
+      return;
+    }
+
+    const subFileBtn = e.target.closest('[data-action="open-sub-file"]');
+    if (subFileBtn) {
+      await openSubmissionFile(subFileBtn.dataset.path);
     }
   });
 
@@ -1659,6 +1953,12 @@ function bindListActions() {
     const fileBtn = e.target.closest('[data-action="open-file"]');
     if (fileBtn) {
       await openAssignmentFile(fileBtn.dataset.path);
+      return;
+    }
+
+    const subFileBtn = e.target.closest('[data-action="open-sub-file"]');
+    if (subFileBtn) {
+      await openSubmissionFile(subFileBtn.dataset.path);
     }
   });
 }
