@@ -16,6 +16,7 @@ const SUPABASE_ANON_KEY = 'sb_publishable_0gOJeJ9z8WZfZH1ZeVm-Ww_GzoGg-kk';
 
 const hasConfig = !SUPABASE_URL.includes('YOUR_') && !SUPABASE_ANON_KEY.includes('YOUR_');
 const $ = (id) => document.getElementById(id);
+const PORTAL_VARIANT = String(document.body?.dataset?.portalVariant || '').trim().toLowerCase();
 
 let sb = null;
 let currentUser = null;
@@ -34,6 +35,23 @@ const MARKING_MODES = [
   'science_short_answer',
   'generic_completion_review'
 ];
+
+function expectedPageForRole(role) {
+  if (role === 'tutor') return 'portal-tutor.html';
+  if (role === 'student') return 'portal-student.html';
+  if (role === 'parent') return 'portal.html';
+  return 'portal.html';
+}
+
+function enforceVariantRouting(role) {
+  if (!PORTAL_VARIANT) return;
+  if (PORTAL_VARIANT === role) return;
+  const target = expectedPageForRole(role);
+  const here = window.location.pathname.split('/').pop() || '';
+  if (here !== target) {
+    window.location.href = target;
+  }
+}
 const SCIENCE_UNITS = {
   biology: [
     'Cell biology',
@@ -2614,6 +2632,7 @@ async function renderAppForRole() {
 async function toSignedIn(user) {
   currentUser = user;
   currentProfile = await ensureProfile(user);
+  enforceVariantRouting(currentProfile.role);
   $('auth-view').classList.add('hidden');
   $('app-view').classList.remove('hidden');
   await renderAppForRole();
