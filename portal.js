@@ -23,6 +23,7 @@ let currentProfile = null;
 let tutorStudentsById = new Map();
 let unitLoadSeq = 0;
 let activeSection = 'dashboard';
+let detailPayloadByAssignmentId = new Map();
 const ASSIGNMENT_FILES_BUCKET = 'assignment-files';
 const SUBMISSION_FILES_BUCKET = 'submission-files';
 const MAX_SUBMISSION_PHOTOS = 6;
@@ -416,6 +417,144 @@ function parseJsonSafe(value, fallback = null) {
   } catch (_err) {
     return fallback;
   }
+}
+
+function indexDetailPayload(assignments) {
+  detailPayloadByAssignmentId = new Map();
+  (assignments || []).forEach((a) => {
+    const sub = a?.submission || null;
+    const autoResult = parseJsonSafe(sub?.auto_result, null) || {};
+    const tutorResult = parseJsonSafe(sub?.tutor_result, null) || {};
+    detailPayloadByAssignmentId.set(String(a.id), {
+      id: a.id,
+      title: a.title || 'Assignment',
+      subject: a.subject || '',
+      markingMode: markingModeLabel(a.marking_mode),
+      student: a.student?.full_name || a.student?.email || null,
+      auto: {
+        mark: sub?.auto_mark ?? null,
+        grade: sub?.auto_grade ?? null,
+        feedback: sub?.auto_feedback || autoResult.summary || '',
+        confidence: sub?.auto_confidence ?? autoResult.confidence ?? null,
+        details: Array.isArray(autoResult.details) ? autoResult.details : [],
+        questionBreakdown: Array.isArray(autoResult.question_breakdown) ? autoResult.question_breakdown : [],
+        raw: autoResult || null
+      },
+      tutor: {
+        mark: sub?.mark ?? tutorResult.mark ?? null,
+        grade: sub?.grade || tutorResult.grade || null,
+        feedback: sub?.tutor_feedback || tutorResult.feedback || '',
+        raw: tutorResult || null
+      }
+    });
+  });
+}
+
+function hasDetailedAnalysis(a) {
+  const sub = a?.submission;
+  if (!sub) return false;
+  const autoResult = parseJsonSafe(sub.auto_result, null) || {};
+  const tutorResult = parseJsonSafe(sub.tutor_result, null) || {};
+  if (Array.isArray(autoResult.details) && autoResult.details.length) return true;
+  if (Array.isArray(autoResult.question_breakdown) && autoResult.question_breakdown.length) return true;
+  if (sub.auto_feedback || sub.tutor_feedback) return true;
+  if (sub.auto_mark !== null && sub.auto_mark !== undefined) return true;
+  if (sub.mark !== null && sub.mark !== undefined) return true;
+  if (tutorResult.feedback || tutorResult.mark !== null || tutorResult.grade) return true;
+  return false;
+}
+
+function renderAnalysisButton(a) {
+  if (!hasDetailedAnalysis(a)) return '';
+  return `<div class="actions" style="margin-top:.45rem"><button class="btn ghost small" type="button" data-action="view-analysis" data-id="${escapeHtml(a.id)}">View detailed analysis</button></div>`;
+}
+
+function renderAnalysisModalBody(entry) {
+  if (!entry) return '<p class="muted">No analysis data available yet.</p>';
+  const auto = entry.auto || {};
+  const tutor = entry.tutor || {};
+  const autoDetails = Array.isArray(auto.details) ? auto.details : [];
+  const autoModeSpecific = auto.raw?.mode_specific && typeof auto.raw.mode_specific === 'object'
+    ? auto.raw.mode_specific
+    : {};
+  const qBreakdown = Array.isArray(auto.questionBreakdown) ? auto.questionBreakdown : [];
+  const tutorRaw = tutor.raw && typeof tutor.raw === 'object' ? tutor.raw : {};
+  const tutorRawItems = Object.entries(tutorRaw).filter(([k]) => !['mark', 'grade', 'feedback'].includes(k));
+
+  const qRows = qBreakdown.length
+    ? `<div class="analysis-block"><h4>Question Breakdown</h4><div class="analysis-grid">${qBreakdown.map((q) => `
+      <div class="analysis-cell">
+        <p><b>${escapeHtml(q.question || 'Question')}</b></p>
+        <p class="muted">Student: ${escapeHtml(q.student_answer ?? '-')}</p>
+        <p class="muted">Expected: ${escapeHtml(q.expected_answer ?? '-')}</p>
+        <p class="muted"><b>${q.correct ? 'Correct' : 'Needs review'}</b></p>
+        ${q.help ? `<p class="muted">${escapeHtml(q.help)}</p>` : ''}
+      </div>
+    `).join('')}</div></div>`
+    : '';
+
+  const tutorExtra = tutorRawItems.length
+    ? `<ul class="analysis-list">${tutorRawItems.map(([k, v]) => `<li class="muted"><b>${escapeHtml(k)}:</b> ${escapeHtml(typeof v === 'string' ? v : JSON.stringify(v))}</li>`).join('')}</ul>`
+    : '';
+  const nextSteps = Array.isArray(autoModeSpecific.next_steps) ? autoModeSpecific.next_steps : [];
+  const ao = autoModeSpecific.ao_breakdown && typeof autoModeSpecific.ao_breakdown === 'object'
+    ? autoModeSpecific.ao_breakdown
+    : null;
+  const aoHtml = ao
+    ? `<div class="analysis-grid">
+        <div class="analysis-cell"><p><b>AO1</b></p><p class="muted">${escapeHtml(ao.ao1 ?? '-')} / 6</p></div>
+        <div class="analysis-cell"><p><b>AO2</b></p><p class="muted">${escapeHtml(ao.ao2 ?? '-')} / 6</p></div>
+        <div class="analysis-cell"><p><b>AO3</b></p><p class="muted">${escapeHtml(ao.ao3 ?? '-')} / 6</p></div>
+        <div class="analysis-cell"><p><b>AO4</b></p><p class="muted">${escapeHtml(ao.ao4 ?? '-')} / 6</p></div>
+      </div>`
+    : '';
+
+  return `
+    <div class="analysis-block">
+      <h4>Auto Assessment</h4>
+      <div class="analysis-grid">
+        <div class="analysis-cell"><p><b>Score</b></p><p class="muted">${auto.mark ?? '-'}${auto.mark !== null && auto.mark !== undefined ? '%' : ''}</p></div>
+        <div class="analysis-cell"><p><b>Grade</b></p><p class="muted">${escapeHtml(auto.grade || '-')}</p></div>
+        <div class="analysis-cell"><p><b>Confidence</b></p><p class="muted">${auto.confidence ?? '-'}${auto.confidence !== null && auto.confidence !== undefined ? '%' : ''}</p></div>
+      </div>
+      <p class="muted"><b>Summary:</b> ${escapeHtml(auto.feedback || 'No auto summary available.')}</p>
+      ${autoDetails.length ? `<ul class="analysis-list">${autoDetails.map((d) => `<li class="muted">${escapeHtml(d)}</li>`).join('')}</ul>` : '<p class="muted">No auto detail bullets available.</p>'}
+      ${aoHtml}
+      ${nextSteps.length ? `<p class="muted" style="margin-top:.4rem"><b>Next Steps</b></p><ul class="analysis-list">${nextSteps.map((s) => `<li class="muted">${escapeHtml(s)}</li>`).join('')}</ul>` : ''}
+    </div>
+    ${qRows}
+    <div class="analysis-block">
+      <h4>Tutor Assessment</h4>
+      <div class="analysis-grid">
+        <div class="analysis-cell"><p><b>Final Mark</b></p><p class="muted">${tutor.mark ?? '-'}${tutor.mark !== null && tutor.mark !== undefined ? '%' : ''}</p></div>
+        <div class="analysis-cell"><p><b>Final Grade</b></p><p class="muted">${escapeHtml(tutor.grade || '-')}</p></div>
+      </div>
+      <p class="muted"><b>Feedback:</b> ${escapeHtml(tutor.feedback || 'No tutor feedback yet.')}</p>
+      ${tutorExtra}
+    </div>
+  `;
+}
+
+function openAnalysisModal(assignmentId) {
+  const modal = $('analysis-modal');
+  const title = $('analysis-modal-title');
+  const subtitle = $('analysis-modal-subtitle');
+  const body = $('analysis-modal-body');
+  if (!modal || !title || !subtitle || !body) return;
+  const entry = detailPayloadByAssignmentId.get(String(assignmentId));
+  if (!entry) {
+    alert('No detailed analysis found for this assignment yet.');
+    return;
+  }
+  title.textContent = `Detailed Assessment: ${entry.title || 'Assignment'}`;
+  subtitle.textContent = `${entry.subject || 'Subject not set'}${entry.student ? ` · ${entry.student}` : ''} · ${entry.markingMode || ''}`.trim();
+  body.innerHTML = renderAnalysisModalBody(entry);
+  modal.classList.remove('hidden');
+}
+
+function closeAnalysisModal() {
+  const modal = $('analysis-modal');
+  if (modal) modal.classList.add('hidden');
 }
 
 function getDefaultMarkingMode(subjectRaw) {
@@ -1186,11 +1325,6 @@ function renderAutoAssessment(a) {
   const feedback = sub.auto_feedback || result.feedback || 'No auto feedback yet.';
   const processing = Boolean(sub.ocr_processing);
   const mode = a.marking_mode || result.mode || 'generic_completion_review';
-  const details = Array.isArray(result.details) ? result.details : [];
-  const bullets = details.length
-    ? `<ul style="margin:.35rem 0 .15rem 1rem">${details.slice(0, 6).map((d) => `<li class="muted">${escapeHtml(d)}</li>`).join('')}</ul>`
-    : '';
-
   return `
     <div class="assess auto">
       <h4>Auto Assessment</h4>
@@ -1201,7 +1335,6 @@ function renderAutoAssessment(a) {
       </p>
       <p class="muted"><b>Score:</b> ${score ?? '-'} ${score !== null && score !== undefined ? '%' : ''} · <b>Grade:</b> ${grade || '-'}</p>
       <p class="muted"><b>Summary:</b> ${escapeHtml(feedback)}</p>
-      ${bullets}
     </div>
   `;
 }
@@ -1242,6 +1375,7 @@ function tutorItemHtml(a) {
         ${submissionFilesHtml(a, 'tutor', true)}
         ${renderAutoAssessment(a)}
         ${renderTutorAssessment(a)}
+        ${renderAnalysisButton(a)}
         <div class="row">
           <div><label>Mark (%)</label><input id="mark-${a.id}" type="number" min="0" max="100" step="0.1" value="${a.submission.mark ?? ''}"></div>
           <div><label>Grade</label><input id="grade-${a.id}" type="text" placeholder="e.g. 7 / B+ / A*" value="${a.submission.grade || ''}"></div>
@@ -1285,7 +1419,7 @@ function studentItemHtml(a) {
     ? `<span class="tag">Lesson: ${a.lesson.lesson_order ? `L${a.lesson.lesson_order} · ` : ''}${escapeHtml(a.lesson.lesson_title)}</span>`
     : '';
   const assessHtml = a.submission
-    ? `${renderAutoAssessment(a)}${renderTutorAssessment(a)}`
+    ? `${renderAutoAssessment(a)}${renderTutorAssessment(a)}${renderAnalysisButton(a)}`
     : '';
 
   return `
@@ -1346,7 +1480,7 @@ function parentItemHtml(a) {
       <p class="muted">${desc}</p>
       ${attachmentButtonHtml(a, 'parent')}
       ${submissionFilesHtml(a, 'parent', false)}
-      ${a.submission ? `${renderAutoAssessment(a)}${renderTutorAssessment(a)}` : ''}
+      ${a.submission ? `${renderAutoAssessment(a)}${renderTutorAssessment(a)}${renderAnalysisButton(a)}` : ''}
     </article>
   `;
 }
@@ -1525,6 +1659,7 @@ async function renderTutorDashboard() {
     submission: submissionMap.get(a.id) || null,
     submissionFiles: submissionFilesMap.get(a.id) || []
   }));
+  indexDetailPayload(enriched);
   $('kpi-active').textContent = String(enriched.filter((x) => x.status === 'assigned' || x.status === 'submitted').length);
   $('kpi-complete').textContent = String(enriched.filter((x) => x.status === 'marked' || x.status === 'completed').length);
   $('kpi-subs').textContent = String(submissionsCount || 0);
@@ -1564,6 +1699,7 @@ async function renderStudentAssignments() {
     submission: submissionMap.get(a.id) || null,
     submissionFiles: submissionFilesMap.get(a.id) || []
   }));
+  indexDetailPayload(enriched);
   $('student-list').innerHTML = enriched.length
     ? enriched.map(studentItemHtml).join('')
     : '<p class="muted">No assignments yet. Your tutor will assign work here.</p>';
@@ -1629,6 +1765,7 @@ async function renderParentTracker() {
     submission: submissionMap.get(a.id) || null,
     submissionFiles: submissionFilesMap.get(a.id) || []
   }));
+  indexDetailPayload(enriched);
   $('kpi-parent-total').textContent = String(enriched.length);
   $('kpi-parent-complete').textContent = String(enriched.filter((x) => x.status === 'marked' || x.status === 'completed').length);
   $('parent-list').innerHTML = enriched.length
@@ -2095,6 +2232,12 @@ function bindListActions() {
       await submitStudentPhotos(submitPhotosBtn.dataset.id);
       return;
     }
+
+    const detailBtn = e.target.closest('[data-action="view-analysis"]');
+    if (detailBtn) {
+      openAnalysisModal(detailBtn.dataset.id);
+      return;
+    }
   });
 
   if (studentList) studentList.addEventListener('change', (e) => {
@@ -2133,6 +2276,12 @@ function bindListActions() {
     const subFileBtn = e.target.closest('[data-action="open-sub-file"]');
     if (subFileBtn) {
       await openSubmissionFile(subFileBtn.dataset.path);
+      return;
+    }
+
+    const detailBtn = e.target.closest('[data-action="view-analysis"]');
+    if (detailBtn) {
+      openAnalysisModal(detailBtn.dataset.id);
     }
   });
 
@@ -2153,6 +2302,12 @@ function bindListActions() {
     const subFileBtn = e.target.closest('[data-action="open-sub-file"]');
     if (subFileBtn) {
       await openSubmissionFile(subFileBtn.dataset.path);
+      return;
+    }
+
+    const detailBtn = e.target.closest('[data-action="view-analysis"]');
+    if (detailBtn) {
+      openAnalysisModal(detailBtn.dataset.id);
     }
   });
 }
@@ -2243,6 +2398,7 @@ async function toSignedIn(user) {
 function toSignedOut() {
   currentUser = null;
   currentProfile = null;
+  closeAnalysisModal();
   $('auth-view').classList.remove('hidden');
   $('app-view').classList.add('hidden');
 }
@@ -2342,6 +2498,7 @@ async function bootstrap() {
   safeBind('btn-save-review', 'click', createProgressReview);
   safeBind('btn-tab-dashboard', 'click', async () => switchSection('dashboard'));
   safeBind('btn-tab-reviews', 'click', async () => switchSection('reviews'));
+  safeBind('btn-analysis-close', 'click', closeAnalysisModal);
   safeBind('asg-student', 'change', handleStudentChange);
   safeBind('asg-subject', 'change', handleSubjectChange);
   safeBind('asg-exam-board', 'change', loadUnitsForAssignmentForm);
@@ -2356,6 +2513,15 @@ async function bootstrap() {
   updateTierVisibility();
 
   bindListActions();
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeAnalysisModal();
+  });
+  const modal = $('analysis-modal');
+  if (modal) {
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) closeAnalysisModal();
+    });
+  }
 
   const { data } = await sb.auth.getUser();
   if (data?.user) {

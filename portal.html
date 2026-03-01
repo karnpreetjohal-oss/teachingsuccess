@@ -98,6 +98,15 @@ textarea{min-height:84px;resize:vertical}
 .kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.7rem;margin-bottom:.8rem}
 .kpi{border:1px solid var(--border);border-radius:10px;padding:.7rem;background:#fff}
 .kpi b{font-family:'Fraunces',serif;font-size:1.35rem;display:block}
+.analysis-modal-overlay{position:fixed;inset:0;background:rgba(18,24,35,.55);display:flex;align-items:center;justify-content:center;padding:1rem;z-index:1200}
+.analysis-modal{width:min(920px,96vw);max-height:86vh;overflow:auto;background:#fff;border:1px solid var(--border);border-radius:14px;padding:1rem}
+.analysis-modal-head{display:flex;justify-content:space-between;align-items:flex-start;gap:.6rem;margin-bottom:.6rem}
+.analysis-modal-head h3{font-family:'Fraunces',serif;font-size:1.2rem}
+.analysis-block{border:1px solid var(--border);border-radius:10px;padding:.65rem .72rem;background:#fafcff;margin-bottom:.55rem}
+.analysis-block h4{font-size:.83rem;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem}
+.analysis-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:.45rem;margin:.35rem 0}
+.analysis-cell{background:#fff;border:1px solid var(--border);border-radius:8px;padding:.45rem .55rem}
+.analysis-list{margin:.35rem 0 .15rem 1rem}
 
 .hidden{display:none!important}
 
@@ -384,8 +393,20 @@ textarea{min-height:84px;resize:vertical}
       </section>
     </section>
   </main>
+  <div id="analysis-modal" class="analysis-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="analysis-modal-title">
+    <div class="analysis-modal">
+      <div class="analysis-modal-head">
+        <div>
+          <h3 id="analysis-modal-title">Detailed Assessment</h3>
+          <p class="muted" id="analysis-modal-subtitle"></p>
+        </div>
+        <button class="btn ghost small" type="button" id="btn-analysis-close">Close</button>
+      </div>
+      <div id="analysis-modal-body"></div>
+    </div>
+  </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="portal.js?v=20260221-5"></script>
+  <script src="portal.js?v=20260301-1"></script>
 </body>
 </html>
