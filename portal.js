@@ -26,6 +26,13 @@ let activeSection = 'dashboard';
 const ASSIGNMENT_FILES_BUCKET = 'assignment-files';
 const SUBMISSION_FILES_BUCKET = 'submission-files';
 const MAX_SUBMISSION_PHOTOS = 6;
+const MARKING_MODES = [
+  'maths_question_marking',
+  'english_writing_feedback',
+  'gcse_english_ao',
+  'science_short_answer',
+  'generic_completion_review'
+];
 const SCIENCE_UNITS = {
   biology: [
     'Cell biology',
@@ -401,6 +408,36 @@ function parseKeywordCsv(value) {
     .filter(Boolean);
 }
 
+function parseJsonSafe(value, fallback = null) {
+  if (value === null || value === undefined) return fallback;
+  if (typeof value === 'object') return value;
+  try {
+    return JSON.parse(value);
+  } catch (_err) {
+    return fallback;
+  }
+}
+
+function getDefaultMarkingMode(subjectRaw) {
+  const subject = normalizeSubject(subjectRaw);
+  const year = getSelectedStudentYearInt();
+  if (subject === 'maths') return 'maths_question_marking';
+  if (subject === 'science') return 'science_short_answer';
+  if (subject === 'english') {
+    if (Number.isFinite(year) && year >= 10) return 'gcse_english_ao';
+    return 'english_writing_feedback';
+  }
+  return 'generic_completion_review';
+}
+
+function updateMarkingModeDefault() {
+  const modeEl = $('asg-marking-mode');
+  if (!modeEl) return;
+  const suggested = getDefaultMarkingMode($('asg-subject')?.value || '');
+  const hasOption = [...modeEl.options].some((o) => o.value === suggested);
+  if (hasOption) modeEl.value = suggested;
+}
+
 function subjectNeedsTier(value) {
   const s = normalizeSubject(value);
   if (isPrimaryYear(getSelectedStudentYearInt())) return false;
@@ -426,6 +463,8 @@ async function handleSubjectChange() {
   updateEnglishTypeVisibility();
   updateTopicVisibility();
   updateTierVisibility();
+  updateMarkingModeDefault();
+  updateMarkingModeDefault();
   await loadUnitsForAssignmentForm();
 }
 
@@ -488,6 +527,7 @@ function updateSubjectOptionsByYear() {
 
 async function handleStudentChange() {
   updateSubjectOptionsByYear();
+  updateMarkingModeDefault();
   await handleSubjectChange();
 }
 
@@ -1128,6 +1168,59 @@ function submissionFilesHtml(a, context, includeOcr = false) {
   return `<div class="submission-files-wrap"><p class="muted"><b>Uploaded photos:</b> ${files.length}</p>${rows}</div>`;
 }
 
+function markingModeLabel(mode) {
+  const m = String(mode || '').trim();
+  if (m === 'maths_question_marking') return 'Maths: Question-by-question';
+  if (m === 'english_writing_feedback') return 'English: WWW + EBI';
+  if (m === 'gcse_english_ao') return 'GCSE English: AO-linked';
+  if (m === 'science_short_answer') return 'Science: Keyword + concept checks';
+  return 'Generic completion review';
+}
+
+function renderAutoAssessment(a) {
+  const sub = a.submission || {};
+  const result = parseJsonSafe(sub.auto_result, null) || {};
+  const confidence = result.confidence ?? sub.auto_confidence ?? null;
+  const score = sub.auto_mark;
+  const grade = sub.auto_grade;
+  const feedback = sub.auto_feedback || result.feedback || 'No auto feedback yet.';
+  const processing = Boolean(sub.ocr_processing);
+  const mode = a.marking_mode || result.mode || 'generic_completion_review';
+  const details = Array.isArray(result.details) ? result.details : [];
+  const bullets = details.length
+    ? `<ul style="margin:.35rem 0 .15rem 1rem">${details.slice(0, 6).map((d) => `<li class="muted">${escapeHtml(d)}</li>`).join('')}</ul>`
+    : '';
+
+  return `
+    <div class="assess auto">
+      <h4>Auto Assessment</h4>
+      <span class="pill">${escapeHtml(markingModeLabel(mode))}</span>
+      ${confidence !== null && confidence !== undefined ? `<span class="pill">Confidence: ${escapeHtml(String(confidence))}%</span>` : ''}
+      <p class="muted" style="margin-top:.35rem">
+        <b>Status:</b> ${processing ? 'Processing' : (score !== null && score !== undefined ? 'Ready' : 'Not generated')}
+      </p>
+      <p class="muted"><b>Score:</b> ${score ?? '-'} ${score !== null && score !== undefined ? '%' : ''} · <b>Grade:</b> ${grade || '-'}</p>
+      <p class="muted"><b>Summary:</b> ${escapeHtml(feedback)}</p>
+      ${bullets}
+    </div>
+  `;
+}
+
+function renderTutorAssessment(a) {
+  const sub = a.submission || {};
+  const result = parseJsonSafe(sub.tutor_result, null) || {};
+  const mark = sub.mark ?? result.mark ?? '-';
+  const grade = sub.grade || result.grade || '-';
+  const feedback = sub.tutor_feedback || result.feedback || 'No tutor feedback yet.';
+  return `
+    <div class="assess tutor">
+      <h4>Tutor Assessment</h4>
+      <p class="muted"><b>Final Mark:</b> ${escapeHtml(String(mark))} ${mark !== '-' ? '%' : ''} · <b>Final Grade:</b> ${escapeHtml(String(grade))}</p>
+      <p class="muted"><b>Tutor Feedback:</b> ${escapeHtml(String(feedback))}</p>
+    </div>
+  `;
+}
+
 function tutorItemHtml(a) {
   const statusClass = a.status === 'marked' || a.status === 'completed' ? 'ok' : 'warn';
   const studentName = a.student?.full_name || a.student?.email || 'Unknown student';
@@ -1147,15 +1240,18 @@ function tutorItemHtml(a) {
       <div style="margin-top:.65rem;border-top:1px solid var(--border);padding-top:.65rem">
         <p class="muted" style="margin-bottom:.35rem"><b>Student Notes:</b> ${a.submission.notes || 'No notes added.'}</p>
         ${submissionFilesHtml(a, 'tutor', true)}
-        ${a.submission.auto_mark !== null && a.submission.auto_mark !== undefined
-          ? `<p class="muted" style="margin-bottom:.35rem"><b>Auto-Mark Suggestion:</b> ${a.submission.auto_mark}% (${a.submission.auto_grade || '-'}) · ${a.submission.auto_feedback || ''}</p>`
-          : ''}
-        ${a.submission.ocr_processing ? '<p class="muted" style="margin-bottom:.35rem"><b>OCR Status:</b> Processing...</p>' : ''}
+        ${renderAutoAssessment(a)}
+        ${renderTutorAssessment(a)}
         <div class="row">
           <div><label>Mark (%)</label><input id="mark-${a.id}" type="number" min="0" max="100" step="0.1" value="${a.submission.mark ?? ''}"></div>
           <div><label>Grade</label><input id="grade-${a.id}" type="text" placeholder="e.g. 7 / B+ / A*" value="${a.submission.grade || ''}"></div>
           <div><label>Tutor Feedback</label><textarea id="feedback-${a.id}" placeholder="Feedback for student">${a.submission.tutor_feedback || ''}</textarea></div>
-          <div class="actions"><button class="btn dark small" type="button" data-action="save-grade" data-id="${a.id}">Save Mark/Grade</button></div>
+          <div class="actions">
+            <button class="btn dark small" type="button" data-action="save-grade" data-id="${a.id}">Save Mark/Grade</button>
+            ${(a.submission.auto_mark !== null && a.submission.auto_mark !== undefined)
+              ? `<button class="btn ghost small" type="button" data-action="use-auto-final" data-id="${a.id}">Use Auto As Final</button>`
+              : ''}
+          </div>
         </div>
       </div>
     `
@@ -1166,6 +1262,7 @@ function tutorItemHtml(a) {
       <h3>${a.title}</h3>
       <div class="meta">
         <span class="tag">${a.subject}</span>
+        <span class="tag">${escapeHtml(markingModeLabel(a.marking_mode))}</span>
         <span class="tag">${studentName}</span>
         <span class="tag ${statusClass}">${a.status}</span>
         <span class="tag">Due: ${due}</span>
@@ -1187,15 +1284,8 @@ function studentItemHtml(a) {
   const lessonTag = a.lesson?.lesson_title
     ? `<span class="tag">Lesson: ${a.lesson.lesson_order ? `L${a.lesson.lesson_order} · ` : ''}${escapeHtml(a.lesson.lesson_title)}</span>`
     : '';
-  const gradeHtml = a.submission
-    ? `
-      <p class="muted" style="margin:.35rem 0"><b>Mark:</b> ${a.submission.mark ?? '-'} · <b>Grade:</b> ${a.submission.grade || '-'}</p>
-      ${a.submission.auto_mark !== null && a.submission.auto_mark !== undefined
-        ? `<p class="muted" style="margin:.25rem 0"><b>Auto-Mark:</b> ${a.submission.auto_mark}% (${a.submission.auto_grade || '-'})</p>`
-        : ''}
-      <p class="muted" style="margin-bottom:.45rem"><b>Tutor Feedback:</b> ${a.submission.tutor_feedback || 'No feedback yet.'}</p>
-      ${a.submission.ocr_processing ? '<p class="muted" style="margin-bottom:.45rem"><b>OCR Status:</b> Processing...</p>' : ''}
-    `
+  const assessHtml = a.submission
+    ? `${renderAutoAssessment(a)}${renderTutorAssessment(a)}`
     : '';
 
   return `
@@ -1203,6 +1293,7 @@ function studentItemHtml(a) {
       <h3>${a.title}</h3>
       <div class="meta">
         <span class="tag">${a.subject}</span>
+        <span class="tag">${escapeHtml(markingModeLabel(a.marking_mode))}</span>
         <span class="tag ${a.status === 'marked' || a.status === 'completed' ? 'ok' : 'warn'}">${a.status}</span>
         <span class="tag">Due: ${due}</span>
         ${unitTag}
@@ -1211,7 +1302,7 @@ function studentItemHtml(a) {
       <p class="muted" style="margin-bottom:.5rem">${desc}</p>
       ${attachmentButtonHtml(a, 'student')}
       ${submissionFilesHtml(a, 'student', false)}
-      ${gradeHtml}
+      ${assessHtml}
       <label style="margin-top:.5rem;margin-bottom:.35rem">Submission Notes</label>
       <textarea id="notes-${a.id}" placeholder="What did you complete? Add links/evidence if needed">${a.submission?.notes || ''}</textarea>
       <label style="margin-top:.6rem;margin-bottom:.35rem">Upload Work Photos (up to ${MAX_SUBMISSION_PHOTOS})</label>
@@ -1245,6 +1336,7 @@ function parentItemHtml(a) {
       <div class="meta">
         <span class="tag">${studentName}</span>
         <span class="tag">${a.subject}</span>
+        <span class="tag">${escapeHtml(markingModeLabel(a.marking_mode))}</span>
         <span class="tag ${a.status === 'marked' || a.status === 'completed' ? 'ok' : 'warn'}">${a.status}</span>
         <span class="tag">Due: ${due}</span>
         ${unitTag}
@@ -1254,11 +1346,7 @@ function parentItemHtml(a) {
       <p class="muted">${desc}</p>
       ${attachmentButtonHtml(a, 'parent')}
       ${submissionFilesHtml(a, 'parent', false)}
-      <p class="muted" style="margin:.35rem 0"><b>Mark:</b> ${a.submission?.mark ?? '-'} · <b>Grade:</b> ${a.submission?.grade || '-'}</p>
-      ${a.submission?.auto_mark !== null && a.submission?.auto_mark !== undefined
-        ? `<p class="muted" style="margin:.25rem 0"><b>Auto-Mark:</b> ${a.submission.auto_mark}% (${a.submission.auto_grade || '-'})</p>`
-        : ''}
-      <p class="muted" style="margin-bottom:.35rem"><b>Tutor Feedback:</b> ${a.submission?.tutor_feedback || 'No feedback yet.'}</p>
+      ${a.submission ? `${renderAutoAssessment(a)}${renderTutorAssessment(a)}` : ''}
     </article>
   `;
 }
@@ -1404,7 +1492,7 @@ async function renderTutorDashboard() {
   const { data: assignments, error } = await sb
     .from('assignments')
     .select(`
-      id,tutor_id,student_id,subject,title,description,due_date,status,resource_title,resource_url,file_path,file_url,year_group,exam_board,created_at,
+      id,tutor_id,student_id,subject,title,description,due_date,status,resource_title,resource_url,file_path,file_url,year_group,exam_board,marking_mode,created_at,
       student:profiles!assignments_student_id_fkey(full_name,email,year_group),
       unit:curriculum_units!assignments_unit_id_fkey(unit_title),
       lesson:curriculum_lessons!assignments_lesson_id_fkey(lesson_title,lesson_order)
@@ -1425,7 +1513,7 @@ async function renderTutorDashboard() {
   if (assignmentIds.length) {
     const { data: subs, error: subErr } = await sb
       .from('submissions')
-      .select('id,assignment_id,notes,submitted_at,mark,grade,tutor_feedback,graded_at,auto_mark,auto_grade,auto_feedback,auto_graded_at,ocr_processing')
+      .select('id,assignment_id,notes,submitted_at,mark,grade,tutor_feedback,graded_at,auto_mark,auto_grade,auto_feedback,auto_graded_at,ocr_processing,auto_result,auto_confidence,tutor_result')
       .in('assignment_id', assignmentIds);
     if (subErr) throw subErr;
     submissionMap = new Map((subs || []).map((s) => [s.assignment_id, s]));
@@ -1449,7 +1537,7 @@ async function renderStudentAssignments() {
   const { data: assignments, error } = await sb
     .from('assignments')
     .select(`
-      id,student_id,subject,title,description,due_date,status,resource_title,resource_url,file_path,file_url,created_at,
+      id,student_id,subject,title,description,due_date,status,resource_title,resource_url,file_path,file_url,marking_mode,created_at,
       unit:curriculum_units!assignments_unit_id_fkey(unit_title),
       lesson:curriculum_lessons!assignments_lesson_id_fkey(lesson_title,lesson_order)
     `)
@@ -1463,7 +1551,7 @@ async function renderStudentAssignments() {
   if (assignmentIds.length) {
     const { data: subs, error: subErr } = await sb
       .from('submissions')
-      .select('id,assignment_id,notes,submitted_at,mark,grade,tutor_feedback,graded_at,auto_mark,auto_grade,auto_feedback,auto_graded_at,ocr_processing')
+      .select('id,assignment_id,notes,submitted_at,mark,grade,tutor_feedback,graded_at,auto_mark,auto_grade,auto_feedback,auto_graded_at,ocr_processing,auto_result,auto_confidence,tutor_result')
       .eq('student_id', currentUser.id)
       .in('assignment_id', assignmentIds);
     if (subErr) throw subErr;
@@ -1514,7 +1602,7 @@ async function renderParentTracker() {
   const { data: assignments, error: asgErr } = await sb
     .from('assignments')
     .select(`
-      id,tutor_id,student_id,subject,title,description,due_date,status,resource_title,resource_url,file_path,file_url,created_at,
+      id,tutor_id,student_id,subject,title,description,due_date,status,resource_title,resource_url,file_path,file_url,marking_mode,created_at,
       student:profiles!assignments_student_id_fkey(full_name,email,year_group),
       unit:curriculum_units!assignments_unit_id_fkey(unit_title),
       lesson:curriculum_lessons!assignments_lesson_id_fkey(lesson_title,lesson_order)
@@ -1529,7 +1617,7 @@ async function renderParentTracker() {
   if (assignmentIds.length) {
     const { data: subs, error: subErr } = await sb
       .from('submissions')
-      .select('id,assignment_id,notes,submitted_at,mark,grade,tutor_feedback,graded_at,auto_mark,auto_grade,auto_feedback,auto_graded_at,ocr_processing')
+      .select('id,assignment_id,notes,submitted_at,mark,grade,tutor_feedback,graded_at,auto_mark,auto_grade,auto_feedback,auto_graded_at,ocr_processing,auto_result,auto_confidence,tutor_result')
       .in('assignment_id', assignmentIds);
     if (subErr) throw subErr;
     submissionMap = new Map((subs || []).map((s) => [s.assignment_id, s]));
@@ -1563,6 +1651,8 @@ async function createAssignment() {
   const automarkEnabled = Boolean($('asg-automark-enabled')?.checked);
   const automarkKeywordsCsv = $('asg-automark-keywords')?.value?.trim() || '';
   const automarkTargetWordsRaw = $('asg-automark-target-words')?.value?.trim() || '';
+  const markingModeRaw = String($('asg-marking-mode')?.value || '').trim();
+  const markingMode = MARKING_MODES.includes(markingModeRaw) ? markingModeRaw : getDefaultMarkingMode(subject);
   const examBoardRaw = $('asg-exam-board') ? String($('asg-exam-board').value || '').trim().toLowerCase() : '';
   const examBoard = examBoardRaw && examBoardRaw !== 'none' ? examBoardRaw : null;
   const unitId = $('asg-unit')?.value || null;
@@ -1621,6 +1711,7 @@ async function createAssignment() {
     year_group: parseYearGroupInt(studentProfile?.year_group),
     exam_board: examBoard || null,
     unit_id: dbUnitId || null,
+    marking_mode: markingMode,
     automark_enabled: automarkEnabled,
     automark_keywords: parseKeywordCsv(automarkKeywordsCsv),
     automark_target_words: automarkTargetWordsRaw === '' ? null : Number(automarkTargetWordsRaw)
@@ -1668,6 +1759,7 @@ async function createAssignment() {
   if ($('asg-topic')) $('asg-topic').value = '';
   if ($('asg-file')) $('asg-file').value = '';
   if ($('asg-unit')) $('asg-unit').value = '';
+  if ($('asg-marking-mode')) $('asg-marking-mode').value = getDefaultMarkingMode(subject);
   updateExamBoardOptionsBySubject();
   updateScienceComponentVisibility();
   updateEnglishTypeVisibility();
@@ -1762,7 +1854,7 @@ async function submitStudentWork(assignmentId) {
   const notes = ($(`notes-${assignmentId}`)?.value || '').trim();
   const { data: assignment, error: asgErr } = await sb
     .from('assignments')
-    .select('id,student_id,automark_enabled,automark_keywords,automark_target_words')
+    .select('id,student_id,automark_enabled,automark_keywords,automark_target_words,marking_mode')
     .eq('id', assignmentId)
     .eq('student_id', currentUser.id)
     .maybeSingle();
@@ -1793,11 +1885,23 @@ async function submitStudentWork(assignmentId) {
       assignment.automark_keywords || [],
       assignment.automark_target_words || 0
     );
+    const autoResult = {
+      mode: assignment.marking_mode || getDefaultMarkingMode('general'),
+      confidence: notes ? 82 : 65,
+      summary: result.feedback,
+      details: [
+        `Keyword coverage score applied`,
+        `Word count considered in scoring`,
+        `Submission type: text notes`
+      ]
+    };
     autoFields = {
       auto_mark: result.score,
       auto_grade: result.grade,
       auto_feedback: result.feedback,
-      auto_graded_at: new Date().toISOString()
+      auto_graded_at: new Date().toISOString(),
+      auto_result: autoResult,
+      auto_confidence: autoResult.confidence
     };
 
     if (!existingSubmission?.mark && existingSubmission?.mark !== 0) {
@@ -1862,6 +1966,12 @@ async function saveTutorGrade(assignmentId) {
       mark,
       grade: grade || null,
       tutor_feedback: feedback || null,
+      tutor_result: {
+        mark,
+        grade: grade || null,
+        feedback: feedback || null,
+        updated_by: currentUser?.id || null
+      },
       graded_at: new Date().toISOString()
     })
     .eq('assignment_id', assignmentId);
@@ -1883,6 +1993,50 @@ async function saveTutorGrade(assignmentId) {
   }
 
   alert('Mark/grade saved.');
+  await renderTutorDashboard();
+}
+
+async function useAutoAsFinal(assignmentId) {
+  const { data: sub, error: subErr } = await sb
+    .from('submissions')
+    .select('auto_mark,auto_grade,auto_feedback,auto_result')
+    .eq('assignment_id', assignmentId)
+    .maybeSingle();
+  if (subErr) {
+    alert(`Could not load auto result: ${subErr.message}`);
+    return;
+  }
+  if (!sub || (sub.auto_mark === null || sub.auto_mark === undefined)) {
+    alert('No auto result is available yet for this submission.');
+    return;
+  }
+
+  const { error: updErr } = await sb
+    .from('submissions')
+    .update({
+      mark: sub.auto_mark,
+      grade: sub.auto_grade || null,
+      tutor_feedback: sub.auto_feedback || 'Auto result accepted as final.',
+      tutor_result: parseJsonSafe(sub.auto_result, null),
+      graded_at: new Date().toISOString()
+    })
+    .eq('assignment_id', assignmentId);
+  if (updErr) {
+    alert(`Failed to apply auto result: ${updErr.message}`);
+    return;
+  }
+
+  const { error: asgErr } = await sb
+    .from('assignments')
+    .update({ status: 'marked' })
+    .eq('id', assignmentId)
+    .eq('tutor_id', currentUser.id);
+  if (asgErr) {
+    alert(`Status update failed: ${asgErr.message}`);
+    return;
+  }
+
+  alert('Auto result applied as final tutor assessment.');
   await renderTutorDashboard();
 }
 
@@ -1955,6 +2109,12 @@ function bindListActions() {
     const gradeBtn = e.target.closest('[data-action="save-grade"]');
     if (gradeBtn) {
       await saveTutorGrade(gradeBtn.dataset.id);
+      return;
+    }
+
+    const useAutoBtn = e.target.closest('[data-action="use-auto-final"]');
+    if (useAutoBtn) {
+      await useAutoAsFinal(useAutoBtn.dataset.id);
       return;
     }
 

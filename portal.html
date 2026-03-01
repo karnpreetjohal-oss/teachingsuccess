@@ -85,6 +85,11 @@ textarea{min-height:84px;resize:vertical}
 .submission-ocr{margin-left:.1rem}
 .submission-ocr summary{cursor:pointer;font-size:.82rem;color:var(--muted)}
 .submission-ocr pre{white-space:pre-wrap;background:#f7f9ff;border:1px solid var(--border);border-radius:8px;padding:.5rem .6rem;font-size:.8rem;max-height:180px;overflow:auto}
+.assess{margin-top:.55rem;border:1px solid var(--border);border-radius:10px;padding:.65rem .7rem;background:#fafcff}
+.assess h4{font-size:.82rem;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-bottom:.35rem}
+.assess.auto{border-left:4px solid #4a6fa5}
+.assess.tutor{border-left:4px solid #2c3a52}
+.pill{display:inline-block;font-size:.7rem;border-radius:999px;padding:.14rem .45rem;background:#edf2fb;color:#233a62;margin-right:.25rem;margin-bottom:.25rem}
 
 .topline{display:flex;align-items:center;justify-content:space-between;gap:.6rem;margin-bottom:.75rem}
 .tabs{display:flex;gap:.55rem;margin-bottom:1rem;flex-wrap:wrap}
@@ -197,6 +202,16 @@ textarea{min-height:84px;resize:vertical}
                 <option>Science</option>
                 <option>11+</option>
                 <option>General</option>
+              </select>
+            </div>
+            <div>
+              <label>Marking Mode</label>
+              <select id="asg-marking-mode">
+                <option value="maths_question_marking">Maths: Question-by-question</option>
+                <option value="english_writing_feedback">English: WWW + EBI</option>
+                <option value="gcse_english_ao">GCSE English: AO-linked</option>
+                <option value="science_short_answer">Science: Keyword + concept checks</option>
+                <option value="generic_completion_review">Generic: Completion review</option>
               </select>
             </div>
             <div id="asg-exam-board-wrap">
