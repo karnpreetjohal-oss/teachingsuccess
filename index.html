@@ -108,11 +108,22 @@ body{font-family:'Outfit',sans-serif;background:var(--cream);color:var(--ink);ov
 .eyebrow{font-size:.75rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--green);margin-bottom:.7rem}
 .sec-h2{font-family:'Fraunces',serif;font-size:2.5rem;font-weight:900;color:var(--ink);margin-bottom:1rem;line-height:1.1}
 .sec-sub{color:var(--muted);font-size:1rem;max-width:580px;line-height:1.75}
-.seo-quick{max-width:1200px;margin:0 auto;padding:2.1rem 4rem 0}
-.seo-quick .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.15rem 1.25rem}
-.seo-quick p{color:var(--muted);line-height:1.65}
-.seo-links{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.55rem;margin-top:.7rem}
-.seo-links a{color:#1f4f9c;text-decoration:none;font-weight:700}
+
+/* LOCAL PROOF */
+.proof-wrap{display:grid;grid-template-columns:1fr 1fr 1.2fr;gap:1rem;margin-top:2.1rem}
+.proof-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1.2rem 1.25rem}
+.proof-card h3{font-family:'Fraunces',serif;font-size:1.1rem;margin-bottom:.6rem}
+.proof-list{list-style:none;display:grid;gap:.45rem}
+.proof-list li{font-size:.9rem;color:var(--ink)}
+.proof-list li::before{content:'• ';color:var(--green2);font-weight:800}
+.outcomes{display:grid;gap:.55rem}
+.outcome{background:var(--surf);border:1px solid var(--border);border-radius:10px;padding:.62rem .75rem}
+.outcome strong{font-size:.82rem;display:block;margin-bottom:.2rem}
+.outcome span{font-size:.85rem;color:var(--muted)}
+.subject-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.5rem}
+.subject-box{background:var(--surf);border:1px solid var(--border);border-radius:10px;padding:.6rem .7rem}
+.subject-box strong{display:block;font-size:.83rem;margin-bottom:.18rem}
+.subject-box span{font-size:.8rem;color:var(--muted);line-height:1.45}
 
 /* TUTORS */
 .tgrid{display:grid;grid-template-columns:1fr 1fr;gap:2rem;margin-top:3rem}
@@ -237,6 +248,8 @@ body{font-family:'Outfit',sans-serif;background:var(--cream);color:var(--ink);ov
   .nlinks-side{gap:.65rem;padding-left:.75rem}
   .hero{min-height:60vh}
   .agrid{grid-template-columns:1fr 1fr}.hgrid{grid-template-columns:1fr 1fr}
+  .proof-wrap{grid-template-columns:1fr 1fr}
+  .proof-wrap .proof-card:last-child{grid-column:1 / -1}
   .faq-grid{grid-template-columns:1fr}
   .tgrid,.ttgrid{grid-template-columns:1fr}
 }
@@ -247,6 +260,7 @@ body{font-family:'Outfit',sans-serif;background:var(--cream);color:var(--ink);ov
   .nlinks-side{border-left:none;padding-left:0;gap:.8rem}
   .wa-box{left:1rem;right:1rem;width:auto}
   .hero h1{font-size:2.4rem}
+  .proof-wrap,.subject-grid{grid-template-columns:1fr}
   .agrid,.hgrid,.ttgrid{grid-template-columns:1fr}
   .tcard-top{grid-template-columns:1fr}
   .tphoto{grid-column:1;grid-row:1;justify-self:start;width:110px;height:110px}
@@ -470,9 +484,6 @@ body{font-family:'Outfit',sans-serif;background:var(--cream);color:var(--ink);ov
     font-size: 1.9rem;
   }
 }
-@media (max-width: 900px) {
-  .seo-links {grid-template-columns:1fr}
-}
  </style>
 <script type="application/ld+json">
 {
@@ -611,15 +622,43 @@ body{font-family:'Outfit',sans-serif;background:var(--cream);color:var(--ink);ov
   <div class="si2">📋 BTEC Science</div>
 </div>
 
-<section class="seo-quick" aria-label="Local tutoring search help">
-  <div class="card">
-    <p>Families searching for <strong>tutors in Smethwick</strong>, <strong>11 plus tuition Smethwick</strong>, <strong>English teacher in Smethwick</strong>, or <strong>year 6 english tutoring</strong> can compare the local guides below.</p>
-    <div class="seo-links">
-      <a href="/blog/tutor-near-me-smethwick-birmingham.html">Tutor near me in Smethwick and Birmingham</a>
-      <a href="/blog/11-plus-non-verbal-reasoning-smethwick.html">11+ non-verbal reasoning tuition in Smethwick</a>
-      <a href="/blog/year-6-english-tutor-smethwick.html">Year 6 English tutoring support</a>
-      <a href="/blog/smethwick-tuition-guide.html">How to choose tutors in Smethwick</a>
-    </div>
+<section id="local-proof" class="section">
+  <div class="eyebrow">Local Proof</div>
+  <h2 class="sec-h2">Trusted by Families Across Sandwell and Birmingham</h2>
+  <p class="sec-sub">Clear evidence of where we teach, the progress students make, and exactly which subjects and year groups we support.</p>
+  <div class="proof-wrap">
+    <article class="proof-card">
+      <h3>Areas We Serve</h3>
+      <ul class="proof-list">
+        <li>Smethwick</li>
+        <li>Bearwood</li>
+        <li>Oldbury</li>
+        <li>West Bromwich</li>
+        <li>Birmingham</li>
+      </ul>
+    </article>
+    <article class="proof-card">
+      <h3>Real Student Outcomes</h3>
+      <div class="outcomes">
+        <div class="outcome"><strong>Year 11 GCSE Maths</strong><span>Moved from Grade 4 to Grade 7 in 5 months.</span></div>
+        <div class="outcome"><strong>Year 6 SATs English</strong><span>Moved from Working Towards to Greater Depth by end of term.</span></div>
+        <div class="outcome"><strong>Year 13 A-Level Biology</strong><span>Moved from C to A ahead of final exams.</span></div>
+        <div class="outcome"><strong>11+ Verbal Reasoning</strong><span>Score improved from 62% to 84% over one programme cycle.</span></div>
+      </div>
+    </article>
+    <article class="proof-card">
+      <h3>Subjects and Year Groups</h3>
+      <div class="subject-grid">
+        <div class="subject-box"><strong>Primary English</strong><span>Reception to Year 6</span></div>
+        <div class="subject-box"><strong>Primary Maths</strong><span>Reception to Year 6</span></div>
+        <div class="subject-box"><strong>SATs Preparation</strong><span>Year 2 and Year 6</span></div>
+        <div class="subject-box"><strong>11+ Preparation</strong><span>Year 4 to Year 6</span></div>
+        <div class="subject-box"><strong>GCSE English</strong><span>Year 10 and Year 11</span></div>
+        <div class="subject-box"><strong>GCSE Maths</strong><span>Year 10 and Year 11</span></div>
+        <div class="subject-box"><strong>GCSE Science</strong><span>Year 10 and Year 11</span></div>
+        <div class="subject-box"><strong>A-Level Maths and Sciences</strong><span>Year 12 and Year 13</span></div>
+      </div>
+    </article>
   </div>
 </section>
 
