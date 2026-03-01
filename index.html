@@ -110,20 +110,13 @@ body{font-family:'Outfit',sans-serif;background:var(--cream);color:var(--ink);ov
 .sec-sub{color:var(--muted);font-size:1rem;max-width:580px;line-height:1.75}
 
 /* LOCAL PROOF */
-.proof-wrap{display:grid;grid-template-columns:1fr 1fr 1.2fr;gap:1rem;margin-top:2.1rem}
+.proof-areas{display:flex;flex-wrap:wrap;gap:.55rem;margin-top:1.1rem}
+.area-pill{display:inline-flex;align-items:center;padding:.38rem .72rem;border-radius:999px;background:#2c3a52;color:#fff;font-size:.79rem;font-weight:700;letter-spacing:.01em}
+.proof-wrap{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.9rem;margin-top:1.2rem}
 .proof-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1.2rem 1.25rem}
 .proof-card h3{font-family:'Fraunces',serif;font-size:1.1rem;margin-bottom:.6rem}
-.proof-list{list-style:none;display:grid;gap:.45rem}
-.proof-list li{font-size:.9rem;color:var(--ink)}
-.proof-list li::before{content:'• ';color:var(--green2);font-weight:800}
-.outcomes{display:grid;gap:.55rem}
-.outcome{background:var(--surf);border:1px solid var(--border);border-radius:10px;padding:.62rem .75rem}
-.outcome strong{font-size:.82rem;display:block;margin-bottom:.2rem}
-.outcome span{font-size:.85rem;color:var(--muted)}
-.subject-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.5rem}
-.subject-box{background:var(--surf);border:1px solid var(--border);border-radius:10px;padding:.6rem .7rem}
-.subject-box strong{display:block;font-size:.83rem;margin-bottom:.18rem}
-.subject-box span{font-size:.8rem;color:var(--muted);line-height:1.45}
+.proof-card p{font-size:.9rem;color:var(--muted);line-height:1.65}
+.proof-shift{display:block;margin-top:.38rem;font-weight:800;color:var(--ink);font-size:.92rem}
 
 /* TUTORS */
 .tgrid{display:grid;grid-template-columns:1fr 1fr;gap:2rem;margin-top:3rem}
@@ -249,7 +242,6 @@ body{font-family:'Outfit',sans-serif;background:var(--cream);color:var(--ink);ov
   .hero{min-height:60vh}
   .agrid{grid-template-columns:1fr 1fr}.hgrid{grid-template-columns:1fr 1fr}
   .proof-wrap{grid-template-columns:1fr 1fr}
-  .proof-wrap .proof-card:last-child{grid-column:1 / -1}
   .faq-grid{grid-template-columns:1fr}
   .tgrid,.ttgrid{grid-template-columns:1fr}
 }
@@ -260,7 +252,7 @@ body{font-family:'Outfit',sans-serif;background:var(--cream);color:var(--ink);ov
   .nlinks-side{border-left:none;padding-left:0;gap:.8rem}
   .wa-box{left:1rem;right:1rem;width:auto}
   .hero h1{font-size:2.4rem}
-  .proof-wrap,.subject-grid{grid-template-columns:1fr}
+  .proof-wrap{grid-template-columns:1fr}
   .agrid,.hgrid,.ttgrid{grid-template-columns:1fr}
   .tcard-top{grid-template-columns:1fr}
   .tphoto{grid-column:1;grid-row:1;justify-self:start;width:110px;height:110px}
@@ -624,40 +616,35 @@ body{font-family:'Outfit',sans-serif;background:var(--cream);color:var(--ink);ov
 
 <section id="local-proof" class="section">
   <div class="eyebrow">Local Proof</div>
-  <h2 class="sec-h2">Trusted by Families Across Sandwell and Birmingham</h2>
-  <p class="sec-sub">Clear evidence of where we teach, the progress students make, and exactly which subjects and year groups we support.</p>
+  <h2 class="sec-h2">Local Results You Can See</h2>
+  <p class="sec-sub">Families across Sandwell and Birmingham choose Teaching Success for consistent progress and clear outcomes.</p>
+  <div class="proof-areas" aria-label="Areas served">
+    <span class="area-pill">Smethwick</span>
+    <span class="area-pill">Bearwood</span>
+    <span class="area-pill">Oldbury</span>
+    <span class="area-pill">West Bromwich</span>
+    <span class="area-pill">Birmingham</span>
+  </div>
   <div class="proof-wrap">
     <article class="proof-card">
-      <h3>Areas We Serve</h3>
-      <ul class="proof-list">
-        <li>Smethwick</li>
-        <li>Bearwood</li>
-        <li>Oldbury</li>
-        <li>West Bromwich</li>
-        <li>Birmingham</li>
-      </ul>
+      <h3>Year 11 GCSE Maths</h3>
+      <p>Student support plan focused on algebra, exam technique and confidence.</p>
+      <span class="proof-shift">Grade 4 to Grade 7 in 5 months.</span>
     </article>
     <article class="proof-card">
-      <h3>Real Student Outcomes</h3>
-      <div class="outcomes">
-        <div class="outcome"><strong>Year 11 GCSE Maths</strong><span>Moved from Grade 4 to Grade 7 in 5 months.</span></div>
-        <div class="outcome"><strong>Year 6 SATs English</strong><span>Moved from Working Towards to Greater Depth by end of term.</span></div>
-        <div class="outcome"><strong>Year 13 A-Level Biology</strong><span>Moved from C to A ahead of final exams.</span></div>
-        <div class="outcome"><strong>11+ Verbal Reasoning</strong><span>Score improved from 62% to 84% over one programme cycle.</span></div>
-      </div>
+      <h3>Year 6 SATs English</h3>
+      <p>Targeted reading and writing sessions with weekly homework feedback.</p>
+      <span class="proof-shift">Working Towards to Greater Depth in one term.</span>
     </article>
     <article class="proof-card">
-      <h3>Subjects and Year Groups</h3>
-      <div class="subject-grid">
-        <div class="subject-box"><strong>Primary English</strong><span>Reception to Year 6</span></div>
-        <div class="subject-box"><strong>Primary Maths</strong><span>Reception to Year 6</span></div>
-        <div class="subject-box"><strong>SATs Preparation</strong><span>Year 2 and Year 6</span></div>
-        <div class="subject-box"><strong>11+ Preparation</strong><span>Year 4 to Year 6</span></div>
-        <div class="subject-box"><strong>GCSE English</strong><span>Year 10 and Year 11</span></div>
-        <div class="subject-box"><strong>GCSE Maths</strong><span>Year 10 and Year 11</span></div>
-        <div class="subject-box"><strong>GCSE Science</strong><span>Year 10 and Year 11</span></div>
-        <div class="subject-box"><strong>A-Level Maths and Sciences</strong><span>Year 12 and Year 13</span></div>
-      </div>
+      <h3>Year 13 A-Level Biology</h3>
+      <p>Structured revision, essay technique and past-paper coaching.</p>
+      <span class="proof-shift">C to A before final exams.</span>
+    </article>
+    <article class="proof-card">
+      <h3>11+ Verbal Reasoning</h3>
+      <p>Timed-practice programme with targeted vocab and pattern work.</p>
+      <span class="proof-shift">62% to 84% over one programme cycle.</span>
     </article>
   </div>
 </section>
@@ -710,7 +697,7 @@ body{font-family:'Outfit',sans-serif;background:var(--cream);color:var(--ink);ov
 <section id="levels" class="section">
   <div class="eyebrow">All Levels Covered</div>
   <h2 class="sec-h2">From Reception to A-Level</h2>
-  <p class="sec-sub">Every programme is built around your child's needs, their current level, and their specific exam board and targets.</p>
+  <p class="sec-sub">Primary English and Maths (Reception to Year 6), SATs support (Year 2 and Year 6), 11+ preparation (Year 4 to Year 6), GCSE English/Maths/Science (Year 10 and Year 11), and A-Level Maths, Biology, Chemistry and Physics (Year 12 and Year 13).</p>
   <div class="agrid">
     <div class="ac pri">
       <div class="ac-top"><div class="ac-emo">🎒</div><h3>Primary</h3><div class="ac-rng">Reception – Year 6 · Ages 4–11</div></div>
