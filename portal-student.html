@@ -220,135 +220,6 @@ textarea{min-height:84px;resize:vertical}
       </section>
 
       <section id="section-dashboard">
-      <div id="tutor-view" class="grid main hidden">
-        <aside class="card">
-          <h2>Tutor Actions</h2>
-          <details class="panel-toggle" open>
-            <summary>Create Assignment</summary>
-            <div class="panel-body">
-          <div class="row" style="margin-top:.35rem">
-            <div>
-              <label>Student</label>
-              <select id="asg-student"></select>
-            </div>
-            <div>
-              <label>Subject</label>
-              <select id="asg-subject">
-                <option>Maths</option>
-                <option>English</option>
-                <option>Science</option>
-                <option>11+</option>
-                <option>General</option>
-              </select>
-            </div>
-            <div>
-              <label>Marking Mode</label>
-              <select id="asg-marking-mode">
-                <option value="maths_question_marking">Maths: Question-by-question</option>
-                <option value="english_writing_feedback">English: WWW + EBI</option>
-                <option value="gcse_english_ao">GCSE English: AO-linked</option>
-                <option value="science_short_answer">Science: Keyword + concept checks</option>
-                <option value="generic_completion_review">Generic: Completion review</option>
-              </select>
-            </div>
-            <div id="asg-exam-board-wrap">
-              <label>Exam Board</label>
-              <select id="asg-exam-board">
-                <option value="">Select exam board first</option>
-                <option value="aqa">AQA</option>
-                <option value="edexcel">Edexcel</option>
-                <option value="ocr">OCR</option>
-                <option value="wjec">WJEC</option>
-                <option value="ccea">CCEA</option>
-                <option value="none">No exam board / General</option>
-              </select>
-            </div>
-            <div id="asg-science-component-wrap" style="display:none">
-              <label>Science</label>
-              <select id="asg-science-component">
-                <option value="">Select science first</option>
-                <option value="biology">Biology</option>
-                <option value="chemistry">Chemistry</option>
-                <option value="physics">Physics</option>
-              </select>
-            </div>
-            <div id="asg-english-type-wrap" style="display:none">
-              <label>English</label>
-              <select id="asg-english-type">
-                <option value="">Select English type</option>
-                <option value="language">Language</option>
-                <option value="literature">Literature</option>
-              </select>
-            </div>
-            <div id="asg-tier-wrap">
-              <label>Tier</label>
-              <select id="asg-tier">
-                <option value="">Select tier</option>
-                <option value="foundation">Foundation</option>
-                <option value="higher">Higher</option>
-              </select>
-            </div>
-            <div>
-              <label>Units</label>
-              <select id="asg-unit">
-                <option value="">Select exam board first</option>
-              </select>
-            </div>
-            <div id="asg-topic-wrap" style="display:none">
-              <label>Topic</label>
-              <select id="asg-topic">
-                <option value="">Select a unit first</option>
-              </select>
-            </div>
-            <div><label>Title</label><input id="asg-title" type="text" placeholder="e.g. Algebra worksheet set"></div>
-            <div><label>Due Date</label><input id="asg-due" type="date"></div>
-            <div><label>Description / Instructions</label><textarea id="asg-desc" placeholder="What exactly should they complete?"></textarea></div>
-            <div style="display:flex;align-items:center;gap:.55rem">
-              <input id="asg-automark-enabled" type="checkbox" style="width:auto">
-              <label for="asg-automark-enabled" style="margin:0;text-transform:none;letter-spacing:0;font-size:.92rem;color:var(--ink)">Enable auto-mark (for text submissions)</label>
-            </div>
-            <div><label>Auto-mark Keywords (comma separated)</label><input id="asg-automark-keywords" type="text" placeholder="e.g. photosynthesis, chlorophyll, glucose, oxygen"></div>
-            <div><label>Target Word Count (optional)</label><input id="asg-automark-target-words" type="number" min="0" step="1" placeholder="e.g. 120"></div>
-            <div><label>Resource Title</label><input id="asg-resource-title" type="text" placeholder="e.g. GCSE Algebra Worksheet"></div>
-            <div><label>Resource Link</label><input id="asg-resource-url" type="url" placeholder="https://... (website, PDF, Drive link, etc.)"></div>
-            <div><label>Attach File (private)</label><input id="asg-file" type="file"></div>
-            <div class="actions"><button class="btn blue" id="btn-create-asg" type="button">Create Assignment</button></div>
-            <div class="msg" id="asg-msg"></div>
-          </div>
-            </div>
-          </details>
-          <details class="panel-toggle" style="margin-top:.7rem">
-            <summary>Parent Links</summary>
-            <div class="panel-body">
-          <div class="row" style="margin-top:.35rem">
-            <div>
-              <label>Parent</label>
-              <select id="link-parent"></select>
-            </div>
-            <div>
-              <label>Student</label>
-              <select id="link-student"></select>
-            </div>
-            <div class="actions"><button class="btn dark" id="btn-link-parent" type="button">Create Parent Link</button></div>
-            <div class="msg" id="link-msg"></div>
-            <div id="parent-links-list" class="list"></div>
-          </div>
-            </div>
-          </details>
-        </aside>
-
-        <section class="card">
-          <h2>Tutor Dashboard</h2>
-          <div class="kpis">
-            <div class="kpi"><span class="muted">Active Assignments</span><b id="kpi-active">0</b></div>
-            <div class="kpi"><span class="muted">Completed</span><b id="kpi-complete">0</b></div>
-            <div class="kpi"><span class="muted">Student Submissions</span><b id="kpi-subs">0</b></div>
-          </div>
-          <div id="tutor-list" class="list"></div>
-        </section>
-
-      </div>
-
       <div id="student-view" class="card hidden">
         <h2>My Assignments</h2>
         <p class="muted" style="margin-bottom:.7rem">Submit notes and upload work photos. Images can be OCR-marked and feedback is saved to your portal record.</p>
@@ -410,78 +281,13 @@ textarea{min-height:84px;resize:vertical}
         <div id="student-list" class="list"></div>
       </div>
 
-      <div id="parent-view" class="card hidden">
-        <h2>Parent Tracker</h2>
-        <p class="muted" style="margin-bottom:.7rem">Read-only view of your linked child assignments, submissions, marks and feedback.</p>
-        <div class="kpis">
-          <div class="kpi"><span class="muted">Linked Students</span><b id="kpi-parent-students">0</b></div>
-          <div class="kpi"><span class="muted">Total Assignments</span><b id="kpi-parent-total">0</b></div>
-          <div class="kpi"><span class="muted">Completed</span><b id="kpi-parent-complete">0</b></div>
-        </div>
-        <div id="parent-linked-students" class="list" style="margin-bottom:.8rem"></div>
-        <div id="parent-list" class="list"></div>
-      </div>
       </section>
 
       <section id="section-reviews" class="hidden">
-        <div id="tutor-reviews-view" class="grid main hidden">
-          <aside class="card">
-            <h2>Review Actions</h2>
-            <details class="panel-toggle" open>
-              <summary>Create Progress Review</summary>
-              <div class="panel-body">
-            <div class="row" style="margin-top:.35rem">
-              <div>
-                <label>Student</label>
-                <select id="review-student"></select>
-              </div>
-              <div>
-                <label>Review Period</label>
-                <input id="review-period" type="text" placeholder="e.g. Spring Term 1 / Feb Review">
-              </div>
-              <div>
-                <label>Predicted Grade</label>
-                <input id="review-predicted-grade" type="text" placeholder="e.g. 7 / B+ / A*">
-              </div>
-              <div>
-                <label>Confidence (%)</label>
-                <input id="review-confidence" type="number" min="0" max="100" step="1" placeholder="e.g. 72">
-              </div>
-              <div>
-                <label>What They Are Doing Well</label>
-                <textarea id="review-strengths" placeholder="Key strengths, wins, positive trends"></textarea>
-              </div>
-              <div>
-                <label>Needs Extra Help With</label>
-                <textarea id="review-support" placeholder="Gaps, weaker topics, intervention focus"></textarea>
-              </div>
-              <div>
-                <label>Next Steps / Action Plan</label>
-                <textarea id="review-next-steps" placeholder="What happens next and how progress will be measured"></textarea>
-              </div>
-              <div class="actions"><button class="btn blue" id="btn-save-review" type="button">Save Progress Review</button></div>
-              <div class="msg" id="review-msg"></div>
-            </div>
-              </div>
-            </details>
-          </aside>
-
-          <section class="card">
-            <h2>Tutor Progress Reviews</h2>
-            <div id="tutor-reviews-list" class="list"></div>
-          </section>
-        </div>
-
         <div id="student-reviews-view" class="card hidden">
           <h2>My Progress Reviews</h2>
           <p class="muted" style="margin-bottom:.7rem">Your tutor’s predicted grade, strengths and improvement focus.</p>
           <div id="student-reviews-list" class="list"></div>
-        </div>
-
-        <div id="parent-reviews-view" class="card hidden">
-          <h2>Parent Progress Reviews</h2>
-          <p class="muted" style="margin-bottom:.7rem">Read-only progress snapshots for linked students.</p>
-          <div id="parent-reviews-list" class="list"></div>
         </div>
       </section>
 
@@ -492,19 +298,10 @@ textarea{min-height:84px;resize:vertical}
           <p class="muted"><b>Email:</b> <span id="settings-email">-</span></p>
           <p class="muted"><b>Role:</b> <span id="settings-role">-</span></p>
         </div>
-        <div id="settings-tutor" class="card hidden">
-          <h2>Tutor Setup Tips</h2>
-          <p class="muted">Keep assignment titles short and specific by topic so progress reports stay clean.</p>
-          <p class="muted">Use quick grading first, then open detailed analysis only when needed.</p>
-        </div>
         <div id="settings-student" class="card hidden">
           <h2>Student Setup Tips</h2>
           <p class="muted">Use “Quick Upload” when there is no pre-made task, but always fill subject and topic.</p>
           <p class="muted">For maths exact marking, include answers in Q1/Q2 format where possible.</p>
-        </div>
-        <div id="settings-parent" class="card hidden">
-          <h2>Parent Setup Tips</h2>
-          <p class="muted">Check both Assignments and Reviews weekly to track trends, not only latest marks.</p>
         </div>
       </section>
         </div>

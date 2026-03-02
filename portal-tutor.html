@@ -349,78 +349,6 @@ textarea{min-height:84px;resize:vertical}
 
       </div>
 
-      <div id="student-view" class="card hidden">
-        <h2>My Assignments</h2>
-        <p class="muted" style="margin-bottom:.7rem">Submit notes and upload work photos. Images can be OCR-marked and feedback is saved to your portal record.</p>
-        <div class="card" style="margin-bottom:.8rem;border-style:dashed">
-          <h2 style="font-size:1.05rem">Quick Upload (No Task Needed)</h2>
-          <p class="muted" style="margin-bottom:.6rem">Use this if work was done in session but no assignment was pre-created. Choose the subject and topic so results are tracked correctly.</p>
-          <div class="row">
-            <div>
-              <label>Subject</label>
-              <select id="quick-subject">
-                <option>Maths</option>
-                <option>English</option>
-                <option>Science</option>
-                <option>11+</option>
-                <option>General</option>
-              </select>
-            </div>
-            <div>
-              <label>Topic</label>
-              <input id="quick-topic" type="text" placeholder="e.g. Algebra, Comprehension, Cell biology">
-            </div>
-            <div>
-              <label>Title (optional)</label>
-              <input id="quick-title" type="text" placeholder="e.g. Monday worksheet set">
-            </div>
-            <div>
-              <label>Marking Mode</label>
-              <select id="quick-marking-mode">
-                <option value="maths_question_marking">Maths: Question-by-question</option>
-                <option value="english_writing_feedback">English: WWW + EBI</option>
-                <option value="gcse_english_ao">GCSE English: AO-linked</option>
-                <option value="science_short_answer">Science: Keyword + concept checks</option>
-                <option value="generic_completion_review">Generic: Completion review</option>
-              </select>
-            </div>
-            <div>
-              <label>Notes (optional)</label>
-              <textarea id="quick-notes" placeholder="Anything tutor should know about this attempt"></textarea>
-            </div>
-            <details>
-              <summary class="muted" style="cursor:pointer">Advanced auto-mark settings (optional)</summary>
-              <div style="margin-top:.5rem" class="row">
-                <div><label>Keywords (comma separated)</label><input id="quick-keywords" type="text" placeholder="e.g. simultaneous equations, substitution"></div>
-                <div><label>Target Word Count</label><input id="quick-target-words" type="number" min="0" step="1" placeholder="e.g. 120"></div>
-              </div>
-            </details>
-            <div>
-              <label>Upload Work Photos (up to 6)</label>
-              <input id="quick-photos" type="file" accept="image/*" multiple capture="environment">
-            </div>
-            <div id="quick-photo-preview" class="photo-preview-grid"></div>
-            <p class="muted" id="quick-photo-count"></p>
-            <p class="photo-status" id="quick-photo-status"></p>
-            <div class="actions">
-              <button class="btn blue" id="btn-quick-submit-photos" type="button">Upload + Auto-Mark</button>
-            </div>
-          </div>
-        </div>
-        <div id="student-list" class="list"></div>
-      </div>
-
-      <div id="parent-view" class="card hidden">
-        <h2>Parent Tracker</h2>
-        <p class="muted" style="margin-bottom:.7rem">Read-only view of your linked child assignments, submissions, marks and feedback.</p>
-        <div class="kpis">
-          <div class="kpi"><span class="muted">Linked Students</span><b id="kpi-parent-students">0</b></div>
-          <div class="kpi"><span class="muted">Total Assignments</span><b id="kpi-parent-total">0</b></div>
-          <div class="kpi"><span class="muted">Completed</span><b id="kpi-parent-complete">0</b></div>
-        </div>
-        <div id="parent-linked-students" class="list" style="margin-bottom:.8rem"></div>
-        <div id="parent-list" class="list"></div>
-      </div>
       </section>
 
       <section id="section-reviews" class="hidden">
@@ -472,17 +400,6 @@ textarea{min-height:84px;resize:vertical}
           </section>
         </div>
 
-        <div id="student-reviews-view" class="card hidden">
-          <h2>My Progress Reviews</h2>
-          <p class="muted" style="margin-bottom:.7rem">Your tutor’s predicted grade, strengths and improvement focus.</p>
-          <div id="student-reviews-list" class="list"></div>
-        </div>
-
-        <div id="parent-reviews-view" class="card hidden">
-          <h2>Parent Progress Reviews</h2>
-          <p class="muted" style="margin-bottom:.7rem">Read-only progress snapshots for linked students.</p>
-          <div id="parent-reviews-list" class="list"></div>
-        </div>
       </section>
 
       <section id="section-settings" class="hidden">
@@ -496,15 +413,6 @@ textarea{min-height:84px;resize:vertical}
           <h2>Tutor Setup Tips</h2>
           <p class="muted">Keep assignment titles short and specific by topic so progress reports stay clean.</p>
           <p class="muted">Use quick grading first, then open detailed analysis only when needed.</p>
-        </div>
-        <div id="settings-student" class="card hidden">
-          <h2>Student Setup Tips</h2>
-          <p class="muted">Use “Quick Upload” when there is no pre-made task, but always fill subject and topic.</p>
-          <p class="muted">For maths exact marking, include answers in Q1/Q2 format where possible.</p>
-        </div>
-        <div id="settings-parent" class="card hidden">
-          <h2>Parent Setup Tips</h2>
-          <p class="muted">Check both Assignments and Reviews weekly to track trends, not only latest marks.</p>
         </div>
       </section>
         </div>

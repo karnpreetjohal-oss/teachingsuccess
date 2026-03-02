@@ -50,7 +50,9 @@ function enforceVariantRouting(role) {
   const here = window.location.pathname.split('/').pop() || '';
   if (here !== target) {
     window.location.href = target;
+    return true;
   }
+  return false;
 }
 const SCIENCE_UNITS = {
   biology: [
@@ -2632,7 +2634,8 @@ async function renderAppForRole() {
 async function toSignedIn(user) {
   currentUser = user;
   currentProfile = await ensureProfile(user);
-  enforceVariantRouting(currentProfile.role);
+  const redirected = enforceVariantRouting(currentProfile.role);
+  if (redirected) return;
   $('auth-view').classList.add('hidden');
   $('app-view').classList.remove('hidden');
   await renderAppForRole();
