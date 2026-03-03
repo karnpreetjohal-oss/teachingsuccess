@@ -1590,10 +1590,22 @@ function tutorItemHtml(a) {
   const submittedTag = a.submission
     ? `<span class="tag ok">Submitted: ${new Date(a.submission.submitted_at).toLocaleString()}</span>`
     : '<span class="tag warn">Not submitted yet</span>';
+  const quickAuto = (a.submission && a.submission.auto_mark !== null && a.submission.auto_mark !== undefined)
+    ? `${a.submission.auto_mark}% ${a.submission.auto_grade ? `(${a.submission.auto_grade})` : ''}`
+    : 'Not marked yet';
+  const quickFinal = (a.submission && a.submission.mark !== null && a.submission.mark !== undefined)
+    ? `${a.submission.mark}% ${a.submission.grade ? `(${a.submission.grade})` : ''}`
+    : 'Not finalised';
 
   const gradingBlock = a.submission
     ? `
-      <div style="margin-top:.65rem;border-top:1px solid var(--border);padding-top:.65rem">
+      <details class="panel-toggle" style="margin-top:.65rem">
+        <summary>Review Submission</summary>
+        <div class="panel-body">
+        <div class="tutor-card-summary">
+          <span class="muted"><b>Auto:</b> ${escapeHtml(String(quickAuto))}</span>
+          <span class="muted"><b>Final:</b> ${escapeHtml(String(quickFinal))}</span>
+        </div>
         <p class="muted" style="margin-bottom:.35rem"><b>Student Notes:</b> ${a.submission.notes || 'No notes added.'}</p>
         ${submissionFilesHtml(a, 'tutor', true)}
         ${renderAutoAssessment(a)}
@@ -1610,7 +1622,8 @@ function tutorItemHtml(a) {
               : ''}
           </div>
         </div>
-      </div>
+        </div>
+      </details>
     `
     : '';
 
@@ -2599,6 +2612,13 @@ function renderSettingsForRole() {
   $('settings-parent')?.classList.toggle('hidden', currentProfile?.role !== 'parent');
 }
 
+function openTutorPanel(panelId) {
+  const panel = $(panelId);
+  if (!panel) return;
+  panel.open = true;
+  panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
 async function switchSection(section) {
   updateSectionHeader(section);
   if (section === 'settings') {
@@ -2763,6 +2783,20 @@ async function bootstrap() {
   updateQuickMarkingModeDefault();
 
   bindListActions();
+  const openCreateBtn = $('btn-open-create-asg');
+  if (openCreateBtn) {
+    openCreateBtn.addEventListener('click', async () => {
+      await switchSection('dashboard');
+      openTutorPanel('panel-create-assignment');
+    });
+  }
+  const openParentLinksBtn = $('btn-open-parent-links');
+  if (openParentLinksBtn) {
+    openParentLinksBtn.addEventListener('click', async () => {
+      await switchSection('dashboard');
+      openTutorPanel('panel-parent-links');
+    });
+  }
   const quickPhotosInput = $('quick-photos');
   if (quickPhotosInput) {
     quickPhotosInput.addEventListener('change', () => {

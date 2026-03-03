@@ -106,6 +106,9 @@ textarea{min-height:84px;resize:vertical}
 .panel-toggle summary{cursor:pointer;font-weight:700;padding:.65rem .75rem;color:var(--ink);list-style:none}
 .panel-toggle summary::-webkit-details-marker{display:none}
 .panel-body{padding:.2rem .75rem .75rem .75rem}
+.quick-actions{display:flex;gap:.55rem;flex-wrap:wrap;margin:.2rem 0 .7rem}
+.tutor-card-summary{display:flex;justify-content:space-between;align-items:center;gap:.6rem;padding:.52rem .7rem;background:#f8faff;border:1px solid var(--border);border-radius:8px;margin-top:.55rem}
+.tutor-card-summary b{font-size:.95rem}
 .kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.7rem;margin-bottom:.8rem}
 .kpi{border:1px solid var(--border);border-radius:10px;padding:.7rem;background:#fff}
 .kpi b{font-family:'Fraunces',serif;font-size:1.35rem;display:block}
@@ -223,7 +226,12 @@ textarea{min-height:84px;resize:vertical}
       <div id="tutor-view" class="grid main hidden">
         <aside class="card">
           <h2>Tutor Actions</h2>
-          <details class="panel-toggle" open>
+          <p class="muted" style="margin-bottom:.6rem">Start with one action, then return to dashboard review.</p>
+          <div class="quick-actions">
+            <button class="btn blue small" id="btn-open-create-asg" type="button">New Assignment</button>
+            <button class="btn ghost small" id="btn-open-parent-links" type="button">Parent Links</button>
+          </div>
+          <details class="panel-toggle" id="panel-create-assignment">
             <summary>Create Assignment</summary>
             <div class="panel-body">
           <div class="row" style="margin-top:.35rem">
@@ -317,7 +325,7 @@ textarea{min-height:84px;resize:vertical}
           </div>
             </div>
           </details>
-          <details class="panel-toggle" style="margin-top:.7rem">
+          <details class="panel-toggle" style="margin-top:.7rem" id="panel-parent-links">
             <summary>Parent Links</summary>
             <div class="panel-body">
           <div class="row" style="margin-top:.35rem">
@@ -355,7 +363,7 @@ textarea{min-height:84px;resize:vertical}
         <div id="tutor-reviews-view" class="grid main hidden">
           <aside class="card">
             <h2>Review Actions</h2>
-            <details class="panel-toggle" open>
+            <details class="panel-toggle">
               <summary>Create Progress Review</summary>
               <div class="panel-body">
             <div class="row" style="margin-top:.35rem">
@@ -433,6 +441,6 @@ textarea{min-height:84px;resize:vertical}
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="portal.js?v=20260301-3"></script>
+  <script src="portal.js?v=20260301-4"></script>
 </body>
 </html>
