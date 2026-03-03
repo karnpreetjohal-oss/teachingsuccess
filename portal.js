@@ -28,6 +28,7 @@ let detailPayloadByAssignmentId = new Map();
 let tutorAssignmentsCache = [];
 let studentAssignmentsCache = [];
 let parentAssignmentsCache = [];
+let activeStudentPanel = 'assignments';
 const ASSIGNMENT_FILES_BUCKET = 'assignment-files';
 const SUBMISSION_FILES_BUCKET = 'submission-files';
 const MAX_SUBMISSION_PHOTOS = 6;
@@ -1427,6 +1428,7 @@ async function submitQuickUploadPhotos() {
     if ($('quick-photo-count')) $('quick-photo-count').textContent = '';
 
     await renderStudentAssignments();
+    switchStudentPanel('assignments');
   } catch (err) {
     console.error('submitQuickUploadPhotos error', err);
     if (statusEl) {
@@ -2744,6 +2746,7 @@ async function renderDashboardForRole() {
   $('parent-view').classList.add('hidden');
   updateQuickMarkingModeDefault();
   await renderStudentAssignments();
+  switchStudentPanel(activeStudentPanel);
 }
 
 async function renderReviewsForRole() {
@@ -2784,6 +2787,19 @@ function openTutorPanel(panelId) {
   if (!panel) return;
   panel.open = true;
   panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function switchStudentPanel(panel) {
+  const valid = new Set(['progress', 'submit', 'assignments']);
+  const target = valid.has(panel) ? panel : 'assignments';
+  activeStudentPanel = target;
+
+  ['progress', 'submit', 'assignments'].forEach((name) => {
+    const btn = $(`btn-student-panel-${name}`);
+    const section = $(`student-panel-${name}`);
+    if (btn) btn.classList.toggle('active', name === target);
+    if (section) section.classList.toggle('hidden', name !== target);
+  });
 }
 
 function openTutorDrawer() {
@@ -2999,6 +3015,9 @@ async function bootstrap() {
   if (studentFilterStatus) studentFilterStatus.addEventListener('change', renderStudentListFromCache);
   const studentFilterSearch = $('student-filter-search');
   if (studentFilterSearch) studentFilterSearch.addEventListener('input', renderStudentListFromCache);
+  safeBind('btn-student-panel-progress', 'click', () => switchStudentPanel('progress'));
+  safeBind('btn-student-panel-submit', 'click', () => switchStudentPanel('submit'));
+  safeBind('btn-student-panel-assignments', 'click', () => switchStudentPanel('assignments'));
 
   const parentFilterStudent = $('parent-filter-student');
   if (parentFilterStudent) parentFilterStudent.addEventListener('change', renderParentListFromCache);
