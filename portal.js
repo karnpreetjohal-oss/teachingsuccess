@@ -25,6 +25,9 @@ let tutorStudentsById = new Map();
 let unitLoadSeq = 0;
 let activeSection = 'dashboard';
 let detailPayloadByAssignmentId = new Map();
+let tutorAssignmentsCache = [];
+let studentAssignmentsCache = [];
+let parentAssignmentsCache = [];
 const ASSIGNMENT_FILES_BUCKET = 'assignment-files';
 const SUBMISSION_FILES_BUCKET = 'submission-files';
 const MAX_SUBMISSION_PHOTOS = 6;
@@ -437,6 +440,149 @@ function parseJsonSafe(value, fallback = null) {
   } catch (_err) {
     return fallback;
   }
+}
+
+function toNumberOrNull(v) {
+  if (v === null || v === undefined || v === '') return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+}
+
+function finalScoreForSubmission(sub) {
+  if (!sub) return null;
+  const tutor = toNumberOrNull(sub.mark);
+  if (tutor !== null) return tutor;
+  const auto = toNumberOrNull(sub.auto_mark);
+  return auto;
+}
+
+function assignmentSortTime(a) {
+  const subTs = a?.submission?.submitted_at ? new Date(a.submission.submitted_at).getTime() : 0;
+  const createdTs = a?.created_at ? new Date(a.created_at).getTime() : 0;
+  return Math.max(subTs || 0, createdTs || 0);
+}
+
+function renderTutorProgressSummary(items) {
+  const total = items.length;
+  const submitted = items.filter((x) => !!x.submission).length;
+  const marked = items.filter((x) => x.status === 'marked' || x.status === 'completed').length;
+  const scores = items.map((x) => finalScoreForSubmission(x.submission)).filter((x) => x !== null);
+  const avg = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : null;
+
+  if ($('kpi-active')) $('kpi-active').textContent = String(items.filter((x) => x.status === 'assigned' || x.status === 'submitted').length);
+  if ($('kpi-complete')) $('kpi-complete').textContent = String(marked);
+  if ($('kpi-subs')) $('kpi-subs').textContent = String(submitted);
+  if ($('kpi-tutor-avg')) $('kpi-tutor-avg').textContent = avg !== null ? `${avg}%` : '-';
+
+  const feed = $('tutor-progress-feed');
+  if (!feed) return;
+  const recent = [...items].sort((a, b) => assignmentSortTime(b) - assignmentSortTime(a)).slice(0, 5);
+  feed.innerHTML = recent.length
+    ? recent.map((x) => {
+      const when = x?.submission?.submitted_at ? formatDateTime(x.submission.submitted_at) : formatDateTime(x.created_at);
+      const score = finalScoreForSubmission(x.submission);
+      return `<article class="item"><p><b>${escapeHtml(x.title)}</b></p><p class="muted">${escapeHtml(x.subject)} · ${escapeHtml(x.student?.full_name || x.student?.email || 'Student')}</p><p class="muted">${score !== null ? `Score: ${score}%` : 'Awaiting mark'} · ${escapeHtml(when)}</p></article>`;
+    }).join('')
+    : '<p class="muted">No recent progress yet.</p>';
+}
+
+function renderStudentProgressSummary(items) {
+  const total = items.length;
+  const submitted = items.filter((x) => !!x.submission).length;
+  const marked = items.filter((x) => x.status === 'marked' || x.status === 'completed' || toNumberOrNull(x?.submission?.mark) !== null).length;
+  const scores = items.map((x) => finalScoreForSubmission(x.submission)).filter((x) => x !== null);
+  const avg = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : null;
+
+  if ($('kpi-student-total')) $('kpi-student-total').textContent = String(total);
+  if ($('kpi-student-submitted')) $('kpi-student-submitted').textContent = String(submitted);
+  if ($('kpi-student-marked')) $('kpi-student-marked').textContent = String(marked);
+  if ($('kpi-student-avg')) $('kpi-student-avg').textContent = avg !== null ? `${avg}%` : '-';
+
+  const feed = $('student-progress-feed');
+  if (!feed) return;
+  const recent = [...items].sort((a, b) => assignmentSortTime(b) - assignmentSortTime(a)).slice(0, 5);
+  feed.innerHTML = recent.length
+    ? recent.map((x) => {
+      const score = finalScoreForSubmission(x.submission);
+      const when = x?.submission?.submitted_at ? formatDateTime(x.submission.submitted_at) : formatDateTime(x.created_at);
+      return `<article class="item"><p><b>${escapeHtml(x.title)}</b></p><p class="muted">${escapeHtml(x.subject)} · ${score !== null ? `Score: ${score}%` : 'No mark yet'}</p><p class="muted">${escapeHtml(when)}</p></article>`;
+    }).join('')
+    : '<p class="muted">No progress items yet.</p>';
+}
+
+function renderParentProgressSummary(items) {
+  const scores = items.map((x) => finalScoreForSubmission(x.submission)).filter((x) => x !== null);
+  const avg = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : null;
+  if ($('kpi-parent-avg')) $('kpi-parent-avg').textContent = avg !== null ? `${avg}%` : '-';
+  const feed = $('parent-progress-feed');
+  if (!feed) return;
+  const recent = [...items].sort((a, b) => assignmentSortTime(b) - assignmentSortTime(a)).slice(0, 6);
+  feed.innerHTML = recent.length
+    ? recent.map((x) => {
+      const score = finalScoreForSubmission(x.submission);
+      const student = x.student?.full_name || x.student?.email || 'Student';
+      const when = x?.submission?.submitted_at ? formatDateTime(x.submission.submitted_at) : formatDateTime(x.created_at);
+      return `<article class="item"><p><b>${escapeHtml(student)}</b> · ${escapeHtml(x.title)}</p><p class="muted">${escapeHtml(x.subject)} · ${score !== null ? `Score: ${score}%` : 'No mark yet'}</p><p class="muted">${escapeHtml(when)}</p></article>`;
+    }).join('')
+    : '<p class="muted">No recent progress yet.</p>';
+}
+
+function renderTutorListFromCache() {
+  const statusFilter = String($('tutor-filter-status')?.value || 'all');
+  const studentFilter = String($('tutor-filter-student')?.value || 'all');
+  const q = String($('tutor-filter-search')?.value || '').trim().toLowerCase();
+  let rows = [...tutorAssignmentsCache];
+  if (statusFilter !== 'all') rows = rows.filter((x) => String(x.status) === statusFilter);
+  if (studentFilter !== 'all') rows = rows.filter((x) => String(x.student_id) === studentFilter);
+  if (q) {
+    rows = rows.filter((x) =>
+      String(x.title || '').toLowerCase().includes(q) ||
+      String(x.subject || '').toLowerCase().includes(q) ||
+      String(x.student?.full_name || x.student?.email || '').toLowerCase().includes(q)
+    );
+  }
+  $('tutor-list').innerHTML = rows.length
+    ? rows.map(tutorItemHtml).join('')
+    : '<p class="muted">No assignments match the current filters.</p>';
+  renderTutorProgressSummary(rows);
+}
+
+function renderStudentListFromCache() {
+  const statusFilter = String($('student-filter-status')?.value || 'all');
+  const q = String($('student-filter-search')?.value || '').trim().toLowerCase();
+  let rows = [...studentAssignmentsCache];
+  if (statusFilter !== 'all') rows = rows.filter((x) => String(x.status) === statusFilter);
+  if (q) {
+    rows = rows.filter((x) =>
+      String(x.title || '').toLowerCase().includes(q) ||
+      String(x.subject || '').toLowerCase().includes(q) ||
+      String(x.description || '').toLowerCase().includes(q)
+    );
+  }
+  $('student-list').innerHTML = rows.length
+    ? rows.map(studentItemHtml).join('')
+    : '<p class="muted">No assignments match the current filters.</p>';
+  renderStudentProgressSummary(rows);
+}
+
+function renderParentListFromCache() {
+  const studentFilter = String($('parent-filter-student')?.value || 'all');
+  const statusFilter = String($('parent-filter-status')?.value || 'all');
+  const q = String($('parent-filter-search')?.value || '').trim().toLowerCase();
+  let rows = [...parentAssignmentsCache];
+  if (studentFilter !== 'all') rows = rows.filter((x) => String(x.student_id) === studentFilter);
+  if (statusFilter !== 'all') rows = rows.filter((x) => String(x.status) === statusFilter);
+  if (q) {
+    rows = rows.filter((x) =>
+      String(x.title || '').toLowerCase().includes(q) ||
+      String(x.subject || '').toLowerCase().includes(q) ||
+      String(x.student?.full_name || x.student?.email || '').toLowerCase().includes(q)
+    );
+  }
+  $('parent-list').innerHTML = rows.length
+    ? rows.map(parentItemHtml).join('')
+    : '<p class="muted">No assignments match the current filters.</p>';
+  renderParentProgressSummary(rows);
 }
 
 function indexDetailPayload(assignments) {
@@ -1900,12 +2046,21 @@ async function renderTutorDashboard() {
     submissionFiles: submissionFilesMap.get(a.id) || []
   }));
   indexDetailPayload(enriched);
-  $('kpi-active').textContent = String(enriched.filter((x) => x.status === 'assigned' || x.status === 'submitted').length);
-  $('kpi-complete').textContent = String(enriched.filter((x) => x.status === 'marked' || x.status === 'completed').length);
-  $('kpi-subs').textContent = String(submissionsCount || 0);
-  $('tutor-list').innerHTML = enriched.length
-    ? enriched.map(tutorItemHtml).join('')
-    : '<p class="muted">No assignments yet. Create the first one on the left.</p>';
+  tutorAssignmentsCache = enriched;
+  const studentFilter = $('tutor-filter-student');
+  if (studentFilter) {
+    const current = studentFilter.value || 'all';
+    const uniqueStudents = [...new Map(enriched
+      .filter((x) => x.student_id)
+      .map((x) => [x.student_id, { id: x.student_id, label: x.student?.full_name || x.student?.email || x.student_id }])
+    ).values()];
+    studentFilter.innerHTML = `<option value="all">All students</option>${uniqueStudents
+      .map((s) => `<option value="${escapeHtml(s.id)}">${escapeHtml(s.label)}</option>`)
+      .join('')}`;
+    if ([...studentFilter.options].some((o) => o.value === current)) studentFilter.value = current;
+  }
+  if ($('kpi-subs')) $('kpi-subs').textContent = String(submissionsCount || 0);
+  renderTutorListFromCache();
 }
 
 async function renderStudentAssignments() {
@@ -1940,9 +2095,8 @@ async function renderStudentAssignments() {
     submissionFiles: submissionFilesMap.get(a.id) || []
   }));
   indexDetailPayload(enriched);
-  $('student-list').innerHTML = enriched.length
-    ? enriched.map(studentItemHtml).join('')
-    : '<p class="muted">No assignments yet. Your tutor will assign work here.</p>';
+  studentAssignmentsCache = enriched;
+  renderStudentListFromCache();
 }
 
 async function renderParentTracker() {
@@ -1958,8 +2112,10 @@ async function renderParentTracker() {
   if (!studentIds.length) {
     $('kpi-parent-total').textContent = '0';
     $('kpi-parent-complete').textContent = '0';
+    if ($('kpi-parent-avg')) $('kpi-parent-avg').textContent = '-';
     $('parent-linked-students').innerHTML = '';
     $('parent-list').innerHTML = '<p class="muted">No linked students yet. Ask tutor to link your account.</p>';
+    if ($('parent-progress-feed')) $('parent-progress-feed').innerHTML = '<p class="muted">No recent progress yet.</p>';
     return;
   }
 
@@ -2006,11 +2162,22 @@ async function renderParentTracker() {
     submissionFiles: submissionFilesMap.get(a.id) || []
   }));
   indexDetailPayload(enriched);
+  parentAssignmentsCache = enriched;
   $('kpi-parent-total').textContent = String(enriched.length);
   $('kpi-parent-complete').textContent = String(enriched.filter((x) => x.status === 'marked' || x.status === 'completed').length);
-  $('parent-list').innerHTML = enriched.length
-    ? enriched.map(parentItemHtml).join('')
-    : '<p class="muted">No assignments found for linked students.</p>';
+  const parentStudentFilter = $('parent-filter-student');
+  if (parentStudentFilter) {
+    const current = parentStudentFilter.value || 'all';
+    const uniqueStudents = [...new Map(enriched
+      .filter((x) => x.student_id)
+      .map((x) => [x.student_id, { id: x.student_id, label: x.student?.full_name || x.student?.email || x.student_id }])
+    ).values()];
+    parentStudentFilter.innerHTML = `<option value="all">All linked students</option>${uniqueStudents
+      .map((s) => `<option value="${escapeHtml(s.id)}">${escapeHtml(s.label)}</option>`)
+      .join('')}`;
+    if ([...parentStudentFilter.options].some((o) => o.value === current)) parentStudentFilter.value = current;
+  }
+  renderParentListFromCache();
 }
 
 async function createAssignment() {
@@ -2619,7 +2786,22 @@ function openTutorPanel(panelId) {
   panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
+function openTutorDrawer() {
+  const drawer = $('tutor-actions-drawer');
+  const overlay = $('tutor-drawer-overlay');
+  if (drawer) drawer.classList.add('open');
+  if (overlay) overlay.classList.remove('hidden');
+}
+
+function closeTutorDrawer() {
+  const drawer = $('tutor-actions-drawer');
+  const overlay = $('tutor-drawer-overlay');
+  if (drawer) drawer.classList.remove('open');
+  if (overlay) overlay.classList.add('hidden');
+}
+
 async function switchSection(section) {
+  closeTutorDrawer();
   updateSectionHeader(section);
   if (section === 'settings') {
     setActiveSection('settings');
@@ -2788,6 +2970,7 @@ async function bootstrap() {
     openCreateBtn.addEventListener('click', async () => {
       await switchSection('dashboard');
       openTutorPanel('panel-create-assignment');
+      openTutorDrawer();
     });
   }
   const openParentLinksBtn = $('btn-open-parent-links');
@@ -2795,8 +2978,34 @@ async function bootstrap() {
     openParentLinksBtn.addEventListener('click', async () => {
       await switchSection('dashboard');
       openTutorPanel('panel-parent-links');
+      openTutorDrawer();
     });
   }
+  const openDrawerBtn = $('btn-open-tutor-drawer');
+  if (openDrawerBtn) openDrawerBtn.addEventListener('click', openTutorDrawer);
+  const closeDrawerBtn = $('btn-close-tutor-drawer');
+  if (closeDrawerBtn) closeDrawerBtn.addEventListener('click', closeTutorDrawer);
+  const drawerOverlay = $('tutor-drawer-overlay');
+  if (drawerOverlay) drawerOverlay.addEventListener('click', closeTutorDrawer);
+
+  const tutorFilterStatus = $('tutor-filter-status');
+  if (tutorFilterStatus) tutorFilterStatus.addEventListener('change', renderTutorListFromCache);
+  const tutorFilterStudent = $('tutor-filter-student');
+  if (tutorFilterStudent) tutorFilterStudent.addEventListener('change', renderTutorListFromCache);
+  const tutorFilterSearch = $('tutor-filter-search');
+  if (tutorFilterSearch) tutorFilterSearch.addEventListener('input', renderTutorListFromCache);
+
+  const studentFilterStatus = $('student-filter-status');
+  if (studentFilterStatus) studentFilterStatus.addEventListener('change', renderStudentListFromCache);
+  const studentFilterSearch = $('student-filter-search');
+  if (studentFilterSearch) studentFilterSearch.addEventListener('input', renderStudentListFromCache);
+
+  const parentFilterStudent = $('parent-filter-student');
+  if (parentFilterStudent) parentFilterStudent.addEventListener('change', renderParentListFromCache);
+  const parentFilterStatus = $('parent-filter-status');
+  if (parentFilterStatus) parentFilterStatus.addEventListener('change', renderParentListFromCache);
+  const parentFilterSearch = $('parent-filter-search');
+  if (parentFilterSearch) parentFilterSearch.addEventListener('input', renderParentListFromCache);
   const quickPhotosInput = $('quick-photos');
   if (quickPhotosInput) {
     quickPhotosInput.addEventListener('change', () => {
