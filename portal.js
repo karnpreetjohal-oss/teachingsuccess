@@ -1870,12 +1870,17 @@ function parentItemHtml(a) {
 }
 
 function parentLinkItemHtml(link) {
-  const p = link.parent?.full_name || link.parent?.email || 'Unknown parent';
-  const s = link.student?.full_name || link.student?.email || link.student_id;
+  const parentLabel = link.parent?.full_name || link.parent?.email || 'Unknown parent';
+  const cachedStudent = tutorStudentsById.get(link.student_id);
+  const studentLabel = link.student?.full_name
+    || link.student?.email
+    || cachedStudent?.full_name
+    || cachedStudent?.email
+    || `Student ${String(link.student_id || '').slice(0, 8)}`;
   return `
     <article class="item">
-      <h3>${p}</h3>
-      <div class="meta"><span class="tag">Linked student: ${s}</span></div>
+      <h3>${escapeHtml(parentLabel)}</h3>
+      <div class="meta"><span class="tag">Linked student: ${escapeHtml(studentLabel)}</span></div>
     </article>
   `;
 }
