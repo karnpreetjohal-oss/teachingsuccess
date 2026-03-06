@@ -7,12 +7,13 @@
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
-
   gtag('config', 'G-JFWJFYZD6D');
 </script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Resources | Teaching Success</title>
+<meta name="description" content="Curated revision links from Teaching Success for KS2, 11+, GCSE and A-Level students, plus clear information on how enrolled families receive private worksheets and packs.">
+<link rel="canonical" href="https://www.teachingsuccess.co.uk/resources.html">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,700;9..144,900&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -26,10 +27,12 @@
   --muted:#6b7a96;
   --border:#c8d0e0;
   --surf:#e4e9f2;
+  --warn:#fff6dd;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Outfit',sans-serif;background:var(--cream);color:var(--ink)}
 a{text-decoration:none}
+button,input,select{font:inherit}
 
 .navbar{display:flex;align-items:center;justify-content:space-between;padding:1rem 2rem;background:var(--ink);position:sticky;top:0;z-index:20}
 .logo{display:flex;align-items:center;gap:.55rem}
@@ -43,37 +46,37 @@ a{text-decoration:none}
 .container{max-width:1200px;margin:0 auto;padding:2rem}
 .hero{background:linear-gradient(135deg,var(--ink2),var(--blue2));border-radius:18px;padding:2rem;color:#fff;border:1px solid rgba(255,255,255,.14)}
 .eyebrow{font-size:.75rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(245,200,66,.95);margin-bottom:.5rem}
-.hero h1{font-family:'Fraunces',serif;font-size:2.3rem;line-height:1.1;margin-bottom:.65rem}
-.hero p{color:rgba(255,255,255,.85);max-width:760px;line-height:1.7}
-.note{margin-top:.9rem;font-size:.86rem;color:rgba(255,255,255,.82)}
+.hero h1{font-family:'Fraunces',serif;font-size:2.3rem;line-height:1.05;margin-bottom:.7rem}
+.hero p{color:rgba(255,255,255,.86);max-width:760px;line-height:1.7}
+.hero-note{margin-top:1rem;padding:1rem 1.1rem;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);border-radius:12px}
 
 .panel{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1rem;margin-top:1rem}
 .filter-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.75rem;align-items:end}
 label{font-size:.78rem;font-weight:700;color:var(--muted);display:block;margin-bottom:.28rem;text-transform:uppercase;letter-spacing:.05em}
-input,select,textarea{width:100%;padding:.68rem .8rem;border:2px solid var(--border);background:#fff;border-radius:8px;font-family:'Outfit',sans-serif;color:var(--ink)}
-input:focus,select:focus,textarea:focus{outline:none;border-color:var(--blue2)}
-textarea{min-height:76px;resize:vertical}
-.btn{border:none;border-radius:8px;padding:.7rem 1rem;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif}
+input,select{width:100%;padding:.68rem .8rem;border:2px solid var(--border);background:#fff;border-radius:8px;color:var(--ink)}
+input:focus,select:focus{outline:none;border-color:var(--blue2)}
+.btn{border:none;border-radius:8px;padding:.72rem 1rem;font-weight:700;cursor:pointer}
 .btn-dark{background:var(--ink);color:#fff}
-.btn-dark:hover{background:var(--ink2)}
-.btn-gold{background:var(--gold);color:var(--ink)}
-.btn-gold:hover{filter:brightness(1.02)}
+.btn-link{display:inline-flex;align-items:center;justify-content:center;border-radius:8px;padding:.72rem 1rem;font-weight:700;background:var(--ink);color:#fff}
+.btn-inline{display:inline-flex;align-items:center;gap:.4rem;color:var(--blue2);font-weight:700}
 
-.cols{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1rem}
+.cols{display:grid;grid-template-columns:1.2fr .8fr;gap:1rem;margin-top:1rem}
 .sec{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1rem}
 .sec h2{font-family:'Fraunces',serif;font-size:1.55rem;margin-bottom:.3rem}
-.sec-sub{color:var(--muted);font-size:.9rem;margin-bottom:.8rem}
-.add-form{display:grid;gap:.65rem;padding:1rem;background:var(--surf);border-radius:12px;border:1px solid var(--border)}
-
-.list{display:grid;gap:.65rem;margin-top:.9rem}
-.item{background:#fff;border:1px solid var(--border);border-radius:11px;padding:.85rem}
-.item-top{display:flex;justify-content:space-between;gap:.6rem;align-items:flex-start}
+.sec-sub{color:var(--muted);font-size:.92rem;line-height:1.6;margin-bottom:.8rem}
+.list{display:grid;gap:.7rem}
+.item{background:#fff;border:1px solid var(--border);border-radius:12px;padding:1rem}
 .item h3{font-size:1rem;line-height:1.35}
-.meta{display:flex;gap:.35rem;flex-wrap:wrap;margin:.45rem 0}
+.meta{display:flex;gap:.35rem;flex-wrap:wrap;margin:.5rem 0}
 .tag{font-size:.72rem;padding:.14rem .48rem;border-radius:999px;background:var(--surf);color:var(--ink)}
-.item p{font-size:.88rem;color:var(--muted);line-height:1.5}
-.item a{display:inline-block;margin-top:.45rem;color:var(--blue2);font-weight:700;font-size:.9rem}
-.empty{color:var(--muted);font-size:.88rem;padding:.8rem 0}
+.tag.warn{background:var(--warn);color:#856404}
+.item p{font-size:.9rem;color:var(--muted);line-height:1.55}
+.item-actions{display:flex;gap:.65rem;flex-wrap:wrap;margin-top:.8rem}
+.empty{color:var(--muted);font-size:.9rem;padding:.8rem 0}
+.callout{background:linear-gradient(180deg,#fff8e6 0,#fffdf6 100%);border:1px solid #efdca4;border-radius:14px;padding:1rem;margin-bottom:1rem}
+.callout h3{font-family:'Fraunces',serif;font-size:1.2rem;margin-bottom:.35rem}
+.callout p{color:var(--muted);line-height:1.65}
+.helper{margin-top:.9rem;font-size:.88rem;color:var(--muted)}
 
 @media (max-width:1020px){
   .filter-grid{grid-template-columns:1fr 1fr}
@@ -82,7 +85,7 @@ textarea{min-height:76px;resize:vertical}
 @media (max-width:640px){
   .navbar{padding:.9rem 1rem;gap:.8rem;align-items:flex-start;flex-direction:column}
   .container{padding:1rem}
-  .hero h1{font-size:1.8rem}
+  .hero h1{font-size:1.85rem}
   .filter-grid{grid-template-columns:1fr}
 }
 </style>
@@ -98,15 +101,20 @@ textarea{min-height:76px;resize:vertical}
       <a href="index.html#tutors">Tutors</a>
       <a href="index.html#levels">Levels</a>
       <a class="active" href="resources.html">Resources</a>
+      <a href="blog.html">Blog</a>
     </div>
   </nav>
 
   <main class="container">
     <section class="hero">
       <div class="eyebrow">Student Hub</div>
-      <h1>Resources</h1>
-      <p>Keep all your learning links and downloads in one place. Filter by year group, 11+, and subject so students can quickly find what they need.</p>
-      <p class="note">Resources are managed by Teaching Success only.</p>
+      <h1>Resources That Are Actually Live</h1>
+      <p>Use the live revision links below for quick wins at home. Teaching Success worksheets and printable packs are not public downloads yet — we share those directly with enrolled students while the portal rollout is being finished properly.</p>
+      <div class="hero-note">
+        <strong>What is available right now:</strong> trusted external learning sites.
+        <br>
+        <strong>What is not public yet:</strong> Teaching Success PDFs, worksheets, and revision packs.
+      </div>
     </section>
 
     <section class="panel">
@@ -136,7 +144,7 @@ textarea{min-height:76px;resize:vertical}
         </div>
         <div>
           <label for="f-search">Keyword</label>
-          <input id="f-search" type="text" placeholder="e.g. algebra, macbeth, UCAT">
+          <input id="f-search" type="text" placeholder="e.g. algebra, Macbeth, phonics">
         </div>
         <div>
           <button id="clear-filters" class="btn btn-dark" type="button">Clear Filters</button>
@@ -146,26 +154,26 @@ textarea{min-height:76px;resize:vertical}
 
     <section class="cols">
       <div class="sec">
-        <h2>Website Links</h2>
-        <p class="sec-sub">Useful websites, revision tools and practice platforms.</p>
-
+        <h2>Live Revision Links</h2>
+        <p class="sec-sub">Open these immediately. They are real, public resources we recommend regularly in lessons.</p>
         <div id="web-list" class="list"></div>
       </div>
 
       <div class="sec">
-        <h2>Downloadable Sources</h2>
-        <p class="sec-sub">Worksheets, PDFs, notes and revision packs.</p>
-
-        <div id="dl-list" class="list"></div>
+        <div class="callout">
+          <h3>Teaching Success Packs Are Not Public Downloads Yet</h3>
+          <p>We removed the fake placeholder downloads. For now, our worksheets and revision packs are shared directly with enrolled families so the material stays organised and matched to each student.</p>
+        </div>
+        <h2>Private Packs</h2>
+        <p class="sec-sub">This shows what we already provide privately, and how to get access honestly.</p>
+        <div id="pack-list" class="list"></div>
+        <p class="helper">Need access now? Book a free trial or call <a href="tel:07909274901">07909 274901</a>.</p>
       </div>
     </section>
   </main>
 
 <script>
-const WEB_KEY = 'ts_res_web_v1';
-const DL_KEY = 'ts_res_dl_v1';
-
-const seedWeb = [
+const liveResources = [
   {title:'Dr Frost Maths',url:'https://www.drfrostmaths.com',year:'GCSE',subject:'Maths',notes:'Practice questions, videos and auto-marked homework.'},
   {title:'BBC Bitesize Maths',url:'https://www.bbc.co.uk/bitesize/subjects/z6vg9j6',year:'GCSE',subject:'Maths',notes:'GCSE topic summaries and quick quizzes.'},
   {title:'BBC Bitesize English',url:'https://www.bbc.co.uk/bitesize/subjects/z3kw2hv',year:'GCSE',subject:'English',notes:'Language and Literature revision.'},
@@ -173,151 +181,98 @@ const seedWeb = [
   {title:'Corbettmaths',url:'https://corbettmaths.com',year:'GCSE',subject:'Maths',notes:'Videos, textbook exercises and 5-a-day practice.'},
   {title:'Maths Genie',url:'https://www.mathsgenie.co.uk',year:'GCSE',subject:'Maths',notes:'Grade-by-grade GCSE maths practice papers.'},
   {title:'Physics & Maths Tutor',url:'https://www.physicsandmathstutor.com',year:'A-Level',subject:'Science',notes:'Topic questions and past papers.'},
-  {title:'Savemyexams',url:'https://www.savemyexams.com',year:'A-Level',subject:'Science',notes:'Concise notes and exam questions across boards.'},
   {title:'Seneca Learning',url:'https://app.senecalearning.com',year:'GCSE',subject:'General',notes:'Interactive revision across multiple subjects.'},
-  {title:'Quizlet',url:'https://quizlet.com',year:'Year 7-9',subject:'General',notes:'Flashcards for definitions, formulas and quotes.'},
   {title:'Oak National Academy',url:'https://www.thenational.academy',year:'Year 7-9',subject:'General',notes:'Free lessons and tasks by topic.'},
   {title:'Topmarks',url:'https://www.topmarks.co.uk',year:'Year 3-6',subject:'General',notes:'Primary-friendly games and practice activities.'},
   {title:'Phonics Play',url:'https://www.phonicsplay.co.uk',year:'Reception-Year 2',subject:'English',notes:'Phonics games and early reading support.'},
-  {title:'Teach Your Monster to Read',url:'https://www.teachyourmonster.org',year:'Reception-Year 2',subject:'English',notes:'Early reading and phonics game platform.'},
   {title:'Nrich',url:'https://nrich.maths.org',year:'Year 3-6',subject:'Maths',notes:'Problem-solving tasks to build reasoning skills.'},
-  {title:'Times Tables Rock Stars',url:'https://ttrockstars.com',year:'Year 3-6',subject:'Maths',notes:'Fast multiplication fluency practice.'},
   {title:'Khan Academy Maths',url:'https://www.khanacademy.org/math',year:'Year 7-9',subject:'Maths',notes:'Structured lessons from basics to advanced topics.'},
-  {title:'Spelling Shed',url:'https://www.spellingshed.com',year:'Year 3-6',subject:'English',notes:'Spelling games aligned to year-group lists.'},
   {title:'11 Plus Guide',url:'https://www.11plusguide.com',year:'11+',subject:'11+',notes:'Exam format information and preparation advice.'},
-  {title:'Bond 11+',url:'https://www.bond11plus.co.uk',year:'11+',subject:'11+',notes:'11+ practice resources and guidance.'},
   {title:'AQA Past Papers',url:'https://www.aqa.org.uk/find-past-papers-and-mark-schemes',year:'GCSE',subject:'General',notes:'Official past papers and mark schemes.'},
-  {title:'Edexcel Past Papers',url:'https://qualifications.pearson.com/en/support/support-topics/exams/past-papers.html',year:'A-Level',subject:'General',notes:'Official Pearson Edexcel papers.'},
-  {title:'OCR Past Papers',url:'https://www.ocr.org.uk/qualifications/past-paper-finder/',year:'GCSE',subject:'General',notes:'OCR exam board paper finder.'},
-  {title:'UCAT Official',url:'https://www.ucat.ac.uk',year:'A-Level',subject:'General',notes:'Official UCAT guidance and practice information.'},
-  {title:'The Medic Portal',url:'https://www.themedicportal.com',year:'A-Level',subject:'General',notes:'Medicine applications, UCAT and interview support.'}
+  {title:'Edexcel Past Papers',url:'https://qualifications.pearson.com/en/support/support-topics/exams/past-papers.html',year:'A-Level',subject:'General',notes:'Official Pearson Edexcel papers.'}
 ];
 
-const seedDl = [
-  {title:'Reception Phonics Sound Mat',url:'#',year:'Reception-Year 2',subject:'English',type:'PDF',notes:'Daily sound review and blending prompts.'},
-  {title:'KS1 Reading Comprehension Pack',url:'#',year:'Reception-Year 2',subject:'English',type:'Worksheet',notes:'Short passages with retrieval questions.'},
-  {title:'KS1 Number Bonds to 20',url:'#',year:'Reception-Year 2',subject:'Maths',type:'Worksheet',notes:'Fluency drills with visual models.'},
-  {title:'Year 3-4 Times Tables Tracker',url:'#',year:'Year 3-6',subject:'Maths',type:'Worksheet',notes:'Weekly multiplication score tracker.'},
-  {title:'Year 5-6 SATs Arithmetic Pack',url:'#',year:'Year 3-6',subject:'Maths',type:'Exam Pack',notes:'Timed arithmetic papers with answers.'},
-  {title:'KS2 Grammar and Punctuation Booster',url:'#',year:'Year 3-6',subject:'English',type:'Worksheet',notes:'SPaG drills for SATs prep.'},
-  {title:'KS2 Science Knowledge Organisers',url:'#',year:'Year 3-6',subject:'Science',type:'Notes',notes:'Core science vocabulary and concepts by topic.'},
-  {title:'Year 7 Algebra Basics Workbook',url:'#',year:'Year 7-9',subject:'Maths',type:'Worksheet',notes:'Substitution, expanding and solving equations.'},
-  {title:'Year 8-9 Fractions, Decimals, Percentages',url:'#',year:'Year 7-9',subject:'Maths',type:'Worksheet',notes:'Progressive mixed practice with exam-style questions.'},
-  {title:'Year 7-9 Creative Writing Prompts',url:'#',year:'Year 7-9',subject:'English',type:'Worksheet',notes:'Descriptive and narrative tasks with planning grids.'},
-  {title:'KS3 Science Practical Skills Sheet',url:'#',year:'Year 7-9',subject:'Science',type:'PDF',notes:'Variables, graphing and evaluation checklist.'},
-  {title:'GCSE Algebra Revision Pack',url:'#',year:'GCSE',subject:'Maths',type:'Worksheet',notes:'Core algebra skills and mixed exam-style questions.'},
-  {title:'GCSE Geometry and Trigonometry Pack',url:'#',year:'GCSE',subject:'Maths',type:'Worksheet',notes:'Angles, circles, bearings and trig problems.'},
-  {title:'GCSE Foundation to Higher Bridge Pack',url:'#',year:'GCSE',subject:'Maths',type:'Exam Pack',notes:'Targeted questions to move up grades.'},
-  {title:'GCSE English Language Paper 1 Techniques',url:'#',year:'GCSE',subject:'English',type:'Notes',notes:'Question-by-question method and model responses.'},
-  {title:'GCSE English Literature Quote Bank',url:'#',year:'GCSE',subject:'English',type:'PDF',notes:'Theme-organised quotes for key set texts.'},
-  {title:'Macbeth Essay Planning Grid',url:'#',year:'GCSE',subject:'English',type:'Worksheet',notes:'Clear structure for grade 7-9 responses.'},
-  {title:'GCSE Biology Cells and Organisation',url:'#',year:'GCSE',subject:'Science',type:'Notes',notes:'Topic summary with retrieval questions.'},
-  {title:'GCSE Chemistry Bonding and Structure',url:'#',year:'GCSE',subject:'Science',type:'Worksheet',notes:'Mixed questions plus mark-scheme style answers.'},
-  {title:'GCSE Physics Energy and Electricity',url:'#',year:'GCSE',subject:'Science',type:'Exam Pack',notes:'Exam-style paper with worked solutions.'},
-  {title:'A-Level Pure Maths Differentiation Pack',url:'#',year:'A-Level',subject:'Maths',type:'Worksheet',notes:'From basics to chain/product/quotient rules.'},
-  {title:'A-Level Integration Challenge Set',url:'#',year:'A-Level',subject:'Maths',type:'Exam Pack',notes:'Past-paper style mixed integration questions.'},
-  {title:'A-Level Biology Required Practicals Guide',url:'#',year:'A-Level',subject:'Science',type:'Notes',notes:'Method, variables and evaluation points.'},
-  {title:'A-Level Chemistry Organic Mechanisms',url:'#',year:'A-Level',subject:'Science',type:'PDF',notes:'Mechanisms and conditions summary sheet.'},
-  {title:'A-Level Physics Equations and Units Sheet',url:'#',year:'A-Level',subject:'Science',type:'PDF',notes:'High-frequency equations with unit checks.'},
-  {title:'A-Level English Comparative Essay Toolkit',url:'#',year:'A-Level',subject:'English',type:'Notes',notes:'Argument structures and comparison sentence stems.'},
-  {title:'11+ Verbal Reasoning Pack',url:'#',year:'11+',subject:'11+',type:'Exam Pack',notes:'Timed VR drills and answer sheet.'},
-  {title:'11+ Non-Verbal Reasoning Shapes Pack',url:'#',year:'11+',subject:'11+',type:'Worksheet',notes:'Pattern, rotation and sequence questions.'},
-  {title:'11+ Maths Speed Drills',url:'#',year:'11+',subject:'11+',type:'Worksheet',notes:'Mental arithmetic and short method strategies.'},
-  {title:'11+ English Comprehension Set',url:'#',year:'11+',subject:'11+',type:'Exam Pack',notes:'Reading passages with mark-scheme guidance.'}
+const packResources = [
+  {title:'KS2 SATs Arithmetic Pack',year:'Year 3-6',subject:'Maths',notes:'Timed arithmetic papers and answer walkthroughs used in weekly tuition.',availability:'Shared with enrolled students'},
+  {title:'GCSE Algebra Revision Pack',year:'GCSE',subject:'Maths',notes:'Core algebra drills and exam-style questions matched to current gaps.',availability:'Shared after assessment'},
+  {title:'GCSE English Paper 1 Techniques Pack',year:'GCSE',subject:'English',notes:'Question-by-question methods, model paragraphs and teacher annotations.',availability:'Shared after trial lesson'},
+  {title:'A-Level Biology Required Practicals Guide',year:'A-Level',subject:'Science',notes:'Method summaries, variable checklists and evaluation prompts.',availability:'Shared with enrolled students'},
+  {title:'11+ Verbal Reasoning Practice Pack',year:'11+',subject:'11+',notes:'Timed drills with answer discussion and pacing tips.',availability:'Shared after diagnostic session'},
+  {title:'Reception Phonics Sound Mats',year:'Reception-Year 2',subject:'English',notes:'Short daily review mats used in our early reading sessions.',availability:'Shared with enrolled students'}
 ];
-
-let webResources = [];
-let dlResources = [];
 
 const fYear = document.getElementById('f-year');
 const fSubj = document.getElementById('f-subj');
 const fSearch = document.getElementById('f-search');
 
-function mergeByIdentity(existing, defaults){
-  const out = Array.isArray(existing) ? [...existing] : [];
-  const seen = new Set(out.map(x => `${x.title}__${x.url}`));
-  defaults.forEach(item => {
-    const key = `${item.title}__${item.url}`;
-    if(!seen.has(key)){
-      out.push(item);
-      seen.add(key);
-    }
-  });
-  return out;
-}
-
-function loadData(){
-  const storedWeb = JSON.parse(localStorage.getItem(WEB_KEY) || 'null');
-  const storedDl = JSON.parse(localStorage.getItem(DL_KEY) || 'null');
-  webResources = mergeByIdentity(storedWeb, seedWeb);
-  dlResources = mergeByIdentity(storedDl, seedDl);
-  saveData();
-}
-
-function saveData(){
-  localStorage.setItem(WEB_KEY, JSON.stringify(webResources));
-  localStorage.setItem(DL_KEY, JSON.stringify(dlResources));
-}
-
 function matchFilters(item){
-  const y = fYear.value;
-  const s = fSubj.value;
-  const q = fSearch.value.trim().toLowerCase();
-
-  const yearOk = y === 'all' || item.year === y;
-  const subjOk = s === 'all' || item.subject === s;
+  const year = fYear.value;
+  const subject = fSubj.value;
+  const query = fSearch.value.trim().toLowerCase();
   const text = `${item.title} ${item.notes || ''} ${item.subject} ${item.year}`.toLowerCase();
-  const queryOk = !q || text.includes(q);
-
-  return yearOk && subjOk && queryOk;
+  return (year === 'all' || item.year === year)
+    && (subject === 'all' || item.subject === subject)
+    && (!query || text.includes(query));
 }
 
-function itemHtml(item, isDownload){
-  const typeTag = isDownload ? `<span class="tag">${item.type}</span>` : '';
+function liveItemHtml(item){
   return `
     <article class="item">
-      <div class="item-top">
-        <h3>${item.title}</h3>
-      </div>
+      <h3>${item.title}</h3>
       <div class="meta">
         <span class="tag">${item.year}</span>
         <span class="tag">${item.subject}</span>
-        ${typeTag}
+        <span class="tag">Live now</span>
       </div>
-      <p>${item.notes || 'No notes added yet.'}</p>
-      <a href="${item.url}" target="_blank" rel="noopener">Open Resource →</a>
+      <p>${item.notes}</p>
+      <div class="item-actions">
+        <a class="btn-inline" href="${item.url}" target="_blank" rel="noopener">Open resource →</a>
+      </div>
+    </article>
+  `;
+}
+
+function packItemHtml(item){
+  return `
+    <article class="item">
+      <h3>${item.title}</h3>
+      <div class="meta">
+        <span class="tag">${item.year}</span>
+        <span class="tag">${item.subject}</span>
+        <span class="tag warn">${item.availability}</span>
+      </div>
+      <p>${item.notes}</p>
+      <div class="item-actions">
+        <a class="btn-inline" href="index.html#contact-sec">Book a free trial →</a>
+        <a class="btn-inline" href="tel:07909274901">Call now</a>
+      </div>
     </article>
   `;
 }
 
 function render(){
-  const webList = document.getElementById('web-list');
-  const dlList = document.getElementById('dl-list');
+  const liveList = document.getElementById('web-list');
+  const packList = document.getElementById('pack-list');
+  const filteredLive = liveResources.filter(matchFilters);
+  const filteredPacks = packResources.filter(matchFilters);
 
-  const filteredWeb = webResources.filter(matchFilters);
-  const filteredDl = dlResources.filter(matchFilters);
+  liveList.innerHTML = filteredLive.length
+    ? filteredLive.map(liveItemHtml).join('')
+    : '<p class="empty">No live revision links match these filters.</p>';
 
-  webList.innerHTML = filteredWeb.length
-    ? filteredWeb.map(r => itemHtml(r, false)).join('')
-    : '<p class="empty">No website links match these filters.</p>';
-
-  dlList.innerHTML = filteredDl.length
-    ? filteredDl.map(r => itemHtml(r, true)).join('')
-    : '<p class="empty">No downloadable sources match these filters.</p>';
+  packList.innerHTML = filteredPacks.length
+    ? filteredPacks.map(packItemHtml).join('')
+    : '<p class="empty">No private pack categories match these filters right now.</p>';
 }
 
-function bindFilters(){
-  [fYear, fSubj, fSearch].forEach(el => el.addEventListener('input', render));
-  document.getElementById('clear-filters').addEventListener('click', () => {
-    fYear.value = 'all';
-    fSubj.value = 'all';
-    fSearch.value = '';
-    render();
-  });
-}
+document.getElementById('clear-filters').addEventListener('click', () => {
+  fYear.value = 'all';
+  fSubj.value = 'all';
+  fSearch.value = '';
+  render();
+});
 
-loadData();
-bindFilters();
+[fYear, fSubj, fSearch].forEach((el) => el.addEventListener('input', render));
 render();
 </script>
 </body>
