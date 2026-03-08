@@ -5,10 +5,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { getTutorDataBundle, labelTutorStudent } from "@/lib/server/tutor-data";
 
 export default async function TutorAssignmentBuilderPage() {
-  const { assignments, reviews, parentLinks } = await getTutorDataBundle({
+  const { assignments, reviews, parentLinks, accessCodes } = await getTutorDataBundle({
     assignments: true,
     reviews: true,
-    parentLinks: true
+    parentLinks: true,
+    accessCodes: true
   });
 
   const studentMap = new Map<string, { id: string; label: string; yearGroup: string | null }>();
@@ -31,6 +32,13 @@ export default async function TutorAssignmentBuilderPage() {
       id: link.student_id,
       label: labelTutorStudent(link.student),
       yearGroup: link.student?.year_group || null
+    });
+  });
+  accessCodes.forEach((code) => {
+    studentMap.set(code.student_id, {
+      id: code.student_id,
+      label: labelTutorStudent(code.student),
+      yearGroup: code.student?.year_group || null
     });
   });
 

@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 
 import { getAuthenticatedSupabaseProfile } from "@/lib/server/account-session";
+import { getTutorManagedStudent } from "@/lib/server/tutor-managed-student";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getDefaultMarkingMode, MARKING_MODES, parseKeywordCsv, parseYearGroupInt } from "@/lib/tutor-helpers";
 
@@ -103,13 +104,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Student, subject, and title are required." }, { status: 400 });
     }
 
-    const { data: student, error: studentError } = await auth.supabase
-      .from("profiles")
-      .select("id,role,year_group")
-      .eq("id", studentId)
-      .maybeSingle();
-
-    if (studentError || !student || student.role !== "student") {
+    const student = await getTutorManagedStudent(auth.supabase, auth.profile.id, studentId);
+    if (!student) {
       return NextResponse.json({ error: "Student profile not found." }, { status: 404 });
     }
 

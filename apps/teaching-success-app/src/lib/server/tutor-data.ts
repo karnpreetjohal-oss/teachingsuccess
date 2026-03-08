@@ -127,6 +127,56 @@ export function getTutorSubmissionSummary(submission: TutorSubmission) {
   return "No feedback has been generated yet.";
 }
 
+function getTutorSubmissionAutoResult(submission: TutorSubmission) {
+  return submission.auto_result && typeof submission.auto_result === "object"
+    ? (submission.auto_result as Record<string, unknown>)
+    : {};
+}
+
+export function getTutorSubmissionDraftSource(submission: TutorSubmission) {
+  const autoResult = getTutorSubmissionAutoResult(submission);
+  const modeSpecific =
+    autoResult.mode_specific && typeof autoResult.mode_specific === "object"
+      ? (autoResult.mode_specific as Record<string, unknown>)
+      : {};
+  return typeof modeSpecific.draft_source === "string" ? modeSpecific.draft_source : "heuristic";
+}
+
+export function getTutorSubmissionInferenceMeta(submission: TutorSubmission) {
+  const autoResult = getTutorSubmissionAutoResult(submission);
+  const inferred =
+    autoResult.inferred_assignment && typeof autoResult.inferred_assignment === "object"
+      ? (autoResult.inferred_assignment as Record<string, unknown>)
+      : null;
+  if (!inferred) {
+    return null;
+  }
+
+  return {
+    subject: typeof inferred.subject === "string" ? inferred.subject : null,
+    title: typeof inferred.title === "string" ? inferred.title : null,
+    markingMode: typeof inferred.marking_mode === "string" ? inferred.marking_mode : null,
+    subjectInferred: Boolean(inferred.subject_inferred),
+    titleInferred: Boolean(inferred.title_inferred)
+  };
+}
+
+export function getTutorSubmissionReviewLabels(submission: TutorSubmission) {
+  const labels: string[] = [];
+  const draftSource = getTutorSubmissionDraftSource(submission);
+  labels.push(draftSource === "openai" ? "OpenAI OCR draft" : "Heuristic OCR draft");
+
+  const inference = getTutorSubmissionInferenceMeta(submission);
+  if (inference?.subjectInferred) {
+    labels.push("Subject inferred");
+  }
+  if (inference?.titleInferred) {
+    labels.push("Title inferred");
+  }
+
+  return labels;
+}
+
 export function normalizeTutorAssignment(assignment: TutorAssignment) {
   return {
     ...assignment,

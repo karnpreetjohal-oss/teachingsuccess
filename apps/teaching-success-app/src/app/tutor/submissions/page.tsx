@@ -3,6 +3,9 @@ import { TutorReviewCard } from "@/components/tutor-review-card";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   getTutorDataBundle,
+  getTutorSubmissionDraftSource,
+  getTutorSubmissionInferenceMeta,
+  getTutorSubmissionReviewLabels,
   getTutorSubmissionScore,
   getTutorSubmissionSummary,
   labelTutorStudent
@@ -19,6 +22,9 @@ export default async function TutorSubmissionReviewPage() {
       }
 
       const score = getTutorSubmissionScore(latestSubmission);
+      const inference = getTutorSubmissionInferenceMeta(latestSubmission);
+      const reviewLabels = getTutorSubmissionReviewLabels(latestSubmission);
+      const draftSource = getTutorSubmissionDraftSource(latestSubmission);
       const status = latestSubmission.ocr_processing
         ? "Pending OCR"
         : latestSubmission.mark !== null || latestSubmission.tutor_feedback
@@ -38,13 +44,28 @@ export default async function TutorSubmissionReviewPage() {
             ? `Submitted ${new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }).format(new Date(latestSubmission.submitted_at))}. OCR is still processing.`
             : status === "Published"
               ? `Final feedback published${score !== null ? ` at ${score}%` : ""}.`
-              : `${getTutorSubmissionSummary(latestSubmission)}${score !== null ? ` Draft mark ${score}%.` : ""}`,
+              : `${getTutorSubmissionSummary(latestSubmission)}${score !== null ? ` Draft mark ${score}%.` : ""}${
+                  inference?.subjectInferred || inference?.titleInferred
+                    ? ` ${[
+                        inference.subjectInferred ? "Subject inferred from OCR." : "",
+                        inference.titleInferred ? "Title inferred from OCR." : ""
+                      ]
+                        .filter(Boolean)
+                        .join(" ")}`
+                    : ""
+                }`,
         autoMark: latestSubmission.auto_mark === null || latestSubmission.auto_mark === undefined ? null : Number(latestSubmission.auto_mark),
         autoGrade: latestSubmission.auto_grade || null,
         autoFeedback: latestSubmission.auto_feedback || null,
         tutorMark: latestSubmission.mark === null || latestSubmission.mark === undefined ? null : Number(latestSubmission.mark),
         tutorGrade: latestSubmission.grade || null,
-        tutorFeedback: latestSubmission.tutor_feedback || null
+        tutorFeedback: latestSubmission.tutor_feedback || null,
+        draftSource,
+        reviewLabels,
+        autoConfidence:
+          latestSubmission.auto_confidence === null || latestSubmission.auto_confidence === undefined
+            ? null
+            : Number(latestSubmission.auto_confidence)
       };
     })
     .filter((item): item is NonNullable<typeof item> => Boolean(item))
@@ -78,6 +99,9 @@ export default async function TutorSubmissionReviewPage() {
               tutorMark={item.tutorMark}
               tutorGrade={item.tutorGrade}
               tutorFeedback={item.tutorFeedback}
+              draftSource={item.draftSource}
+              reviewLabels={item.reviewLabels}
+              autoConfidence={item.autoConfidence}
             />
           ))
         ) : (

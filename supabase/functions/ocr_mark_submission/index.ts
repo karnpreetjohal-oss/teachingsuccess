@@ -7,6 +7,8 @@ const OCR_API_KEY = Deno.env.get("OCR_API_KEY") || "";
 const GOOGLE_VISION_KEY = Deno.env.get("GOOGLE_VISION_KEY") || OCR_API_KEY;
 const AZURE_CV_ENDPOINT = Deno.env.get("AZURE_CV_ENDPOINT") || "";
 const AZURE_CV_KEY = Deno.env.get("AZURE_CV_KEY") || OCR_API_KEY;
+const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY") || "";
+const OPENAI_MODEL = Deno.env.get("OPENAI_MODEL") || "gpt-4o-mini";
 const SUBMISSION_BUCKET = "submission-files";
 
 const corsHeaders = {
@@ -165,6 +167,7 @@ function inferQuickUploadMetadata({
   yearGroup: string | number | null | undefined;
 }) {
   const normalizedExistingSubject = normalizeDetectedSubject(existingSubject);
+  const hasStudentSuppliedSubject = /student supplied subject:/i.test(String(existingDescription || ""));
   const hasStudentSuppliedTitle = /student supplied title:/i.test(String(existingDescription || ""));
   const subject = normalizedExistingSubject !== "general" && normalizedExistingSubject
     ? normalizedExistingSubject
@@ -188,6 +191,10 @@ function inferQuickUploadMetadata({
     markingMode,
     keywords,
     targetWords,
+    subjectInferred: !hasStudentSuppliedSubject && normalizeDetectedSubject(subject) !== "general",
+    titleInferred: !hasStudentSuppliedTitle,
+    hasStudentSuppliedSubject,
+    hasStudentSuppliedTitle,
   };
 }
 
@@ -247,6 +254,238 @@ function calculateDraftStructureScore(text: string, emphasis: "generic" | "scien
   };
 }
 
+function getObjectValue(source: unknown, key: string): unknown {
+  if (!source || typeof source !== "object") return undefined;
+  return (source as Record<string, unknown>)[key];
+}
+
+function extractOpenAiJson(responseJson: unknown): Record<string, unknown> | null {
+  const directText = getObjectValue(responseJson, "output_text");
+  if (typeof directText === "string" && directText.trim()) {
+    try {
+      return JSON.parse(directText);
+    } catch {
+      // fall through to nested extraction
+    }
+  }
+
+  const output = getObjectValue(responseJson, "output");
+  if (!Array.isArray(output)) {
+    return null;
+  }
+
+  for (const item of output) {
+    const content = getObjectValue(item, "content");
+    if (!Array.isArray(content)) continue;
+    for (const block of content) {
+      const textValue = getObjectValue(block, "text");
+      if (typeof textValue === "string" && textValue.trim()) {
+        try {
+          return JSON.parse(textValue);
+        } catch {
+          continue;
+        }
+      }
+      const jsonValue = getObjectValue(block, "json");
+      if (jsonValue && typeof jsonValue === "object") {
+        return jsonValue as Record<string, unknown>;
+      }
+    }
+  }
+
+  return null;
+}
+
+function parseStringArray(value: unknown, limit = 4): string[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .filter((item): item is string => typeof item === "string" && item.trim().length > 0)
+    .slice(0, limit)
+    .map((item) => item.trim());
+}
+
+function validateOpenAiDraft(payload: Record<string, unknown>): OpenAiDraft | null {
+  const inferredSubject = String(payload.inferred_subject || "").trim();
+  const inferredTitle = String(payload.inferred_title || "").trim();
+  const markingMode = String(payload.suggested_marking_mode || "").trim();
+  const summary = String(payload.summary || "").trim();
+  const confidenceRaw = Number(payload.confidence);
+
+  const validSubjects = new Set(["Maths", "English", "Science", "General"]);
+  const validModes = new Set([
+    "maths_question_marking",
+    "english_writing_feedback",
+    "gcse_english_ao",
+    "science_short_answer",
+    "generic_completion_review",
+  ]);
+
+  if (!validSubjects.has(inferredSubject) || !validModes.has(markingMode) || !summary) {
+    return null;
+  }
+
+  const scoreRaw = payload.draft_score;
+  const numericScore =
+    scoreRaw === null || scoreRaw === undefined || scoreRaw === ""
+      ? null
+      : Number(scoreRaw);
+  const draftScore =
+    numericScore === null || (Number.isFinite(numericScore) && numericScore >= 0 && numericScore <= 100)
+      ? numericScore
+      : null;
+
+  return {
+    inferred_subject: inferredSubject as OpenAiDraft["inferred_subject"],
+    inferred_title: inferredTitle || "Quick Upload: Student work",
+    suggested_marking_mode: markingMode as OpenAiDraft["suggested_marking_mode"],
+    draft_score: draftScore,
+    draft_grade: String(payload.draft_grade || "").trim() || null,
+    confidence: Number.isFinite(confidenceRaw) ? Math.max(0, Math.min(100, Math.round(confidenceRaw))) : 60,
+    summary,
+    strengths: parseStringArray(payload.strengths),
+    issues: parseStringArray(payload.issues),
+    next_steps: parseStringArray(payload.next_steps),
+  };
+}
+
+async function requestOpenAiDraftAssessment({
+  combinedText,
+  assignmentContext,
+  yearGroup,
+  subject,
+  markingMode,
+  heuristicSummary,
+}: {
+  combinedText: string;
+  assignmentContext: string;
+  yearGroup: string | number | null | undefined;
+  subject: string;
+  markingMode: string;
+  heuristicSummary: string;
+}): Promise<OpenAiDraft | null> {
+  if (!OPENAI_API_KEY || !combinedText.trim()) {
+    return null;
+  }
+
+  const response = await fetch("https://api.openai.com/v1/responses", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${OPENAI_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: OPENAI_MODEL,
+      input: [
+        {
+          role: "system",
+          content: [
+            {
+              type: "input_text",
+              text:
+                "You are marking OCR-extracted tutoring work. Infer subject/title conservatively, do not overclaim, and give a draft mark only from visible evidence in the OCR text.",
+            },
+          ],
+        },
+        {
+          role: "user",
+          content: [
+            {
+              type: "input_text",
+              text: [
+                `Student year group: ${yearGroup || "unknown"}`,
+                `Current subject: ${subject || "General"}`,
+                `Current marking mode: ${markingMode || "generic_completion_review"}`,
+                `Assignment context: ${assignmentContext || "None provided"}`,
+                `Heuristic draft summary: ${heuristicSummary || "None"}`,
+                "OCR text:",
+                combinedText,
+              ].join("\n\n"),
+            },
+          ],
+        },
+      ],
+      text: {
+        format: {
+          type: "json_schema",
+          name: "ocr_draft_assessment",
+          strict: true,
+          schema: {
+            type: "object",
+            additionalProperties: false,
+            properties: {
+              inferred_subject: {
+                type: "string",
+                enum: ["Maths", "English", "Science", "General"],
+              },
+              inferred_title: { type: "string" },
+              suggested_marking_mode: {
+                type: "string",
+                enum: [
+                  "maths_question_marking",
+                  "english_writing_feedback",
+                  "gcse_english_ao",
+                  "science_short_answer",
+                  "generic_completion_review",
+                ],
+              },
+              draft_score: {
+                anyOf: [{ type: "number", minimum: 0, maximum: 100 }, { type: "null" }],
+              },
+              draft_grade: {
+                anyOf: [{ type: "string" }, { type: "null" }],
+              },
+              confidence: { type: "number", minimum: 0, maximum: 100 },
+              summary: { type: "string" },
+              strengths: {
+                type: "array",
+                items: { type: "string" },
+                maxItems: 4,
+              },
+              issues: {
+                type: "array",
+                items: { type: "string" },
+                maxItems: 4,
+              },
+              next_steps: {
+                type: "array",
+                items: { type: "string" },
+                maxItems: 4,
+              },
+            },
+            required: [
+              "inferred_subject",
+              "inferred_title",
+              "suggested_marking_mode",
+              "draft_score",
+              "draft_grade",
+              "confidence",
+              "summary",
+              "strengths",
+              "issues",
+              "next_steps",
+            ],
+          },
+        },
+      },
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`OpenAI draft request failed with ${response.status}`);
+  }
+
+  const responseJson = await response.json();
+  const parsed = extractOpenAiJson(responseJson);
+  if (!parsed) {
+    return null;
+  }
+
+  return validateOpenAiDraft(parsed);
+}
+
 type AutoAssessment = {
   mode: string;
   confidence: number;
@@ -262,6 +501,24 @@ type AutoAssessment = {
     help?: string;
   }>;
   mode_specific?: Record<string, unknown>;
+};
+
+type OpenAiDraft = {
+  inferred_subject: "Maths" | "English" | "Science" | "General";
+  inferred_title: string;
+  suggested_marking_mode:
+    | "maths_question_marking"
+    | "english_writing_feedback"
+    | "gcse_english_ao"
+    | "science_short_answer"
+    | "generic_completion_review";
+  draft_score: number | null;
+  draft_grade: string | null;
+  confidence: number;
+  summary: string;
+  strengths: string[];
+  issues: string[];
+  next_steps: string[];
 };
 
 function normalizeAnswer(value: string): string {
@@ -741,7 +998,7 @@ Deno.serve(async (req) => {
     let autoConfidence: number | null = null;
 
     if (workingAssignment.automark_enabled) {
-      const result = buildAutoAssessment(
+      const heuristicResult = buildAutoAssessment(
         workingAssignment.marking_mode || "generic_completion_review",
         combined,
         workingAssignment.automark_keywords || [],
@@ -749,10 +1006,120 @@ Deno.serve(async (req) => {
         (files || []).length,
         [workingAssignment.title || "", workingAssignment.description || ""].filter(Boolean).join("\n"),
       );
+      const heuristicModeSpecific =
+        heuristicResult.mode_specific && typeof heuristicResult.mode_specific === "object"
+          ? heuristicResult.mode_specific
+          : {};
+      const heuristicMarkingBasis = typeof heuristicModeSpecific.marking_basis === "string"
+        ? heuristicModeSpecific.marking_basis
+        : null;
+
+      let openAiDraft: OpenAiDraft | null = null;
+      if (OPENAI_API_KEY && combined.trim() && heuristicMarkingBasis !== "answer_key_match") {
+        try {
+          openAiDraft = await requestOpenAiDraftAssessment({
+            combinedText: combined,
+            assignmentContext: [
+              workingAssignment.subject || "",
+              workingAssignment.title || "",
+              workingAssignment.description || "",
+            ]
+              .filter(Boolean)
+              .join("\n"),
+            yearGroup: studentProfile?.year_group ?? null,
+            subject: workingAssignment.subject || "General",
+            markingMode: workingAssignment.marking_mode || "generic_completion_review",
+            heuristicSummary: heuristicResult.feedback,
+          });
+        } catch (openAiError) {
+          fileErrors.push(
+            `[openai] ${openAiError instanceof Error ? openAiError.message : "Draft enhancement failed"}`
+          );
+        }
+      }
+
+      if (openAiDraft && isQuickUpload) {
+        const openAiAssignmentUpdates: Record<string, unknown> = {};
+        if (
+          !inferredMeta.hasStudentSuppliedSubject &&
+          openAiDraft.inferred_subject &&
+          openAiDraft.inferred_subject !== workingAssignment.subject &&
+          openAiDraft.inferred_subject !== "General"
+        ) {
+          openAiAssignmentUpdates.subject = openAiDraft.inferred_subject;
+        }
+        if (
+          !inferredMeta.hasStudentSuppliedTitle &&
+          openAiDraft.inferred_title &&
+          openAiDraft.inferred_title !== workingAssignment.title
+        ) {
+          openAiAssignmentUpdates.title = openAiDraft.inferred_title;
+        }
+        if (
+          openAiDraft.suggested_marking_mode &&
+          openAiDraft.suggested_marking_mode !== workingAssignment.marking_mode
+        ) {
+          openAiAssignmentUpdates.marking_mode = openAiDraft.suggested_marking_mode;
+        }
+
+        if (Object.keys(openAiAssignmentUpdates).length) {
+          const { data: updatedAssignment, error: openAiAssignmentErr } = await supabase
+            .from("assignments")
+            .update(openAiAssignmentUpdates)
+            .eq("id", assignment.id)
+            .select("id,subject,title,description,automark_enabled,automark_keywords,automark_target_words,marking_mode")
+            .single();
+
+          if (openAiAssignmentErr) {
+            fileErrors.push(`[assignment-update] ${openAiAssignmentErr.message}`);
+          } else if (updatedAssignment) {
+            workingAssignment = updatedAssignment;
+          }
+        }
+      }
+
+      const result = openAiDraft
+        ? {
+            mode: workingAssignment.marking_mode || openAiDraft.suggested_marking_mode,
+            confidence: openAiDraft.confidence,
+            score: openAiDraft.draft_score,
+            grade:
+              openAiDraft.draft_grade ||
+              (openAiDraft.draft_score === null ? null : gradeFromPercent(openAiDraft.draft_score)),
+            feedback: openAiDraft.summary,
+            details: [
+              ...openAiDraft.strengths.map((item) => `Strength: ${item}`),
+              ...openAiDraft.issues.map((item) => `Watch: ${item}`),
+              ...openAiDraft.next_steps.map((item) => `Next: ${item}`),
+            ].slice(0, 8),
+            mode_specific: {
+              ...(heuristicModeSpecific && typeof heuristicModeSpecific === "object" ? heuristicModeSpecific : {}),
+              draft_source: "openai",
+              model: OPENAI_MODEL,
+              strengths: openAiDraft.strengths,
+              issues: openAiDraft.issues,
+              next_steps: openAiDraft.next_steps,
+              heuristic_summary: heuristicResult.feedback,
+            },
+          }
+        : {
+            ...heuristicResult,
+            mode_specific: {
+              ...(heuristicModeSpecific && typeof heuristicModeSpecific === "object" ? heuristicModeSpecific : {}),
+              draft_source: "heuristic",
+            },
+          };
+
       autoMark = result.score;
       autoGrade = result.grade;
       autoFeedback = result.feedback;
       autoConfidence = result.confidence;
+      const finalSubjectInferred =
+        inferredMeta.subjectInferred ||
+        (!inferredMeta.hasStudentSuppliedSubject && workingAssignment.subject !== assignment.subject);
+      const finalTitleInferred =
+        inferredMeta.titleInferred ||
+        (!inferredMeta.hasStudentSuppliedTitle && workingAssignment.title !== assignment.title);
       autoResult = {
         mode: result.mode,
         confidence: result.confidence,
@@ -765,6 +1132,8 @@ Deno.serve(async (req) => {
               subject: workingAssignment.subject,
               title: workingAssignment.title,
               marking_mode: workingAssignment.marking_mode,
+              subject_inferred: finalSubjectInferred,
+              title_inferred: finalTitleInferred,
             }
           : null,
       };

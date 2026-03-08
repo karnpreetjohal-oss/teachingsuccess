@@ -17,9 +17,12 @@ type TutorReviewCardProps = {
   autoMark: number | null;
   autoGrade: string | null;
   autoFeedback: string | null;
+  autoConfidence: number | null;
   tutorMark: number | null;
   tutorGrade: string | null;
   tutorFeedback: string | null;
+  draftSource: string;
+  reviewLabels: string[];
 };
 
 function statusVariant(status: string) {
@@ -38,9 +41,12 @@ export function TutorReviewCard({
   autoMark,
   autoGrade,
   autoFeedback,
+  autoConfidence,
   tutorMark,
   tutorGrade,
-  tutorFeedback
+  tutorFeedback,
+  draftSource,
+  reviewLabels
 }: TutorReviewCardProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -99,6 +105,7 @@ export function TutorReviewCard({
         <div className="flex flex-wrap gap-2">
           <Badge variant={statusVariant(status) as "blue" | "green" | "amber"}>{status}</Badge>
           {autoMark !== null ? <Badge variant="gold">{autoMark}%{autoGrade ? ` • ${autoGrade}` : ""}</Badge> : null}
+          {autoConfidence !== null ? <Badge variant="neutral">{autoConfidence}% confidence</Badge> : null}
         </div>
       </CardHeader>
       <CardContent className="grid gap-4">
@@ -106,7 +113,19 @@ export function TutorReviewCard({
 
         <div className="grid gap-4 lg:grid-cols-2">
           <div className="rounded-2xl border border-brand-line bg-brand-surface px-4 py-4 text-sm leading-7 text-brand-ink">
-            <p className="font-semibold">Auto draft</p>
+            <div className="flex flex-wrap gap-2">
+              <Badge variant={draftSource === "openai" ? "blue" : "amber"}>
+                {draftSource === "openai" ? "OpenAI OCR draft" : "Heuristic OCR draft"}
+              </Badge>
+              {reviewLabels
+                .filter((label) => label !== "OpenAI OCR draft" && label !== "Heuristic OCR draft")
+                .map((label) => (
+                  <Badge key={label} variant="neutral">
+                    {label}
+                  </Badge>
+                ))}
+            </div>
+            <p className="mt-3 font-semibold">Auto draft</p>
             <p className="mt-2">{autoFeedback || "No AI draft feedback yet."}</p>
           </div>
 
