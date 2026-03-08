@@ -109,6 +109,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Student profile not found." }, { status: 404 });
     }
 
+    const admin = createSupabaseAdminClient();
+
     const automarkTargetWords =
       automarkTargetWordsRaw === "" ? null : Number(automarkTargetWordsRaw);
 
@@ -143,7 +145,7 @@ export async function POST(request: Request) {
       automark_target_words: automarkTargetWords
     };
 
-    const { data: created, error } = await auth.supabase
+    const { data: created, error } = await admin
       .from("assignments")
       .insert(payload)
       .select("id,title")
@@ -157,7 +159,6 @@ export async function POST(request: Request) {
 
     if (attachment) {
       try {
-        const admin = createSupabaseAdminClient();
         const { baseName, extension } = getSafeFileParts(attachment.name);
         const path = `${studentId}/${created.id}/${randomUUID()}_${baseName}.${extension}`;
         const bytes = new Uint8Array(await attachment.arrayBuffer());
@@ -173,7 +174,7 @@ export async function POST(request: Request) {
         if (upload.error) {
           warning = `Assignment created, but attachment upload failed: ${upload.error.message}`;
         } else {
-          const { error: updateError } = await auth.supabase
+          const { error: updateError } = await admin
             .from("assignments")
             .update({
               file_path: path,
