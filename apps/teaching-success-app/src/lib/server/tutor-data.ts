@@ -73,6 +73,8 @@ type TutorAccessCode = {
   expires_at: string | null;
   last_used_at: string | null;
   created_at: string;
+  created_by: string | null;
+  student: TutorStudent | TutorStudent[] | null;
 };
 
 function one<T>(value: T | T[] | null | undefined): T | null {
@@ -143,6 +145,13 @@ export function normalizeTutorParentLink(link: TutorParentLink) {
     ...link,
     student: one(link.student),
     parent: one(link.parent)
+  };
+}
+
+export function normalizeTutorAccessCode(accessCode: TutorAccessCode) {
+  return {
+    ...accessCode,
+    student: one(accessCode.student)
   };
 }
 
@@ -265,23 +274,62 @@ export async function getTutorDataBundle(options: TutorDataOptions = {}) {
     throw new Error(parentLinksRes.error.message);
   }
 
-  const accessCodesRes = options.accessCodes && studentIds.length
+  const accessCodeSelect = `
+    id,
+    student_id,
+    access_code,
+    is_active,
+    expires_at,
+    last_used_at,
+    created_at,
+    created_by,
+    student:profiles!student_access_codes_student_id_fkey (
+      id,
+      full_name,
+      email,
+      year_group
+    )
+  `;
+
+  const accessCodesByLinkedRes = options.accessCodes && studentIds.length
     ? await supabase
         .from("student_access_codes")
-        .select("id,student_id,access_code,is_active,expires_at,last_used_at,created_at")
+        .select(accessCodeSelect)
         .in("student_id", studentIds)
         .order("created_at", { ascending: false })
     : { data: [], error: null };
 
-  if (accessCodesRes.error) {
-    throw new Error(accessCodesRes.error.message);
+  const accessCodesByCreatorRes = options.accessCodes
+    ? await supabase
+        .from("student_access_codes")
+        .select(accessCodeSelect)
+        .eq("created_by", profile.id)
+        .order("created_at", { ascending: false })
+    : { data: [], error: null };
+
+  if (accessCodesByLinkedRes.error) {
+    throw new Error(accessCodesByLinkedRes.error.message);
   }
+  if (accessCodesByCreatorRes.error) {
+    throw new Error(accessCodesByCreatorRes.error.message);
+  }
+
+  const accessCodes = [
+    ...((accessCodesByLinkedRes.data ?? []) as TutorAccessCode[]),
+    ...((accessCodesByCreatorRes.data ?? []) as TutorAccessCode[])
+  ].reduce<TutorAccessCode[]>((all, current) => {
+    if (all.some((item) => item.id === current.id)) {
+      return all;
+    }
+    all.push(current);
+    return all;
+  }, []);
 
   return {
     profile,
     assignments,
     reviews,
     parentLinks: (parentLinksRes.data ?? []).map((link) => normalizeTutorParentLink(link as TutorParentLink)),
-    accessCodes: (accessCodesRes.data ?? []) as TutorAccessCode[]
+    accessCodes: accessCodes.map((code) => normalizeTutorAccessCode(code))
   };
 }

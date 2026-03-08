@@ -1,3 +1,4 @@
+import { CreateStudentForm } from "@/components/create-student-form";
 import { PageIntro } from "@/components/page-intro";
 import { StudentAccessCodeManager } from "@/components/student-access-code-manager";
 import { getTutorDataBundle, labelTutorParent, labelTutorStudent } from "@/lib/server/tutor-data";
@@ -70,8 +71,8 @@ export default async function TutorStudentsPage() {
   accessCodes.forEach((code) => {
     const existing = studentMap.get(code.student_id) || {
       id: code.student_id,
-      label: "Student",
-      yearGroup: null,
+      label: labelTutorStudent(code.student),
+      yearGroup: code.student?.year_group || null,
       subjects: new Set<string>(),
       parentLabels: new Set<string>(),
       reviewCount: 0,
@@ -95,6 +96,8 @@ export default async function TutorStudentsPage() {
       />
 
       <section className="grid gap-4 lg:grid-cols-[.95fr_1.05fr]">
+        <CreateStudentForm />
+
         <Card>
           <CardHeader>
             <CardTitle>Access overview</CardTitle>
@@ -112,7 +115,9 @@ export default async function TutorStudentsPage() {
             </div>
           </CardContent>
         </Card>
+      </section>
 
+      <section>
         <Card>
           <CardHeader>
             <CardTitle>Current students</CardTitle>
