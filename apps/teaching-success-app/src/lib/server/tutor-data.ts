@@ -60,7 +60,9 @@ type TutorReview = {
 };
 
 type TutorParentLink = {
+  id: string;
   student_id: string;
+  created_at: string;
   student: TutorStudent | TutorStudent[] | null;
   parent: TutorParent | TutorParent[] | null;
 };
@@ -251,10 +253,12 @@ export async function getTutorDataBundle(options: TutorDataOptions = {}) {
   ])];
 
   const parentLinksRes = options.parentLinks && studentIds.length
-    ? await supabase
+      ? await supabase
         .from("parent_student_links")
         .select(`
+          id,
           student_id,
+          created_at,
           student:profiles!parent_student_links_student_id_fkey (
             id,
             full_name,

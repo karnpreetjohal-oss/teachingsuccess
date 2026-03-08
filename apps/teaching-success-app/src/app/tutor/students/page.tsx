@@ -1,4 +1,5 @@
 import { CreateStudentForm } from "@/components/create-student-form";
+import { ParentLinkManager } from "@/components/parent-link-manager";
 import { PageIntro } from "@/components/page-intro";
 import { StudentAccessCodeManager } from "@/components/student-access-code-manager";
 import { getTutorDataBundle, labelTutorParent, labelTutorStudent } from "@/lib/server/tutor-data";
@@ -20,7 +21,7 @@ export default async function TutorStudentsPage() {
       label: string;
       yearGroup: string | null;
       subjects: Set<string>;
-      parentLabels: Set<string>;
+      parentLinks: Array<(typeof parentLinks)[number]>;
       reviewCount: number;
       accessCodes: typeof accessCodes;
     }
@@ -32,7 +33,7 @@ export default async function TutorStudentsPage() {
       label: labelTutorStudent(assignment.student),
       yearGroup: assignment.student?.year_group || null,
       subjects: new Set<string>(),
-      parentLabels: new Set<string>(),
+      parentLinks: [],
       reviewCount: 0,
       accessCodes: []
     };
@@ -46,7 +47,7 @@ export default async function TutorStudentsPage() {
       label: labelTutorStudent(review.student),
       yearGroup: review.student?.year_group || null,
       subjects: new Set<string>(),
-      parentLabels: new Set<string>(),
+      parentLinks: [],
       reviewCount: 0,
       accessCodes: []
     };
@@ -60,11 +61,11 @@ export default async function TutorStudentsPage() {
       label: labelTutorStudent(link.student),
       yearGroup: link.student?.year_group || null,
       subjects: new Set<string>(),
-      parentLabels: new Set<string>(),
+      parentLinks: [],
       reviewCount: 0,
       accessCodes: []
     };
-    existing.parentLabels.add(labelTutorParent(link.parent));
+    existing.parentLinks = [...existing.parentLinks, link];
     studentMap.set(link.student_id, existing);
   });
 
@@ -74,7 +75,7 @@ export default async function TutorStudentsPage() {
       label: labelTutorStudent(code.student),
       yearGroup: code.student?.year_group || null,
       subjects: new Set<string>(),
-      parentLabels: new Set<string>(),
+      parentLinks: [],
       reviewCount: 0,
       accessCodes: []
     };
@@ -92,7 +93,7 @@ export default async function TutorStudentsPage() {
       <PageIntro
         eyebrow="Student manager"
         title="Student records and PIN access."
-        description="Manage the live student list, check linked parents, and issue or rotate PIN codes for app access."
+        description="Manage the live student list, create parent access, and issue or rotate PIN codes for app access."
       />
 
       <section className="grid gap-4 lg:grid-cols-[.95fr_1.05fr]">
@@ -135,12 +136,17 @@ export default async function TutorStudentsPage() {
                     {student.subjects.size ? [...student.subjects].sort().join(", ") : "No subjects recorded yet"}
                   </p>
                   <p className="mt-1 text-sm text-brand-muted">
-                    Parent: {student.parentLabels.size ? [...student.parentLabels].join(", ") : "No linked parent"}
+                    Parent: {student.parentLinks.length ? student.parentLinks.map((link) => labelTutorParent(link.parent)).join(", ") : "No linked parent"}
                   </p>
                   <p className="mt-1 text-sm text-brand-muted">
                     Reviews published: {student.reviewCount}
                   </p>
-                  <div className="mt-4">
+                  <div className="mt-4 grid gap-4 xl:grid-cols-2">
+                    <ParentLinkManager
+                      studentId={student.id}
+                      studentLabel={student.label}
+                      parentLinks={student.parentLinks}
+                    />
                     <StudentAccessCodeManager
                       studentId={student.id}
                       studentLabel={student.label}

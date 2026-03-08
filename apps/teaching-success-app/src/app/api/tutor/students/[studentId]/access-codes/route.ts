@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { hashStudentPin, normalizeAccessCode } from "@/lib/auth/student-access";
 import { getAuthenticatedSupabaseProfile } from "@/lib/server/account-session";
+import { getTutorManagedStudent } from "@/lib/server/tutor-managed-student";
 
 export async function POST(
   request: NextRequest,
@@ -24,13 +25,8 @@ export async function POST(
       return NextResponse.json({ error: "Access code and PIN are required." }, { status: 400 });
     }
 
-    const { data: student, error: studentError } = await auth.supabase
-      .from("profiles")
-      .select("id,role")
-      .eq("id", studentId)
-      .maybeSingle();
-
-    if (studentError || !student || student.role !== "student") {
+    const student = await getTutorManagedStudent(auth.supabase, auth.profile.id, studentId);
+    if (!student) {
       return NextResponse.json({ error: "Student not found." }, { status: 404 });
     }
 

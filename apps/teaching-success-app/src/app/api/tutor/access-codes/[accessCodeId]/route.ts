@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { getAuthenticatedSupabaseProfile } from "@/lib/server/account-session";
+import { getTutorManagedStudent } from "@/lib/server/tutor-managed-student";
 
 export async function PATCH(
   request: NextRequest,
@@ -25,6 +26,21 @@ export async function PATCH(
 
     if (!Object.keys(updates).length) {
       return NextResponse.json({ error: "No changes were supplied." }, { status: 400 });
+    }
+
+    const { data: accessCode, error: accessCodeError } = await auth.supabase
+      .from("student_access_codes")
+      .select("id,student_id")
+      .eq("id", accessCodeId)
+      .maybeSingle();
+
+    if (accessCodeError || !accessCode) {
+      return NextResponse.json({ error: "Access code not found." }, { status: 404 });
+    }
+
+    const student = await getTutorManagedStudent(auth.supabase, auth.profile.id, accessCode.student_id);
+    if (!student) {
+      return NextResponse.json({ error: "You do not have access to this student." }, { status: 403 });
     }
 
     const { error } = await auth.supabase
