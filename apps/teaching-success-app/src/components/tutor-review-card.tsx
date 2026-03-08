@@ -56,7 +56,7 @@ export function TutorReviewCard({
 
     startTransition(async () => {
       try {
-        const response = await fetch(`/app/api/tutor/submissions/${submissionId}/publish`, {
+        const response = await fetch(`/api/tutor/submissions/${submissionId}/publish`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json"

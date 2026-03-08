@@ -88,7 +88,7 @@ export function TutorAssignmentBuilderForm({ students }: TutorAssignmentBuilderF
           params.set("examBoard", examBoard.trim());
         }
 
-        const response = await fetch(`/app/api/tutor/curriculum?${params.toString()}`);
+        const response = await fetch(`/api/tutor/curriculum?${params.toString()}`);
         const payload = (await response.json()) as {
           error?: string;
           units?: CurriculumUnit[];
@@ -151,7 +151,7 @@ export function TutorAssignmentBuilderForm({ students }: TutorAssignmentBuilderF
           formData.set("attachment", attachmentFile);
         }
 
-        const response = await fetch("/app/api/tutor/assignments", {
+        const response = await fetch("/api/tutor/assignments", {
           method: "POST",
           body: formData
         });

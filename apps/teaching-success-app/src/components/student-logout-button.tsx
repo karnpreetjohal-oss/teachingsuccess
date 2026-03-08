@@ -15,7 +15,7 @@ export function StudentLogoutButton() {
       disabled={isPending}
       onClick={() => {
         startTransition(async () => {
-          await fetch("/app/api/student/logout", { method: "POST" });
+          await fetch("/api/student/logout", { method: "POST" });
           router.push("/login");
           router.refresh();
         });

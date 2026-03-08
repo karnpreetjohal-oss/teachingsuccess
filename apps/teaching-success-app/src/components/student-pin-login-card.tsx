@@ -39,7 +39,7 @@ export function StudentPinLoginCard() {
 
     startTransition(async () => {
       try {
-        const response = await fetch("/app/api/student/pin-login", {
+        const response = await fetch("/api/student/pin-login", {
           method: "POST",
           headers: {
             "Content-Type": "application/json"

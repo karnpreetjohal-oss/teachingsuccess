@@ -38,7 +38,7 @@ npm run dev
 
 With the configured `basePath`, the app will live under:
 
-- `http://localhost:3000/app`
+- `http://localhost:3000`
 
 ## Notes
 

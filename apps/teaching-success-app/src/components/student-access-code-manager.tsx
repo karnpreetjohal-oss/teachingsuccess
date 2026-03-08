@@ -68,7 +68,7 @@ export function StudentAccessCodeManager({
 
     startTransition(async () => {
       try {
-        const response = await fetch(`/app/api/tutor/students/${studentId}/access-codes`, {
+        const response = await fetch(`/api/tutor/students/${studentId}/access-codes`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json"
@@ -103,7 +103,7 @@ export function StudentAccessCodeManager({
 
     startTransition(async () => {
       try {
-        const response = await fetch(`/app/api/tutor/access-codes/${id}`, {
+        const response = await fetch(`/api/tutor/access-codes/${id}`, {
           method: "PATCH",
           headers: {
             "Content-Type": "application/json"

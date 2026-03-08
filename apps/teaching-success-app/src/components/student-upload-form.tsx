@@ -91,7 +91,7 @@ export function StudentUploadForm({ assignments, initialAssignmentId }: StudentU
         files.forEach((file) => formData.append("photos", file));
 
         setStatus("Uploading work...");
-        const response = await fetch("/app/api/student/submissions", {
+        const response = await fetch("/api/student/submissions", {
           method: "POST",
           body: formData
         });
