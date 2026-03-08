@@ -1,7 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { Copy, Mail, ShieldCheck } from "lucide-react";
+import { useMemo, useState, useTransition } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
@@ -33,6 +34,28 @@ type ParentLinkResult = {
   issuedPassword: string | null;
 };
 
+function buildInviteText({
+  studentLabel,
+  parentEmail,
+  password,
+  loginUrl
+}: {
+  studentLabel: string;
+  parentEmail: string;
+  password: string | null;
+  loginUrl: string;
+}) {
+  return [
+    `Teaching Success parent login for ${studentLabel}`,
+    `Login URL: ${loginUrl}`,
+    `Email: ${parentEmail}`,
+    password ? `Temporary password: ${password}` : null,
+    password ? "Please sign in and change the password after first login." : null
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
 function labelParent(parent: ParentLinkRow["parent"]) {
   if (!parent) {
     return "Linked parent";
@@ -53,11 +76,33 @@ export function ParentLinkManager({
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ParentLinkResult | null>(null);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
+
+  const loginUrl = useMemo(() => {
+    if (!process.env.NEXT_PUBLIC_SITE_URL) {
+      return "/login";
+    }
+
+    return `${process.env.NEXT_PUBLIC_SITE_URL.replace(/\/$/, "")}/login`;
+  }, []);
+
+  const copyText = async (label: string, value: string) => {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopiedField(label);
+      window.setTimeout(() => {
+        setCopiedField((current) => (current === label ? null : current));
+      }, 1600);
+    } catch {
+      setError("Could not copy to clipboard on this device.");
+    }
+  };
 
   const linkParent = () => {
     setStatus(null);
     setError(null);
     setResult(null);
+    setCopiedField(null);
 
     startTransition(async () => {
       try {
@@ -113,6 +158,7 @@ export function ParentLinkManager({
     setStatus(null);
     setError(null);
     setResult(null);
+    setCopiedField(null);
 
     if (!window.confirm(`Remove ${parentLabel} from ${studentLabel}?`)) {
       return;
@@ -243,14 +289,109 @@ export function ParentLinkManager({
         </div>
       ) : null}
       {result ? (
-        <div className="grid gap-2 rounded-[24px] border border-brand-line bg-brand-surface px-4 py-4 text-sm leading-7 text-brand-ink">
-          <p className="font-semibold">{result.parent.fullName || result.parent.email || "Parent account"}</p>
-          <p>Email: {result.parent.email || "No email recorded"}</p>
-          {result.issuedPassword ? (
-            <p>
-              Temporary password: <span className="font-semibold">{result.issuedPassword}</span>
-            </p>
-          ) : null}
+        <div className="grid gap-4 rounded-[26px] border border-brand-line bg-brand-surface px-4 py-4">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <div className="flex flex-wrap gap-2">
+                <Badge variant={result.action === "created" ? "green" : "blue"}>
+                  {result.action === "created" ? "Invite ready" : "Login ready"}
+                </Badge>
+                <Badge variant="gold">Share with parent</Badge>
+              </div>
+              <p className="mt-2 font-semibold text-brand-ink">
+                {result.parent.fullName || result.parent.email || "Parent account"}
+              </p>
+              <p className="mt-1 text-sm leading-7 text-brand-muted">
+                {result.action === "created"
+                  ? "A parent account has been created. Share the details below so they can open the dashboard."
+                  : "This parent already has an account. Send them the login link below."}
+              </p>
+            </div>
+            <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-blue/12 text-brand-blue">
+              {result.action === "created" ? <ShieldCheck className="h-6 w-6" /> : <Mail className="h-6 w-6" />}
+            </div>
+          </div>
+
+          <div className="grid gap-3">
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-brand-line bg-white px-4 py-3">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.08em] text-brand-muted">Email</p>
+                <p className="mt-1 text-sm font-semibold text-brand-ink">{result.parent.email || "No email recorded"}</p>
+              </div>
+              {result.parent.email ? (
+                <button
+                  type="button"
+                  onClick={() => copyText("email", result.parent.email || "")}
+                  className={buttonVariants({ variant: "outline", size: "sm" })}
+                >
+                  <Copy className="mr-2 h-4 w-4" />
+                  {copiedField === "email" ? "Copied" : "Copy"}
+                </button>
+              ) : null}
+            </div>
+
+            {result.issuedPassword ? (
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-brand-line bg-white px-4 py-3">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.08em] text-brand-muted">Temporary password</p>
+                  <p className="mt-1 text-sm font-semibold text-brand-ink">{result.issuedPassword}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => copyText("password", result.issuedPassword || "")}
+                  className={buttonVariants({ variant: "outline", size: "sm" })}
+                >
+                  <Copy className="mr-2 h-4 w-4" />
+                  {copiedField === "password" ? "Copied" : "Copy"}
+                </button>
+              </div>
+            ) : null}
+
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-brand-line bg-white px-4 py-3">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.08em] text-brand-muted">Login URL</p>
+                <p className="mt-1 text-sm font-semibold text-brand-ink">{loginUrl}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => copyText("login-url", loginUrl)}
+                className={buttonVariants({ variant: "outline", size: "sm" })}
+              >
+                <Copy className="mr-2 h-4 w-4" />
+                {copiedField === "login-url" ? "Copied" : "Copy"}
+              </button>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={() =>
+                copyText(
+                  "invite",
+                  buildInviteText({
+                    studentLabel,
+                    parentEmail: result.parent.email || "",
+                    password: result.issuedPassword,
+                    loginUrl
+                  })
+                )
+              }
+              className={buttonVariants({ size: "sm" })}
+            >
+              <Copy className="mr-2 h-4 w-4" />
+              {copiedField === "invite" ? "Invite copied" : "Copy invite text"}
+            </button>
+            {result.issuedPassword ? (
+              <p className="self-center text-sm text-brand-muted">
+                Ask the parent to change this password after first sign-in.
+              </p>
+            ) : (
+              <p className="self-center text-sm text-brand-muted">
+                This parent already has an account, so only the login link needs sharing.
+              </p>
+            )}
+          </div>
         </div>
       ) : null}
 
@@ -273,6 +414,7 @@ export function ParentLinkManager({
             setStatus(null);
             setError(null);
             setResult(null);
+            setCopiedField(null);
           }}
           className={cn(buttonVariants({ variant: "outline" }))}
         >

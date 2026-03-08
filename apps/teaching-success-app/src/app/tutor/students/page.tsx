@@ -1,9 +1,7 @@
 import { CreateStudentForm } from "@/components/create-student-form";
-import { ParentLinkManager } from "@/components/parent-link-manager";
 import { PageIntro } from "@/components/page-intro";
-import { StudentAccessCodeManager } from "@/components/student-access-code-manager";
-import { getTutorDataBundle, labelTutorParent, labelTutorStudent } from "@/lib/server/tutor-data";
-import { Badge } from "@/components/ui/badge";
+import { TutorStudentDetailDrawer } from "@/components/tutor-student-detail-drawer";
+import { getTutorDataBundle, labelTutorStudent } from "@/lib/server/tutor-data";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default async function TutorStudentsPage() {
@@ -24,6 +22,15 @@ export default async function TutorStudentsPage() {
       parentLinks: Array<(typeof parentLinks)[number]>;
       reviewCount: number;
       accessCodes: typeof accessCodes;
+      assignments: Array<{
+        id: string;
+        title: string;
+        subject: string;
+        dueDate: string | null;
+        status: string;
+        latestSubmissionAt: string | null;
+        createdAt: string;
+      }>;
     }
   >();
 
@@ -35,9 +42,24 @@ export default async function TutorStudentsPage() {
       subjects: new Set<string>(),
       parentLinks: [],
       reviewCount: 0,
-      accessCodes: []
+      accessCodes: [],
+      assignments: []
     };
     existing.subjects.add(assignment.subject);
+    const latestSubmissionAt = [...assignment.submissions]
+      .sort((a, b) => new Date(b.submitted_at).getTime() - new Date(a.submitted_at).getTime())[0]?.submitted_at || null;
+    existing.assignments = [
+      ...existing.assignments,
+      {
+        id: assignment.id,
+        title: assignment.title,
+        subject: assignment.subject,
+        dueDate: assignment.due_date,
+        status: assignment.status,
+        latestSubmissionAt,
+        createdAt: assignment.created_at
+      }
+    ];
     studentMap.set(assignment.student_id, existing);
   });
 
@@ -49,7 +71,8 @@ export default async function TutorStudentsPage() {
       subjects: new Set<string>(),
       parentLinks: [],
       reviewCount: 0,
-      accessCodes: []
+      accessCodes: [],
+      assignments: []
     };
     existing.reviewCount += 1;
     studentMap.set(review.student_id, existing);
@@ -63,7 +86,8 @@ export default async function TutorStudentsPage() {
       subjects: new Set<string>(),
       parentLinks: [],
       reviewCount: 0,
-      accessCodes: []
+      accessCodes: [],
+      assignments: []
     };
     existing.parentLinks = [...existing.parentLinks, link];
     studentMap.set(link.student_id, existing);
@@ -77,7 +101,8 @@ export default async function TutorStudentsPage() {
       subjects: new Set<string>(),
       parentLinks: [],
       reviewCount: 0,
-      accessCodes: []
+      accessCodes: [],
+      assignments: []
     };
     existing.accessCodes = [...existing.accessCodes, code];
     studentMap.set(code.student_id, existing);
@@ -122,38 +147,22 @@ export default async function TutorStudentsPage() {
         <Card>
           <CardHeader>
             <CardTitle>Current students</CardTitle>
-            <CardDescription>Operational view first: year, subjects, exam board, and linked parent.</CardDescription>
+            <CardDescription>Keep this list compact, then open a student when you need full access, parent setup, and recent activity.</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-3">
             {students.length ? (
               students.map((student) => (
-                <div key={student.id} className="rounded-[26px] border border-brand-line bg-white px-4 py-4">
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <p className="font-semibold text-brand-ink">{student.label}</p>
-                    <Badge variant="gold">{student.yearGroup || "Year group not set"}</Badge>
-                  </div>
-                  <p className="mt-2 text-sm text-brand-muted">
-                    {student.subjects.size ? [...student.subjects].sort().join(", ") : "No subjects recorded yet"}
-                  </p>
-                  <p className="mt-1 text-sm text-brand-muted">
-                    Parent: {student.parentLinks.length ? student.parentLinks.map((link) => labelTutorParent(link.parent)).join(", ") : "No linked parent"}
-                  </p>
-                  <p className="mt-1 text-sm text-brand-muted">
-                    Reviews published: {student.reviewCount}
-                  </p>
-                  <div className="mt-4 grid gap-4 xl:grid-cols-2">
-                    <ParentLinkManager
-                      studentId={student.id}
-                      studentLabel={student.label}
-                      parentLinks={student.parentLinks}
-                    />
-                    <StudentAccessCodeManager
-                      studentId={student.id}
-                      studentLabel={student.label}
-                      accessCodes={student.accessCodes}
-                    />
-                  </div>
-                </div>
+                <TutorStudentDetailDrawer
+                  key={student.id}
+                  studentId={student.id}
+                  studentLabel={student.label}
+                  yearGroup={student.yearGroup}
+                  subjects={[...student.subjects].sort()}
+                  reviewCount={student.reviewCount}
+                  parentLinks={student.parentLinks}
+                  accessCodes={student.accessCodes}
+                  assignments={student.assignments}
+                />
               ))
             ) : (
               <div className="rounded-[26px] border border-brand-line bg-white px-4 py-4 text-sm leading-7 text-brand-muted">
