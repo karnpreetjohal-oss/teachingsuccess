@@ -1,0 +1,16 @@
+.DS_Store
+node_modules/
+.next/
+out/
+coverage/
+.env
+.env.local
+.env.*.local
+apps/*/node_modules/
+apps/*/.next/
+supabase/.temp/
+
+# Temporary image experiments
+assets/images/.home-hero.avif-*
+assets/images/home-hero-optimized.jpg
+assets/images/home-hero.jpg

@@ -1,0 +1,57 @@
+@import "tailwindcss";
+@config "../../tailwind.config.ts";
+
+:root {
+  --brand-ink: 44 58 82;
+  --brand-ink-deep: 30 42 61;
+  --brand-gold: 245 200 66;
+  --brand-gold-soft: 253 224 122;
+  --brand-surface: 238 241 247;
+  --brand-card: 255 255 255;
+  --brand-muted: 107 122 150;
+  --brand-line: 200 208 224;
+  --brand-blue: 74 111 165;
+  --brand-green: 31 122 79;
+  --brand-amber: 183 121 31;
+  --brand-red: 201 68 68;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, rgba(245, 200, 66, 0.16), transparent 24%),
+    radial-gradient(circle at top right, rgba(91, 142, 207, 0.18), transparent 26%),
+    rgb(var(--brand-surface));
+  color: rgb(var(--brand-ink));
+  font-family: var(--font-sans), sans-serif;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+::selection {
+  background: rgba(245, 200, 66, 0.32);
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
