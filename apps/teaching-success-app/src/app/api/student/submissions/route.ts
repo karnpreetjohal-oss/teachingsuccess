@@ -22,10 +22,10 @@ export async function POST(request: Request) {
     const assignmentIdRaw = String(formData.get("assignmentId") || "").trim();
     const mode = String(formData.get("mode") || "assignment").trim();
     const notes = String(formData.get("notes") || "").trim();
-    const subject = String(formData.get("subject") || "General").trim();
+    const subject = String(formData.get("subject") || "").trim();
     const topic = String(formData.get("topic") || "").trim();
     const title = String(formData.get("title") || "").trim();
-    const markingMode = String(formData.get("markingMode") || "generic_completion_review").trim();
+    const markingMode = String(formData.get("markingMode") || "").trim();
     const files = formData
       .getAll("photos")
       .filter((value): value is File => value instanceof File && value.size > 0);

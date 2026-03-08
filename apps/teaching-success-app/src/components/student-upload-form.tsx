@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Camera, UploadCloud } from "lucide-react";
+import { Camera, EyeOff, UploadCloud, X } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
@@ -28,24 +28,36 @@ export function StudentUploadForm({ assignments, initialAssignmentId }: StudentU
   const [isPending, startTransition] = useTransition();
   const [mode, setMode] = useState<"assignment" | "quick">(initialAssignment ? "assignment" : "quick");
   const [assignmentId, setAssignmentId] = useState(initialAssignment?.id ?? "");
-  const [subject, setSubject] = useState(initialAssignment?.subject ?? "Maths");
+  const [subject, setSubject] = useState(initialAssignment?.subject ?? "");
   const [topic, setTopic] = useState("");
   const [title, setTitle] = useState("");
   const [notes, setNotes] = useState("");
   const [files, setFiles] = useState<File[]>([]);
+  const [previewItems, setPreviewItems] = useState<
+    Array<{
+      id: string;
+      name: string;
+      url: string;
+    }>
+  >([]);
+  const [failedPreviewIds, setFailedPreviewIds] = useState<Record<string, true>>({});
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const previews = useMemo(
-    () => files.map((file) => ({ file, url: URL.createObjectURL(file) })),
-    [files]
-  );
-
   useEffect(() => {
+    const nextPreviewItems = files.map((file, index) => ({
+      id: `${file.name}-${file.size}-${file.lastModified}-${index}`,
+      name: file.name,
+      url: URL.createObjectURL(file)
+    }));
+
+    setPreviewItems(nextPreviewItems);
+    setFailedPreviewIds({});
+
     return () => {
-      previews.forEach(({ url }) => URL.revokeObjectURL(url));
+      nextPreviewItems.forEach(({ url }) => URL.revokeObjectURL(url));
     };
-  }, [previews]);
+  }, [files]);
 
   useEffect(() => {
     if (!assignments.length) {
@@ -62,13 +74,17 @@ export function StudentUploadForm({ assignments, initialAssignmentId }: StudentU
     if (nextAssignment && nextAssignment.id !== assignmentId) {
       setAssignmentId(nextAssignment.id);
     }
-    if (nextAssignment?.subject) {
+    if (mode === "assignment" && nextAssignment?.subject) {
       setSubject(nextAssignment.subject);
     }
-  }, [assignmentId, assignments, initialAssignmentId]);
+  }, [assignmentId, assignments, initialAssignmentId, mode]);
 
   const handleFiles = (nextFiles: FileList | null) => {
     setFiles(Array.from(nextFiles || []).slice(0, 6));
+  };
+
+  const removeFile = (indexToRemove: number) => {
+    setFiles((current) => current.filter((_, index) => index !== indexToRemove));
   };
 
   const handleSubmit = () => {
@@ -83,10 +99,15 @@ export function StudentUploadForm({ assignments, initialAssignmentId }: StudentU
         if (mode === "assignment") {
           formData.set("assignmentId", assignmentId);
         } else {
-          formData.set("subject", subject);
-          formData.set("topic", topic);
-          formData.set("title", title);
-          formData.set("markingMode", "generic_completion_review");
+          if (subject.trim()) {
+            formData.set("subject", subject);
+          }
+          if (topic.trim()) {
+            formData.set("topic", topic);
+          }
+          if (title.trim()) {
+            formData.set("title", title);
+          }
         }
         files.forEach((file) => formData.append("photos", file));
 
@@ -126,13 +147,22 @@ export function StudentUploadForm({ assignments, initialAssignmentId }: StudentU
             <Camera className="h-6 w-6" />
           </div>
           <CardTitle>Real upload flow</CardTitle>
-          <CardDescription>Uploads go to `submission-files`, create `submission_files` rows, and trigger OCR marking.</CardDescription>
+          <CardDescription>
+            Uploads go to `submission-files`, create `submission_files` rows, and trigger OCR marking.
+            Quick uploads can now leave subject, topic, and title blank so the app can detect them from the photos.
+          </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
-              onClick={() => setMode("assignment")}
+              onClick={() => {
+                setMode("assignment");
+                const selected = assignments.find((assignment) => assignment.id === assignmentId) ?? initialAssignment;
+                if (selected?.subject) {
+                  setSubject(selected.subject);
+                }
+              }}
               className={buttonVariants({
                 variant: mode === "assignment" ? "default" : "outline",
                 size: "sm"
@@ -142,7 +172,12 @@ export function StudentUploadForm({ assignments, initialAssignmentId }: StudentU
             </button>
             <button
               type="button"
-              onClick={() => setMode("quick")}
+              onClick={() => {
+                setMode("quick");
+                setSubject("");
+                setTopic("");
+                setTitle("");
+              }}
               className={buttonVariants({
                 variant: mode === "quick" ? "default" : "outline",
                 size: "sm"
@@ -186,10 +221,26 @@ export function StudentUploadForm({ assignments, initialAssignmentId }: StudentU
           ) : (
             <div className="grid gap-3 rounded-[24px] border border-brand-line bg-brand-surface p-4">
               <div className="grid gap-3 md:grid-cols-2">
-                <Input value={subject} onChange={(event) => setSubject(event.target.value)} placeholder="Subject" />
-                <Input value={topic} onChange={(event) => setTopic(event.target.value)} placeholder="Topic" />
+                <Input
+                  value={subject}
+                  onChange={(event) => setSubject(event.target.value)}
+                  placeholder="Subject (leave blank to auto-detect)"
+                />
+                <Input
+                  value={topic}
+                  onChange={(event) => setTopic(event.target.value)}
+                  placeholder="Topic (optional)"
+                />
               </div>
-              <Input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Optional custom title" />
+              <Input
+                value={title}
+                onChange={(event) => setTitle(event.target.value)}
+                placeholder="Title (leave blank to auto-detect)"
+              />
+              <p className="text-sm leading-6 text-brand-muted">
+                If you do not know the subject or title, just upload the photos. The app will create a quick upload,
+                scan the work, and update the subject/title after OCR.
+              </p>
             </div>
           )}
 
@@ -226,11 +277,41 @@ export function StudentUploadForm({ assignments, initialAssignmentId }: StudentU
             onChange={(event) => handleFiles(event.target.files)}
           />
 
-          {previews.length ? (
+          {previewItems.length ? (
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-              {previews.map(({ file, url }) => (
-                <div key={file.name + file.size} className="overflow-hidden rounded-[22px] border border-brand-line bg-white">
-                  <img src={url} alt={file.name} className="aspect-square w-full object-cover" />
+              {previewItems.map((preview, index) => (
+                <div key={preview.id} className="overflow-hidden rounded-[22px] border border-brand-line bg-white">
+                  <div className="relative aspect-square w-full bg-brand-surface">
+                    {failedPreviewIds[preview.id] ? (
+                      <div className="flex h-full flex-col items-center justify-center gap-2 px-4 text-center text-sm text-brand-muted">
+                        <EyeOff className="h-7 w-7 text-brand-blue" />
+                        <p>Preview unavailable on this device, but the file is still selected.</p>
+                      </div>
+                    ) : (
+                      <img
+                        src={preview.url}
+                        alt={preview.name}
+                        className="h-full w-full object-cover"
+                        onError={() =>
+                          setFailedPreviewIds((current) => ({
+                            ...current,
+                            [preview.id]: true
+                          }))
+                        }
+                      />
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => removeFile(index)}
+                      className="absolute right-2 top-2 inline-flex h-9 w-9 items-center justify-center rounded-full bg-brand-ink/75 text-white transition hover:bg-brand-ink"
+                      aria-label={`Remove ${preview.name}`}
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                  <div className="border-t border-brand-line px-3 py-2 text-xs text-brand-muted">
+                    {preview.name}
+                  </div>
                 </div>
               ))}
             </div>
@@ -261,7 +342,10 @@ export function StudentUploadForm({ assignments, initialAssignmentId }: StudentU
           ) : null}
           <div className="rounded-[24px] border border-brand-line bg-white px-4 py-4">
             <p className="font-semibold text-brand-ink">What happens next</p>
-            <p className="mt-1">A submission row is created, photos are stored, assignment status moves to submitted, and OCR marking is triggered.</p>
+            <p className="mt-1">
+              A submission row is created, photos are stored, assignment status moves to submitted,
+              OCR marking starts, and quick uploads can update to a detected subject/title automatically.
+            </p>
           </div>
           {status ? (
             <div className="rounded-2xl border border-brand-blue/20 bg-brand-blue/10 px-4 py-3 text-brand-ink">
@@ -275,7 +359,7 @@ export function StudentUploadForm({ assignments, initialAssignmentId }: StudentU
           ) : null}
           <button
             type="button"
-            disabled={isPending || files.length === 0 || (mode === "assignment" ? !assignmentId : !topic.trim())}
+            disabled={isPending || files.length === 0 || (mode === "assignment" ? !assignmentId : false)}
             onClick={handleSubmit}
             className={cn(buttonVariants({ size: "lg" }), "w-full")}
           >

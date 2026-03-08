@@ -29,6 +29,168 @@ function gradeFromPercent(percent: number): string {
   return "E";
 }
 
+function titleCase(value: string): string {
+  return String(value || "")
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+    .join(" ");
+}
+
+function parseYearGroupInt(value: string | number | null | undefined): number | null {
+  if (value === null || value === undefined) return null;
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  const match = String(value).match(/\d{1,2}/);
+  if (!match) return null;
+  const parsed = Number(match[0]);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function normalizeDetectedSubject(value: string | null | undefined) {
+  const subject = String(value || "").trim().toLowerCase();
+  if (!subject) return "general";
+  if (subject === "math" || subject === "maths" || subject === "mathematics") return "maths";
+  if (subject === "english") return "english";
+  if (subject === "science" || subject === "biology" || subject === "chemistry" || subject === "physics") return "science";
+  if (subject === "11+" || subject === "11 plus" || subject === "eleven plus") return "11+";
+  if (subject === "general") return "general";
+  return subject;
+}
+
+function getDefaultMarkingMode(subjectRaw: string, yearGroup?: string | number | null) {
+  const subject = normalizeDetectedSubject(subjectRaw);
+  const year = parseYearGroupInt(yearGroup);
+  if (subject === "maths") return "maths_question_marking";
+  if (subject === "science") return "science_short_answer";
+  if (subject === "english") {
+    if (year !== null && year >= 10) return "gcse_english_ao";
+    return "english_writing_feedback";
+  }
+  return "generic_completion_review";
+}
+
+function inferSubjectFromText(text: string) {
+  const normalized = String(text || "").toLowerCase();
+
+  const scores = {
+    maths: 0,
+    english: 0,
+    science: 0,
+    general: 0,
+  };
+
+  const mathsPatterns = [
+    /\bsolve\b/g, /\bequation\b/g, /\balgebra\b/g, /\bfraction\b/g, /\bdecimal\b/g, /\bpercentage\b/g,
+    /\bprobability\b/g, /\bmean\b/g, /\bmedian\b/g, /\bangle\b/g, /\bgraph\b/g, /\bcalculate\b/g,
+    /\bsimplify\b/g, /\bfactor\b/g, /\bx\b/g
+  ];
+  const englishPatterns = [
+    /\bquote\b/g, /\banalyse\b/g, /\banalysis\b/g, /\bwriter\b/g, /\blanguage\b/g, /\bcharacter\b/g,
+    /\btheme\b/g, /\bpoem\b/g, /\bpoetry\b/g, /\bmacbeth\b/g, /\ban inspector calls\b/g, /\bessay\b/g,
+    /\bparagraph\b/g, /\bhow does\b/g
+  ];
+  const sciencePatterns = [
+    /\bcell\b/g, /\batom\b/g, /\bforce\b/g, /\benergy\b/g, /\breaction\b/g, /\bphotosynthesis\b/g,
+    /\brespiration\b/g, /\bparticle\b/g, /\bmagnet\b/g, /\bvoltage\b/g, /\belectric\b/g, /\bbiology\b/g,
+    /\bchemistry\b/g, /\bphysics\b/g, /\bpractical\b/g
+  ];
+
+  for (const pattern of mathsPatterns) {
+    scores.maths += (normalized.match(pattern) || []).length * 2;
+  }
+  for (const pattern of englishPatterns) {
+    scores.english += (normalized.match(pattern) || []).length * 2;
+  }
+  for (const pattern of sciencePatterns) {
+    scores.science += (normalized.match(pattern) || []).length * 2;
+  }
+
+  if (/[=+\-/*]/.test(normalized)) {
+    scores.maths += 4;
+  }
+  if (/["“”']/.test(text)) {
+    scores.english += 3;
+  }
+  if (/\bcm\b|\bmm\b|\bkg\b|\bnewton\b|\bvolts?\b|\bph\b/i.test(text)) {
+    scores.science += 3;
+  }
+
+  const sorted = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+  const [topSubject, topScore] = sorted[0];
+  return topScore >= 4 ? normalizeDetectedSubject(topSubject) : "general";
+}
+
+function deriveDraftTitle(text: string, subject: string) {
+  const lines = String(text || "")
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .filter((line) =>
+      line.length >= 8 &&
+      line.length <= 72 &&
+      !/^name\b/i.test(line) &&
+      !/^date\b/i.test(line) &&
+      !/^page\s+\d+/i.test(line) &&
+      !/^q\d+\b/i.test(line) &&
+      !/^\d+\s*$/.test(line)
+    );
+
+  const candidate = lines.find((line) => {
+    const letters = (line.match(/[a-z]/gi) || []).length;
+    const digits = (line.match(/\d/g) || []).length;
+    return letters >= 6 && digits < letters;
+  });
+
+  if (candidate) {
+    return `Quick Upload: ${candidate.replace(/\s+/g, " ").slice(0, 60)}`;
+  }
+
+  if (subject === "maths") return "Quick Upload: Maths practice";
+  if (subject === "english") return "Quick Upload: English response";
+  if (subject === "science") return "Quick Upload: Science work";
+  return "Quick Upload: Student work";
+}
+
+function inferQuickUploadMetadata({
+  combinedText,
+  existingSubject,
+  existingTitle,
+  existingDescription,
+  yearGroup,
+}: {
+  combinedText: string;
+  existingSubject: string | null | undefined;
+  existingTitle: string | null | undefined;
+  existingDescription: string | null | undefined;
+  yearGroup: string | number | null | undefined;
+}) {
+  const normalizedExistingSubject = normalizeDetectedSubject(existingSubject);
+  const hasStudentSuppliedTitle = /student supplied title:/i.test(String(existingDescription || ""));
+  const subject = normalizedExistingSubject !== "general" && normalizedExistingSubject
+    ? normalizedExistingSubject
+    : inferSubjectFromText([combinedText, existingDescription || ""].filter(Boolean).join("\n"));
+
+  const markingMode = getDefaultMarkingMode(subject, yearGroup);
+  const title = hasStudentSuppliedTitle && String(existingTitle || "").trim()
+    ? String(existingTitle || "").trim()
+    : /^quick upload:/i.test(String(existingTitle || ""))
+      ? deriveDraftTitle(combinedText, subject)
+      : String(existingTitle || "").trim() || deriveDraftTitle(combinedText, subject);
+
+  const targetWords =
+    subject === "english" ? (parseYearGroupInt(yearGroup) !== null && Number(parseYearGroupInt(yearGroup)) >= 10 ? 180 : 120) : null;
+
+  const keywords: string[] = [];
+
+  return {
+    subject: subject === "general" ? "General" : titleCase(subject),
+    title,
+    markingMode,
+    keywords,
+    targetWords,
+  };
+}
+
 function calculateAutoMark(notes: string, keywords: string[], targetWords: number | null) {
   const normalized = String(notes || "").toLowerCase();
   const words = countWords(notes);
@@ -50,6 +212,38 @@ function calculateAutoMark(notes: string, keywords: string[], targetWords: numbe
     score,
     grade: gradeFromPercent(score),
     feedback: `Auto-mark: ${feedbackParts.join(" · ")}`,
+  };
+}
+
+function calculateDraftStructureScore(text: string, emphasis: "generic" | "science") {
+  const normalized = String(text || "");
+  const words = countWords(normalized);
+  const lines = normalized.split("\n").map((line) => line.trim()).filter(Boolean);
+  const questionLike = lines.filter((line) => /^q?\d+[\).:\- ]/i.test(line)).length;
+  const scienceTerms = [
+    "cell", "energy", "reaction", "force", "atom", "particle", "circuit", "voltage", "organism", "practical",
+    "hypothesis", "method", "result", "conclusion"
+  ];
+  const genericAcademic = [
+    "because", "therefore", "however", "explain", "method", "working", "example", "answer", "evidence"
+  ];
+  const vocabularyHits = (emphasis === "science" ? scienceTerms : genericAcademic).filter((term) =>
+    normalized.toLowerCase().includes(term)
+  ).length;
+
+  const wordScore = Math.min(words / (emphasis === "science" ? 90 : 140), 1) * 38;
+  const lineScore = Math.min(lines.length / 10, 1) * 18;
+  const vocabScore = Math.min(vocabularyHits / 5, 1) * 18;
+  const questionScore = Math.min(questionLike / 6, 1) * 16;
+  const completenessScore = /[A-Za-z]/.test(normalized) ? 10 : 0;
+  const score = Math.max(24, Math.min(86, Math.round(wordScore + lineScore + vocabScore + questionScore + completenessScore)));
+
+  return {
+    score,
+    words,
+    lines: lines.length,
+    questionLike,
+    vocabularyHits,
   };
 }
 
@@ -291,6 +485,29 @@ function buildAutoAssessment(
   }
 
   if (mode === "science_short_answer") {
+    if (!keywords.length && !targetWords) {
+      const draft = calculateDraftStructureScore(text, "science");
+      return {
+        mode,
+        confidence: 64,
+        score: draft.score,
+        grade: gradeFromPercent(draft.score),
+        feedback: `Science draft mark estimated from detected scientific vocabulary, response length, and answer structure.`,
+        details: [
+          `Draft mark based on OCR text structure rather than a fixed answer key.`,
+          `Word count: ${draft.words}`,
+          `Detected science terms: ${draft.vocabularyHits}`,
+          `Question-style lines: ${draft.questionLike}`,
+        ],
+        mode_specific: {
+          marking_basis: "science_structure_estimate",
+          words: draft.words,
+          vocabulary_hits: draft.vocabularyHits,
+          question_lines: draft.questionLike,
+        },
+      };
+    }
+
     const result = calculateAutoMark(text, keywords, targetWords);
     return {
       mode,
@@ -303,6 +520,28 @@ function buildAutoAssessment(
         `Word count: ${words}`,
         `OCR files analysed: ${ocrFileCount}`,
       ],
+    };
+  }
+
+  if (!keywords.length && !targetWords) {
+    const draft = calculateDraftStructureScore(text, "generic");
+    return {
+      mode: "generic_completion_review",
+      confidence: 58,
+      score: draft.score,
+      grade: gradeFromPercent(draft.score),
+      feedback: "Draft mark estimated from detected written content and completion signals.",
+      details: [
+        `Draft estimate based on response length and visible structure.`,
+        `Word count: ${draft.words}`,
+        `Lines detected: ${draft.lines}`,
+        `Question-style lines: ${draft.questionLike}`,
+      ],
+      mode_specific: {
+        marking_basis: "generic_structure_estimate",
+        words: draft.words,
+        lines: draft.lines,
+      },
     };
   }
 
@@ -401,10 +640,17 @@ Deno.serve(async (req) => {
 
     const { data: assignment, error: asgErr } = await supabase
       .from("assignments")
-      .select("id,title,description,automark_enabled,automark_keywords,automark_target_words,marking_mode")
+      .select("id,subject,title,description,automark_enabled,automark_keywords,automark_target_words,marking_mode")
       .eq("id", submission.assignment_id)
       .single();
     if (asgErr || !assignment) throw new Error(asgErr?.message || "Assignment not found");
+
+    const { data: studentProfile, error: studentProfileErr } = await supabase
+      .from("profiles")
+      .select("year_group")
+      .eq("id", submission.student_id)
+      .maybeSingle();
+    if (studentProfileErr) throw new Error(studentProfileErr.message);
 
     await supabase
       .from("submissions")
@@ -443,20 +689,65 @@ Deno.serve(async (req) => {
     }
 
     const combined = [submission.notes || "", ...ocrTexts].filter(Boolean).join("\n\n");
+    const isQuickUpload = /^quick upload:/i.test(String(assignment.title || ""));
+    const inferredMeta = inferQuickUploadMetadata({
+      combinedText: combined,
+      existingSubject: assignment.subject,
+      existingTitle: assignment.title,
+      existingDescription: assignment.description,
+      yearGroup: studentProfile?.year_group ?? null,
+    });
+
+    let workingAssignment = assignment;
+    if (isQuickUpload) {
+      const nextKeywords = inferredMeta.keywords || [];
+      const updates: Record<string, unknown> = {};
+
+      if (inferredMeta.subject && inferredMeta.subject !== assignment.subject) {
+        updates.subject = inferredMeta.subject;
+      }
+      if (inferredMeta.title && inferredMeta.title !== assignment.title) {
+        updates.title = inferredMeta.title;
+      }
+      if (inferredMeta.markingMode && inferredMeta.markingMode !== assignment.marking_mode) {
+        updates.marking_mode = inferredMeta.markingMode;
+      }
+      if (JSON.stringify(nextKeywords) !== JSON.stringify(assignment.automark_keywords || [])) {
+        updates.automark_keywords = nextKeywords;
+      }
+      if ((inferredMeta.targetWords || null) !== (assignment.automark_target_words || null)) {
+        updates.automark_target_words = inferredMeta.targetWords;
+      }
+
+      if (Object.keys(updates).length) {
+        const { data: updatedAssignment, error: assignmentUpdateErr } = await supabase
+          .from("assignments")
+          .update(updates)
+          .eq("id", assignment.id)
+          .select("id,subject,title,description,automark_enabled,automark_keywords,automark_target_words,marking_mode")
+          .single();
+
+        if (assignmentUpdateErr) throw new Error(assignmentUpdateErr.message);
+        if (updatedAssignment) {
+          workingAssignment = updatedAssignment;
+        }
+      }
+    }
+
     let autoMark: number | null = null;
     let autoGrade: string | null = null;
     let autoFeedback: string | null = null;
     let autoResult: Record<string, unknown> | null = null;
     let autoConfidence: number | null = null;
 
-    if (assignment.automark_enabled) {
+    if (workingAssignment.automark_enabled) {
       const result = buildAutoAssessment(
-        assignment.marking_mode || "generic_completion_review",
+        workingAssignment.marking_mode || "generic_completion_review",
         combined,
-        assignment.automark_keywords || [],
-        assignment.automark_target_words || null,
+        workingAssignment.automark_keywords || [],
+        workingAssignment.automark_target_words || null,
         (files || []).length,
-        [assignment.title || "", assignment.description || ""].filter(Boolean).join("\n"),
+        [workingAssignment.title || "", workingAssignment.description || ""].filter(Boolean).join("\n"),
       );
       autoMark = result.score;
       autoGrade = result.grade;
@@ -469,6 +760,13 @@ Deno.serve(async (req) => {
         details: result.details,
         question_breakdown: result.question_breakdown || [],
         mode_specific: result.mode_specific || null,
+        inferred_assignment: isQuickUpload
+          ? {
+              subject: workingAssignment.subject,
+              title: workingAssignment.title,
+              marking_mode: workingAssignment.marking_mode,
+            }
+          : null,
       };
       if (fileErrors.length) {
         autoFeedback = `${autoFeedback} · OCR warnings: ${fileErrors.join("; ")}`;

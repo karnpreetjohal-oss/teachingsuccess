@@ -2,6 +2,8 @@ import { randomUUID } from "node:crypto";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { getDefaultMarkingMode } from "@/lib/tutor-helpers";
+
 const SUBMISSION_FILES_BUCKET = "submission-files";
 const MAX_SUBMISSION_PHOTOS = 6;
 
@@ -12,10 +14,6 @@ type QuickUploadInput = {
   notes?: string;
   markingMode?: string;
 };
-
-function sanitizeSegment(value: string) {
-  return value.trim().replace(/[^a-z0-9-_]+/gi, "-").replace(/-+/g, "-").replace(/^-|-$/g, "").toLowerCase();
-}
 
 function inferExtension(file: File) {
   const name = file.name.toLowerCase();
@@ -47,6 +45,20 @@ export async function resolveTutorForQuickUpload(supabase: SupabaseClient, stude
 
   if (latestReview.error) throw latestReview.error;
   return latestReview.data?.tutor_id ?? null;
+}
+
+async function getStudentYearGroup(supabase: SupabaseClient, studentId: string) {
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("year_group")
+    .eq("id", studentId)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  return data?.year_group ?? null;
 }
 
 export async function ensureSubmission(
@@ -102,19 +114,20 @@ export async function createQuickUploadAssignment(
 
   const now = new Date();
   const dateLabel = now.toLocaleDateString("en-GB");
-  const subject = input.subject || "General";
-  const topic = input.topic.trim();
-
-  if (!topic) {
-    throw new Error("Add a topic for the quick upload.");
-  }
+  const subject = input.subject?.trim() || "General";
+  const topic = input.topic?.trim() || "";
+  const studentYearGroup = await getStudentYearGroup(supabase, studentId);
 
   const title = input.title?.trim()
     ? `Quick Upload: ${input.title.trim()}`
-    : `Quick Upload: ${subject} - ${topic} (${dateLabel})`;
+    : topic
+      ? `Quick Upload: ${subject} - ${topic} (${dateLabel})`
+      : `Quick Upload: Awaiting detection (${dateLabel})`;
 
   const description = [
-    `Quick upload topic: ${topic}`,
+    topic ? `Quick upload topic: ${topic}` : "Quick upload awaiting OCR detection.",
+    input.subject?.trim() ? `Student supplied subject: ${input.subject.trim()}` : "",
+    input.title?.trim() ? `Student supplied title: ${input.title.trim()}` : "",
     input.notes?.trim() ? `Student note: ${input.notes.trim()}` : ""
   ]
     .filter(Boolean)
@@ -130,7 +143,7 @@ export async function createQuickUploadAssignment(
       description: description || null,
       status: "submitted",
       due_date: null,
-      marking_mode: input.markingMode || "generic_completion_review",
+      marking_mode: input.markingMode || getDefaultMarkingMode(subject, studentYearGroup),
       automark_enabled: true
     })
     .select("id,title")
