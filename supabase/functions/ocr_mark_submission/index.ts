@@ -82,7 +82,7 @@ function inferSubjectFromText(text: string) {
   };
 
   const mathsPatterns = [
-    /\bsolve\b/g, /\bequation\b/g, /\balgebra\b/g, /\bfraction\b/g, /\bdecimal\b/g, /\bpercentage\b/g,
+    /\bwork out\b/g, /\bsolve\b/g, /\bequation\b/g, /\balgebra\b/g, /\bfraction\b/g, /\bdecimal\b/g, /\bpercentage\b/g,
     /\bprobability\b/g, /\bmean\b/g, /\bmedian\b/g, /\bangle\b/g, /\bgraph\b/g, /\bcalculate\b/g,
     /\bsimplify\b/g, /\bfactor\b/g, /\bx\b/g
   ];
@@ -107,7 +107,7 @@ function inferSubjectFromText(text: string) {
     scores.science += (normalized.match(pattern) || []).length * 2;
   }
 
-  if (/[=+\-/*]/.test(normalized)) {
+  if (/[=+\-/*×÷]/.test(normalized)) {
     scores.maths += 4;
   }
   if (/["“”']/.test(text)) {
@@ -120,6 +120,85 @@ function inferSubjectFromText(text: string) {
   const sorted = Object.entries(scores).sort((a, b) => b[1] - a[1]);
   const [topSubject, topScore] = sorted[0];
   return topScore >= 4 ? normalizeDetectedSubject(topSubject) : "general";
+}
+
+type QuestionBreakdownItem = {
+  question: string;
+  expected_answer: string;
+  student_answer: string;
+  correct: boolean;
+  help?: string;
+};
+
+function normalizeArithmeticOperator(value: string) {
+  if (value === "×" || value === "x" || value === "X" || value === "*") return "*";
+  if (value === "÷" || value === "/") return "/";
+  return value;
+}
+
+function solveSimpleArithmetic(prompt: string): string | null {
+  const match = prompt.match(/(\d+(?:\.\d+)?)\s*([+\-xX×*÷/])\s*(\d+(?:\.\d+)?)/);
+  if (!match) {
+    return null;
+  }
+
+  const left = Number(match[1]);
+  const operator = normalizeArithmeticOperator(match[2]);
+  const right = Number(match[3]);
+  if (!Number.isFinite(left) || !Number.isFinite(right)) {
+    return null;
+  }
+
+  if (operator === "+") return String(left + right);
+  if (operator === "-") return String(left - right);
+  if (operator === "*") return String(left * right);
+  if (operator === "/") {
+    if (right === 0) return null;
+    const result = left / right;
+    return Number.isInteger(result) ? String(result) : String(Number(result.toFixed(4)));
+  }
+
+  return null;
+}
+
+function extractMathsQuestionBreakdownFromText(text: string): QuestionBreakdownItem[] {
+  const normalized = String(text || "").replace(/\r/g, "");
+  if (!normalized.trim()) {
+    return [];
+  }
+
+  const questionMatches = [...normalized.matchAll(/(?:^|\n)\s*(\d{1,2})\s+(Work out[^\n]+)/gi)];
+  if (!questionMatches.length) {
+    return [];
+  }
+
+  return questionMatches.slice(0, 12).map((match, index) => {
+    const questionNumber = Number(match[1]);
+    const prompt = match[2].replace(/\s+/g, " ").trim();
+    const start = match.index ?? 0;
+    const end = questionMatches[index + 1]?.index ?? normalized.length;
+    const block = normalized.slice(start, end);
+    const expectedAnswer = solveSimpleArithmetic(prompt);
+    const strippedBlock = block
+      .replace(prompt, " ")
+      .replace(/\(Total for Question[\s\S]*$/i, " ")
+      .replace(/Total for Question[\s\S]*$/i, " ")
+      .replace(/\b\d+\b/g, (value) => (value === String(questionNumber) ? " " : value));
+    const answerCandidates = [...strippedBlock.matchAll(/-?\d+(?:\.\d+)?/g)].map((candidate) => candidate[0]);
+    const studentAnswer = answerCandidates[answerCandidates.length - 1] || "(no answer detected)";
+    const correct =
+      Boolean(expectedAnswer) &&
+      studentAnswer !== "(no answer detected)" &&
+      normalizeAnswer(expectedAnswer || "") === normalizeAnswer(studentAnswer);
+
+    return {
+      question: `Q${questionNumber}: ${prompt}`,
+      expected_answer: expectedAnswer || "(could not infer)",
+      student_answer: studentAnswer,
+      correct,
+      help: correct ? undefined : expectedAnswer ? buildMathsHelp(expectedAnswer) : "Check the final answer and the working shown."
+    };
+  });
 }
 
 function deriveDraftTitle(text: string, subject: string) {
@@ -307,6 +386,40 @@ function parseStringArray(value: unknown, limit = 4): string[] {
     .map((item) => item.trim());
 }
 
+function parseQuestionBreakdown(value: unknown): QuestionBreakdownItem[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .map((item) => {
+      if (!item || typeof item !== "object") {
+        return null;
+      }
+
+      const record = item as Record<string, unknown>;
+      const question = String(record.question || "").trim();
+      const expectedAnswer = String(record.expected_answer || "").trim() || "(could not infer)";
+      const studentAnswer = String(record.student_answer || "").trim() || "(no answer detected)";
+      const correctRaw = record.correct;
+      const help = String(record.help || "").trim() || undefined;
+
+      if (!question) {
+        return null;
+      }
+
+      return {
+        question,
+        expected_answer: expectedAnswer,
+        student_answer: studentAnswer,
+        correct: correctRaw === true,
+        help,
+      };
+    })
+    .filter((item): item is QuestionBreakdownItem => Boolean(item))
+    .slice(0, 12);
+}
+
 function validateOpenAiDraft(payload: Record<string, unknown>): OpenAiDraft | null {
   const inferredSubject = String(payload.inferred_subject || "").trim();
   const inferredTitle = String(payload.inferred_title || "").trim();
@@ -341,6 +454,7 @@ function validateOpenAiDraft(payload: Record<string, unknown>): OpenAiDraft | nu
     inferred_subject: inferredSubject as OpenAiDraft["inferred_subject"],
     inferred_title: inferredTitle || "Quick Upload: Student work",
     suggested_marking_mode: markingMode as OpenAiDraft["suggested_marking_mode"],
+    extracted_text: String(payload.extracted_text || "").trim() || null,
     draft_score: draftScore,
     draft_grade: String(payload.draft_grade || "").trim() || null,
     confidence: Number.isFinite(confidenceRaw) ? Math.max(0, Math.min(100, Math.round(confidenceRaw))) : 60,
@@ -348,6 +462,7 @@ function validateOpenAiDraft(payload: Record<string, unknown>): OpenAiDraft | nu
     strengths: parseStringArray(payload.strengths),
     issues: parseStringArray(payload.issues),
     next_steps: parseStringArray(payload.next_steps),
+    question_breakdown: parseQuestionBreakdown(payload.question_breakdown),
   };
 }
 
@@ -358,6 +473,7 @@ async function requestOpenAiDraftAssessment({
   subject,
   markingMode,
   heuristicSummary,
+  imagePayloads,
 }: {
   combinedText: string;
   assignmentContext: string;
@@ -365,10 +481,32 @@ async function requestOpenAiDraftAssessment({
   subject: string;
   markingMode: string;
   heuristicSummary: string;
+  imagePayloads: Array<{ mimeType: string; base64: string }>;
 }): Promise<OpenAiDraft | null> {
-  if (!OPENAI_API_KEY || !combinedText.trim()) {
+  if (!OPENAI_API_KEY || (!combinedText.trim() && !imagePayloads.length)) {
     return null;
   }
+
+  const userContent: Array<Record<string, unknown>> = [
+    {
+      type: "input_text",
+      text: [
+        `Student year group: ${yearGroup || "unknown"}`,
+        `Current subject: ${subject || "General"}`,
+        `Current marking mode: ${markingMode || "generic_completion_review"}`,
+        `Assignment context: ${assignmentContext || "None provided"}`,
+        `Heuristic draft summary: ${heuristicSummary || "None"}`,
+        combinedText.trim() ? `OCR text:\n${combinedText}` : "OCR text was empty or unreliable, so infer directly from the uploaded image.",
+      ].join("\n\n"),
+    },
+  ];
+
+  imagePayloads.slice(0, 4).forEach((payload) => {
+    userContent.push({
+      type: "input_image",
+      image_url: `data:${payload.mimeType};base64,${payload.base64}`,
+    });
+  });
 
   const response = await fetch("https://api.openai.com/v1/responses", {
     method: "POST",
@@ -391,20 +529,7 @@ async function requestOpenAiDraftAssessment({
         },
         {
           role: "user",
-          content: [
-            {
-              type: "input_text",
-              text: [
-                `Student year group: ${yearGroup || "unknown"}`,
-                `Current subject: ${subject || "General"}`,
-                `Current marking mode: ${markingMode || "generic_completion_review"}`,
-                `Assignment context: ${assignmentContext || "None provided"}`,
-                `Heuristic draft summary: ${heuristicSummary || "None"}`,
-                "OCR text:",
-                combinedText,
-              ].join("\n\n"),
-            },
-          ],
+          content: userContent,
         },
       ],
       text: {
@@ -431,6 +556,9 @@ async function requestOpenAiDraftAssessment({
                   "generic_completion_review",
                 ],
               },
+              extracted_text: {
+                anyOf: [{ type: "string" }, { type: "null" }],
+              },
               draft_score: {
                 anyOf: [{ type: "number", minimum: 0, maximum: 100 }, { type: "null" }],
               },
@@ -454,11 +582,36 @@ async function requestOpenAiDraftAssessment({
                 items: { type: "string" },
                 maxItems: 4,
               },
+              question_breakdown: {
+                type: "array",
+                maxItems: 12,
+                items: {
+                  type: "object",
+                  additionalProperties: false,
+                  properties: {
+                    question: { type: "string" },
+                    expected_answer: {
+                      anyOf: [{ type: "string" }, { type: "null" }],
+                    },
+                    student_answer: {
+                      anyOf: [{ type: "string" }, { type: "null" }],
+                    },
+                    correct: {
+                      anyOf: [{ type: "boolean" }, { type: "null" }],
+                    },
+                    help: {
+                      anyOf: [{ type: "string" }, { type: "null" }],
+                    },
+                  },
+                  required: ["question", "expected_answer", "student_answer", "correct", "help"],
+                },
+              },
             },
             required: [
               "inferred_subject",
               "inferred_title",
               "suggested_marking_mode",
+              "extracted_text",
               "draft_score",
               "draft_grade",
               "confidence",
@@ -466,6 +619,7 @@ async function requestOpenAiDraftAssessment({
               "strengths",
               "issues",
               "next_steps",
+              "question_breakdown",
             ],
           },
         },
@@ -512,6 +666,7 @@ type OpenAiDraft = {
     | "gcse_english_ao"
     | "science_short_answer"
     | "generic_completion_review";
+  extracted_text: string | null;
   draft_score: number | null;
   draft_grade: string | null;
   confidence: number;
@@ -519,6 +674,7 @@ type OpenAiDraft = {
   strengths: string[];
   issues: string[];
   next_steps: string[];
+  question_breakdown: QuestionBreakdownItem[];
 };
 
 function normalizeAnswer(value: string): string {
@@ -576,6 +732,29 @@ function buildAutoAssessment(
   const words = countWords(text);
   const lines = text.split("\n").map((x) => x.trim()).filter(Boolean);
 
+  if (!text.trim()) {
+    return {
+      mode,
+      confidence: 0,
+      score: null,
+      grade: null,
+      feedback: "We could not read enough text from this upload to mark it automatically.",
+      details: [
+        "No readable OCR text was extracted from the uploaded image.",
+        "Retake the photo with the whole question visible, strong contrast, and no shadow across the page.",
+        `OCR files analysed: ${ocrFileCount}`,
+      ],
+      mode_specific: {
+        marking_basis: "no_text_detected",
+        next_steps: [
+          "Retake the photo in brighter light.",
+          "Crop closer to the worksheet.",
+          "Keep the page flat and the camera directly above it.",
+        ],
+      },
+    };
+  }
+
   if (mode === "maths_question_marking") {
     const answerKey = extractNumberedMap(assignmentContext);
     const studentAnswers = extractNumberedMap(text);
@@ -615,6 +794,38 @@ function buildAutoAssessment(
           marking_basis: "answer_key_match",
           detected_questions: total,
           detected_student_answers: studentAnswers.size,
+        },
+      };
+    }
+
+    const extractedBreakdown = extractMathsQuestionBreakdownFromText(text);
+    if (extractedBreakdown.length) {
+      const answerable = extractedBreakdown.filter((item) => item.expected_answer !== "(could not infer)");
+      const correctCount = answerable.filter((item) => item.correct).length;
+      const total = answerable.length || extractedBreakdown.length;
+      const pct = total > 0 ? Math.round((correctCount / total) * 100) : null;
+      const incorrect = total - correctCount;
+
+      return {
+        mode,
+        confidence: 76,
+        score: pct,
+        grade: pct === null ? null : gradeFromPercent(pct),
+        feedback:
+          pct === null
+            ? "Maths questions were detected, but the answers could not be matched clearly enough for a draft mark."
+            : `${correctCount}/${total} detected arithmetic question${total === 1 ? "" : "s"} correct from the worksheet image.`,
+        details: [
+          `Detected worksheet questions: ${extractedBreakdown.length}`,
+          pct === null ? "Answer matching was not strong enough to calculate a score." : `Correct answers: ${correctCount}/${total}`,
+          incorrect > 0 ? `${incorrect} question${incorrect === 1 ? "" : "s"} still need review.` : "All detected arithmetic answers look correct.",
+          `OCR files analysed: ${ocrFileCount}`,
+        ],
+        question_breakdown: extractedBreakdown,
+        mode_specific: {
+          marking_basis: "ocr_prompt_match",
+          detected_questions: extractedBreakdown.length,
+          answerable_questions: answerable.length,
         },
       };
     }
@@ -818,6 +1029,10 @@ function buildAutoAssessment(
 }
 
 async function ocrWithOcrSpace(imageBytes: Uint8Array, mimeType: string): Promise<string> {
+  if (!OCR_API_KEY) {
+    throw new Error("OCR.Space API key is missing.");
+  }
+
   const b64 = btoa(String.fromCharCode(...imageBytes));
   const body = new FormData();
   body.append("base64Image", `data:${mimeType};base64,${b64}`);
@@ -826,12 +1041,23 @@ async function ocrWithOcrSpace(imageBytes: Uint8Array, mimeType: string): Promis
   body.append("apikey", OCR_API_KEY);
 
   const res = await fetch("https://api.ocr.space/parse/image", { method: "POST", body });
+  if (!res.ok) {
+    throw new Error(`OCR.Space request failed with ${res.status}`);
+  }
   const json = await res.json();
+  if (json.IsErroredOnProcessing) {
+    const message = Array.isArray(json.ErrorMessage) ? json.ErrorMessage.join("; ") : "OCR.Space could not process the image.";
+    throw new Error(message);
+  }
   if (!json.ParsedResults?.length) return "";
   return json.ParsedResults.map((r: any) => r.ParsedText || "").join("\n");
 }
 
 async function ocrWithGoogle(imageBytes: Uint8Array): Promise<string> {
+  if (!GOOGLE_VISION_KEY) {
+    throw new Error("Google Vision API key is missing.");
+  }
+
   const b64 = btoa(String.fromCharCode(...imageBytes));
   const body = {
     requests: [{ image: { content: b64 }, features: [{ type: "TEXT_DETECTION" }] }],
@@ -840,18 +1066,34 @@ async function ocrWithGoogle(imageBytes: Uint8Array): Promise<string> {
     `https://vision.googleapis.com/v1/images:annotate?key=${GOOGLE_VISION_KEY}`,
     { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) },
   );
+  if (!res.ok) {
+    throw new Error(`Google Vision request failed with ${res.status}`);
+  }
   const json = await res.json();
+  if (json.error?.message) {
+    throw new Error(json.error.message);
+  }
   return json.responses?.[0]?.fullTextAnnotation?.text ?? "";
 }
 
 async function ocrWithAzure(imageBytes: Uint8Array, mimeType: string): Promise<string> {
+  if (!AZURE_CV_ENDPOINT || !AZURE_CV_KEY) {
+    throw new Error("Azure Computer Vision is not configured.");
+  }
+
   const analyzeUrl = `${AZURE_CV_ENDPOINT}/computervision/imageanalysis:analyze?api-version=2023-02-01-preview&features=read`;
   const res = await fetch(analyzeUrl, {
     method: "POST",
     headers: { "Ocp-Apim-Subscription-Key": AZURE_CV_KEY, "Content-Type": mimeType },
     body: imageBytes,
   });
+  if (!res.ok) {
+    throw new Error(`Azure OCR request failed with ${res.status}`);
+  }
   const json = await res.json();
+  if (json.error?.message) {
+    throw new Error(json.error.message);
+  }
   const lines = json.readResult?.pages?.flatMap((p: any) => p.lines ?? []) ?? [];
   return lines.map((l: any) => l.content).join("\n");
 }
@@ -922,6 +1164,7 @@ Deno.serve(async (req) => {
     if (filesErr) throw new Error(filesErr.message);
 
     const ocrTexts: string[] = [];
+    const imagePayloads: Array<{ mimeType: string; base64: string }> = [];
     const fileErrors: string[] = [];
 
     for (const file of files || []) {
@@ -933,6 +1176,10 @@ Deno.serve(async (req) => {
 
         const mimeType = blob.type || "image/jpeg";
         const imageBytes = new Uint8Array(await blob.arrayBuffer());
+        imagePayloads.push({
+          mimeType,
+          base64: btoa(String.fromCharCode(...imageBytes)),
+        });
         const text = await runOCR(imageBytes, mimeType);
         ocrTexts.push(text || "");
 
@@ -1015,7 +1262,7 @@ Deno.serve(async (req) => {
         : null;
 
       let openAiDraft: OpenAiDraft | null = null;
-      if (OPENAI_API_KEY && combined.trim() && heuristicMarkingBasis !== "answer_key_match") {
+      if (OPENAI_API_KEY && heuristicMarkingBasis !== "answer_key_match" && (combined.trim() || imagePayloads.length)) {
         try {
           openAiDraft = await requestOpenAiDraftAssessment({
             combinedText: combined,
@@ -1030,12 +1277,21 @@ Deno.serve(async (req) => {
             subject: workingAssignment.subject || "General",
             markingMode: workingAssignment.marking_mode || "generic_completion_review",
             heuristicSummary: heuristicResult.feedback,
+            imagePayloads,
           });
         } catch (openAiError) {
           fileErrors.push(
             `[openai] ${openAiError instanceof Error ? openAiError.message : "Draft enhancement failed"}`
           );
         }
+      }
+
+      if (!combined.trim() && !openAiDraft) {
+        fileErrors.push(
+          OCR_PROVIDER === "none" && !OPENAI_API_KEY
+            ? "No OCR provider or OpenAI image analysis is configured for automatic marking."
+            : "No readable text could be extracted from the uploaded image."
+        );
       }
 
       if (openAiDraft && isQuickUpload) {
@@ -1092,6 +1348,7 @@ Deno.serve(async (req) => {
               ...openAiDraft.issues.map((item) => `Watch: ${item}`),
               ...openAiDraft.next_steps.map((item) => `Next: ${item}`),
             ].slice(0, 8),
+            question_breakdown: openAiDraft.question_breakdown,
             mode_specific: {
               ...(heuristicModeSpecific && typeof heuristicModeSpecific === "object" ? heuristicModeSpecific : {}),
               draft_source: "openai",
@@ -1100,6 +1357,7 @@ Deno.serve(async (req) => {
               issues: openAiDraft.issues,
               next_steps: openAiDraft.next_steps,
               heuristic_summary: heuristicResult.feedback,
+              extracted_text: openAiDraft.extracted_text,
             },
           }
         : {

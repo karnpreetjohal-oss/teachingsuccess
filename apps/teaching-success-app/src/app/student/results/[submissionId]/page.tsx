@@ -69,6 +69,11 @@ export default async function StudentResultsPage({
     submission.auto_feedback ||
     (typeof autoResult.summary === "string" ? autoResult.summary : "") ||
     "No feedback has been generated yet.";
+  const needsClearerPhoto =
+    !processing &&
+    score === null &&
+    !grade &&
+    /could not read enough text|no readable text/i.test(summary);
 
   return (
     <>
@@ -88,6 +93,8 @@ export default async function StudentResultsPage({
             <Badge variant={scoreTone(score) as "green" | "amber" | "blue" | "red"} className="w-fit">
               {processing
                 ? "Processing"
+                : needsClearerPhoto
+                  ? "Needs clearer photo"
                 : score === null
                   ? grade || "Marked"
                   : `${score}%${grade ? ` • ${grade}` : ""}`}
@@ -105,6 +112,8 @@ export default async function StudentResultsPage({
               <p className="mt-2">
                 {processing
                   ? "OCR and AI marking are still running. Refresh this page in a moment to see the draft mark."
+                  : needsClearerPhoto
+                    ? "The app could not read enough of the worksheet to mark it properly. Retake the photo and upload a clearer version."
                   : summary}
               </p>
             </div>
