@@ -27,8 +27,13 @@ function scoreTone(mark: number | null) {
   return "red";
 }
 
-export default async function StudentResultsPage({ params }: { params: { submissionId: string } }) {
-  const submission = await getStudentSubmissionById(params.submissionId);
+export default async function StudentResultsPage({
+  params
+}: {
+  params: Promise<{ submissionId: string }>;
+}) {
+  const { submissionId } = await params;
+  const submission = await getStudentSubmissionById(submissionId);
   if (!submission) {
     notFound();
   }

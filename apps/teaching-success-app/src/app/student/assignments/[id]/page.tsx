@@ -24,8 +24,13 @@ function statusVariant(status: string) {
   return "gold";
 }
 
-export default async function StudentAssignmentPage({ params }: { params: { id: string } }) {
-  const assignment = await getStudentAssignmentById(params.id);
+export default async function StudentAssignmentPage({
+  params
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  const assignment = await getStudentAssignmentById(id);
   if (!assignment) {
     notFound();
   }
