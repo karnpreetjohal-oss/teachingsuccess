@@ -24,27 +24,63 @@ function inferExtension(file: File) {
 }
 
 export async function resolveTutorForQuickUpload(supabase: SupabaseClient, studentId: string) {
-  const latestAssignment = await supabase
-    .from("assignments")
-    .select("tutor_id,created_at")
-    .eq("student_id", studentId)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  const [latestAssignment, latestReview, latestAccessCode] = await Promise.all([
+    supabase
+      .from("assignments")
+      .select("tutor_id,created_at")
+      .eq("student_id", studentId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from("student_progress_reviews")
+      .select("tutor_id,created_at")
+      .eq("student_id", studentId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from("student_access_codes")
+      .select("created_by,created_at")
+      .eq("student_id", studentId)
+      .not("created_by", "is", null)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle()
+  ]);
 
   if (latestAssignment.error) throw latestAssignment.error;
-  if (latestAssignment.data?.tutor_id) return latestAssignment.data.tutor_id;
-
-  const latestReview = await supabase
-    .from("student_progress_reviews")
-    .select("tutor_id,created_at")
-    .eq("student_id", studentId)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
   if (latestReview.error) throw latestReview.error;
-  return latestReview.data?.tutor_id ?? null;
+  if (latestAccessCode.error) throw latestAccessCode.error;
+
+  const candidates = [
+    latestAssignment.data?.tutor_id
+      ? {
+          tutorId: latestAssignment.data.tutor_id,
+          createdAt: latestAssignment.data.created_at || null
+        }
+      : null,
+    latestReview.data?.tutor_id
+      ? {
+          tutorId: latestReview.data.tutor_id,
+          createdAt: latestReview.data.created_at || null
+        }
+      : null,
+    latestAccessCode.data?.created_by
+      ? {
+          tutorId: latestAccessCode.data.created_by,
+          createdAt: latestAccessCode.data.created_at || null
+        }
+      : null
+  ]
+    .filter((candidate): candidate is { tutorId: string; createdAt: string | null } => Boolean(candidate))
+    .sort((a, b) => {
+      const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return bTime - aTime;
+    });
+
+  return candidates[0]?.tutorId ?? null;
 }
 
 async function getStudentYearGroup(supabase: SupabaseClient, studentId: string) {

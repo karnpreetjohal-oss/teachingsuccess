@@ -15,6 +15,7 @@ type AssignmentOption = {
   title: string;
   subject: string;
   status: string;
+  dueDate: string | null;
 };
 
 type StudentUploadFormProps = {
@@ -43,6 +44,8 @@ export function StudentUploadForm({ assignments, initialAssignmentId }: StudentU
   const [failedPreviewIds, setFailedPreviewIds] = useState<Record<string, true>>({});
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const selectedAssignment = assignments.find((assignment) => assignment.id === assignmentId) ?? null;
 
   useEffect(() => {
     const nextPreviewItems = files.map((file, index) => ({
@@ -85,6 +88,29 @@ export function StudentUploadForm({ assignments, initialAssignmentId }: StudentU
 
   const removeFile = (indexToRemove: number) => {
     setFiles((current) => current.filter((_, index) => index !== indexToRemove));
+  };
+
+  const formatDueDate = (value: string | null) => {
+    if (!value) {
+      return "No due date";
+    }
+
+    return new Intl.DateTimeFormat("en-GB", {
+      day: "numeric",
+      month: "short"
+    }).format(new Date(value));
+  };
+
+  const getStatusLabel = (value: string) => {
+    if (value === "assigned") return "To do";
+    if (value === "submitted") return "Awaiting review";
+    return value;
+  };
+
+  const getStatusVariant = (value: string): "blue" | "amber" | "neutral" => {
+    if (value === "assigned") return "blue";
+    if (value === "submitted") return "amber";
+    return "neutral";
   };
 
   const handleSubmit = () => {
@@ -146,10 +172,9 @@ export function StudentUploadForm({ assignments, initialAssignmentId }: StudentU
           <div className="mb-3 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-blue/16 text-brand-blue">
             <Camera className="h-6 w-6" />
           </div>
-          <CardTitle>Real upload flow</CardTitle>
+          <CardTitle>Upload work</CardTitle>
           <CardDescription>
-            Uploads go to `submission-files`, create `submission_files` rows, and trigger OCR marking.
-            Quick uploads can now leave subject, topic, and title blank so the app can detect them from the photos.
+            Choose a live assignment when the work was set by your tutor, or use quick upload for extra workbook pages and unplanned homework.
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
@@ -168,7 +193,7 @@ export function StudentUploadForm({ assignments, initialAssignmentId }: StudentU
                 size: "sm"
               })}
             >
-              Existing assignment
+              Existing assignment {assignments.length ? `(${assignments.length})` : ""}
             </button>
             <button
               type="button"
@@ -189,29 +214,52 @@ export function StudentUploadForm({ assignments, initialAssignmentId }: StudentU
 
           {mode === "assignment" ? (
             <div className="grid gap-3 rounded-[24px] border border-brand-line bg-brand-surface p-4">
-              <label className="text-sm font-semibold text-brand-ink" htmlFor="assignment-id">
-                Choose assignment
-              </label>
-              <select
-                id="assignment-id"
-                value={assignmentId}
-                onChange={(event) => {
-                  const selected = assignments.find((assignment) => assignment.id === event.target.value);
-                  setAssignmentId(event.target.value);
-                  if (selected?.subject) setSubject(selected.subject);
-                }}
-                className="h-12 rounded-2xl border border-brand-line bg-white px-4 text-sm text-brand-ink outline-none focus:border-brand-gold focus:ring-2 focus:ring-brand-gold/35"
-              >
-                {assignments.length ? (
-                  assignments.map((assignment) => (
-                    <option key={assignment.id} value={assignment.id}>
-                      {assignment.title} ({assignment.subject})
-                    </option>
-                  ))
-                ) : (
-                  <option value="">No assignments available</option>
-                )}
-              </select>
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-brand-ink">Choose assignment</p>
+                  <p className="text-sm leading-6 text-brand-muted">
+                    Submit into the exact task your tutor already set.
+                  </p>
+                </div>
+                <Badge variant="blue">{assignments.length} live</Badge>
+              </div>
+              {assignments.length ? (
+                <div className="grid gap-3">
+                  {assignments.map((assignment) => {
+                    const isSelected = assignment.id === assignmentId;
+                    return (
+                      <button
+                        key={assignment.id}
+                        type="button"
+                        onClick={() => {
+                          setAssignmentId(assignment.id);
+                          if (assignment.subject) setSubject(assignment.subject);
+                        }}
+                        className={cn(
+                          "grid gap-3 rounded-[24px] border bg-white px-4 py-4 text-left transition",
+                          isSelected
+                            ? "border-brand-gold ring-2 ring-brand-gold/30"
+                            : "border-brand-line hover:border-brand-blue/40"
+                        )}
+                      >
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Badge variant="neutral">{assignment.subject}</Badge>
+                          <Badge variant={getStatusVariant(assignment.status)}>{getStatusLabel(assignment.status)}</Badge>
+                          <Badge variant="neutral">Due {formatDueDate(assignment.dueDate)}</Badge>
+                        </div>
+                        <div>
+                          <p className="font-semibold text-brand-ink">{assignment.title}</p>
+                          <p className="mt-1 text-sm leading-6 text-brand-muted">
+                            {assignment.status === "submitted"
+                              ? "This task already has work uploaded. Add more photos here if you need to continue it."
+                              : "Photos and notes will be attached to this assignment."}
+                          </p>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : null}
               {!assignments.length ? (
                 <p className="text-sm leading-6 text-brand-muted">
                   No live assignments are waiting. Switch to quick upload to submit fresh work.
@@ -220,6 +268,15 @@ export function StudentUploadForm({ assignments, initialAssignmentId }: StudentU
             </div>
           ) : (
             <div className="grid gap-3 rounded-[24px] border border-brand-line bg-brand-surface p-4">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-brand-ink">Quick upload</p>
+                  <p className="text-sm leading-6 text-brand-muted">
+                    Best for extra workbook pages, revision sheets, or homework your tutor has not set in the app yet.
+                  </p>
+                </div>
+                <Badge variant="gold">Creates new tracked task</Badge>
+              </div>
               <div className="grid gap-3 md:grid-cols-2">
                 <Input
                   value={subject}
@@ -238,8 +295,8 @@ export function StudentUploadForm({ assignments, initialAssignmentId }: StudentU
                 placeholder="Title (leave blank to auto-detect)"
               />
               <p className="text-sm leading-6 text-brand-muted">
-                If you do not know the subject or title, just upload the photos. The app will create a quick upload,
-                scan the work, and update the subject/title after OCR.
+                If you do not know the subject or title, just upload the photos. The app will create a new task,
+                scan the work, and fill in the subject/title after OCR.
               </p>
             </div>
           )}
@@ -325,26 +382,46 @@ export function StudentUploadForm({ assignments, initialAssignmentId }: StudentU
             Submission summary
           </Badge>
           <CardTitle>{mode === "assignment" ? "Existing assignment upload" : "Quick upload"}</CardTitle>
-          <CardDescription>One clear action and one clear result path.</CardDescription>
+          <CardDescription>
+            {mode === "assignment"
+              ? "Your upload is being attached to an assignment that already exists."
+              : "Your upload will create a fresh tracked task for your tutor to review."}
+          </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 text-sm leading-7 text-brand-muted">
           <div className="rounded-[24px] border border-brand-line bg-white px-4 py-4">
             <p className="font-semibold text-brand-ink">Files ready</p>
             <p className="mt-1">{files.length} photo(s) selected.</p>
           </div>
-          {mode === "assignment" && assignmentId ? (
+          {mode === "assignment" && selectedAssignment ? (
             <div className="rounded-[24px] border border-brand-line bg-white px-4 py-4">
               <p className="font-semibold text-brand-ink">Selected assignment</p>
+              <p className="mt-1 font-medium text-brand-ink">{selectedAssignment.title}</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Badge variant="neutral">{selectedAssignment.subject}</Badge>
+                <Badge variant={getStatusVariant(selectedAssignment.status)}>{getStatusLabel(selectedAssignment.status)}</Badge>
+                <Badge variant="neutral">Due {formatDueDate(selectedAssignment.dueDate)}</Badge>
+              </div>
+            </div>
+          ) : null}
+          {mode === "quick" ? (
+            <div className="rounded-[24px] border border-brand-line bg-white px-4 py-4">
+              <p className="font-semibold text-brand-ink">New task preview</p>
               <p className="mt-1">
-                {assignments.find((assignment) => assignment.id === assignmentId)?.title || "Assignment"}
+                {title.trim()
+                  ? `Quick Upload: ${title.trim()}`
+                  : subject.trim()
+                    ? `Quick Upload: ${subject.trim()}`
+                    : "Quick Upload: subject and title will be filled after OCR if you leave them blank."}
               </p>
             </div>
           ) : null}
           <div className="rounded-[24px] border border-brand-line bg-white px-4 py-4">
             <p className="font-semibold text-brand-ink">What happens next</p>
             <p className="mt-1">
-              A submission row is created, photos are stored, assignment status moves to submitted,
-              OCR marking starts, and quick uploads can update to a detected subject/title automatically.
+              {mode === "assignment"
+                ? "Your photos are attached to the selected task, the assignment moves to submitted, and OCR marking starts."
+                : "A fresh task is created for your tutor, photos are stored, OCR marking starts, and the subject/title can update automatically from the work."}
             </p>
           </div>
           {status ? (

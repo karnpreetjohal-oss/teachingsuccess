@@ -9,12 +9,13 @@ export default async function StudentUploadPage({
 }) {
   const assignments = await getStudentAssignments();
   const assignmentOptions = assignments
-    .filter((assignment) => assignment.status !== "completed")
+    .filter((assignment) => assignment.status === "assigned" || assignment.status === "submitted")
     .map((assignment) => ({
       id: assignment.id,
       title: assignment.title,
       subject: assignment.subject,
-      status: assignment.status
+      status: assignment.status,
+      dueDate: assignment.due_date
     }));
   const initialAssignmentId =
     typeof searchParams?.assignmentId === "string" ? searchParams.assignmentId : undefined;
@@ -23,11 +24,11 @@ export default async function StudentUploadPage({
     <>
       <PageIntro
         eyebrow="Quick upload"
-        title={assignmentOptions.length ? "Take photos, check them, submit." : "Quick upload a fresh piece of work."}
+        title={assignmentOptions.length ? "Submit assigned work or upload a fresh piece." : "Quick upload a fresh piece of work."}
         description={
           assignmentOptions.length
-            ? "Choose the assigned task or switch to quick upload. Photos are stored immediately and OCR marking starts in the background."
-            : "No live assignment is waiting, so this screen defaults to the quick-upload path and creates a tracked assignment automatically."
+            ? "Pick one of your live assignments below, or switch to quick upload for extra workbook or homework practice."
+            : "No live assignment is waiting, so this screen starts on quick upload and creates a tracked task automatically."
         }
       />
 
