@@ -166,6 +166,15 @@ export function getTutorSubmissionReviewLabels(submission: TutorSubmission) {
   const draftSource = getTutorSubmissionDraftSource(submission);
   labels.push(draftSource === "openai" ? "OpenAI OCR draft" : "Heuristic OCR draft");
 
+  const autoResult = getTutorSubmissionAutoResult(submission);
+  const modeSpecific =
+    autoResult.mode_specific && typeof autoResult.mode_specific === "object"
+      ? (autoResult.mode_specific as Record<string, unknown>)
+      : {};
+  if (modeSpecific.marking_strategy === "universal_quick_upload") {
+    labels.push("Universal quick-upload mark");
+  }
+
   const inference = getTutorSubmissionInferenceMeta(submission);
   if (inference?.subjectInferred) {
     labels.push("Subject inferred");

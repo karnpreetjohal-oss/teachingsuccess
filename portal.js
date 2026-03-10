@@ -1308,8 +1308,6 @@ async function createQuickUploadAssignmentAndSubmission() {
   const markingModeRaw = String($('quick-marking-mode')?.value || '').trim();
   const markingMode = MARKING_MODES.includes(markingModeRaw) ? markingModeRaw : getDefaultMarkingMode(subject);
 
-  if (!topic) throw new Error('Add a topic so this upload is tracked correctly.');
-
   const tutorId = await resolveTutorForQuickUpload();
   if (!tutorId) {
     throw new Error('No tutor link found yet. Ask your tutor to assign one task first, then quick upload will work.');
@@ -1319,9 +1317,11 @@ async function createQuickUploadAssignmentAndSubmission() {
   const dateLabel = now.toLocaleDateString();
   const title = customTitle
     ? `Quick Upload: ${customTitle}`
-    : `Quick Upload: ${subject} - ${topic} (${dateLabel})`;
+    : topic
+      ? `Quick Upload: ${subject} - ${topic} (${dateLabel})`
+      : `Quick Upload: Awaiting detection (${dateLabel})`;
   const description = [
-    `Quick upload topic: ${topic}`,
+    topic ? `Quick upload topic: ${topic}` : 'Quick upload awaiting OCR detection.',
     notes ? `Student note: ${notes}` : '',
   ].filter(Boolean).join('\n');
   const targetWords = targetWordsRaw === '' ? null : Number(targetWordsRaw);

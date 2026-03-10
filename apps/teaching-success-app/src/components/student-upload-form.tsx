@@ -32,6 +32,12 @@ export function StudentUploadForm({ assignments, initialAssignmentId }: StudentU
   const [subject, setSubject] = useState(initialAssignment?.subject ?? "");
   const [topic, setTopic] = useState("");
   const [title, setTitle] = useState("");
+  const [examBoard, setExamBoard] = useState("");
+  const [taskDescription, setTaskDescription] = useState("");
+  const [maxMarks, setMaxMarks] = useState("");
+  const [markScheme, setMarkScheme] = useState("");
+  const [levelDescriptors, setLevelDescriptors] = useState("");
+  const [additionalContext, setAdditionalContext] = useState("");
   const [notes, setNotes] = useState("");
   const [files, setFiles] = useState<File[]>([]);
   const [previewItems, setPreviewItems] = useState<
@@ -44,6 +50,18 @@ export function StudentUploadForm({ assignments, initialAssignmentId }: StudentU
   const [failedPreviewIds, setFailedPreviewIds] = useState<Record<string, true>>({});
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const resetQuickUploadFields = () => {
+    setSubject("");
+    setTopic("");
+    setTitle("");
+    setExamBoard("");
+    setTaskDescription("");
+    setMaxMarks("");
+    setMarkScheme("");
+    setLevelDescriptors("");
+    setAdditionalContext("");
+  };
 
   const selectedAssignment = assignments.find((assignment) => assignment.id === assignmentId) ?? null;
 
@@ -134,6 +152,24 @@ export function StudentUploadForm({ assignments, initialAssignmentId }: StudentU
           if (title.trim()) {
             formData.set("title", title);
           }
+          if (examBoard.trim()) {
+            formData.set("examBoard", examBoard);
+          }
+          if (taskDescription.trim()) {
+            formData.set("taskDescription", taskDescription);
+          }
+          if (maxMarks.trim()) {
+            formData.set("maxMarks", maxMarks);
+          }
+          if (markScheme.trim()) {
+            formData.set("markScheme", markScheme);
+          }
+          if (levelDescriptors.trim()) {
+            formData.set("levelDescriptors", levelDescriptors);
+          }
+          if (additionalContext.trim()) {
+            formData.set("additionalContext", additionalContext);
+          }
         }
         files.forEach((file) => formData.append("photos", file));
 
@@ -199,9 +235,7 @@ export function StudentUploadForm({ assignments, initialAssignmentId }: StudentU
               type="button"
               onClick={() => {
                 setMode("quick");
-                setSubject("");
-                setTopic("");
-                setTitle("");
+                resetQuickUploadFields();
               }}
               className={buttonVariants({
                 variant: mode === "quick" ? "default" : "outline",
@@ -298,6 +332,51 @@ export function StudentUploadForm({ assignments, initialAssignmentId }: StudentU
                 If you do not know the subject or title, just upload the photos. The app will create a new task,
                 scan the work, and fill in the subject/title after OCR.
               </p>
+              <details className="rounded-[22px] border border-brand-line bg-white px-4 py-4">
+                <summary className="cursor-pointer text-sm font-semibold text-brand-ink">
+                  Add task details for more accurate marking
+                </summary>
+                <div className="mt-4 grid gap-3">
+                  <Input
+                    value={examBoard}
+                    onChange={(event) => setExamBoard(event.target.value)}
+                    placeholder="Exam board or framework (optional)"
+                  />
+                  <textarea
+                    value={taskDescription}
+                    onChange={(event) => setTaskDescription(event.target.value)}
+                    placeholder="Task or question shown on the page (optional)"
+                    className="min-h-28 rounded-2xl border border-brand-line bg-white px-4 py-3 text-sm text-brand-ink outline-none focus:border-brand-gold focus:ring-2 focus:ring-brand-gold/35"
+                  />
+                  <Input
+                    value={maxMarks}
+                    onChange={(event) => setMaxMarks(event.target.value)}
+                    inputMode="decimal"
+                    placeholder="Maximum marks if known (optional)"
+                  />
+                  <textarea
+                    value={markScheme}
+                    onChange={(event) => setMarkScheme(event.target.value)}
+                    placeholder="Mark scheme (optional)"
+                    className="min-h-28 rounded-2xl border border-brand-line bg-white px-4 py-3 text-sm text-brand-ink outline-none focus:border-brand-gold focus:ring-2 focus:ring-brand-gold/35"
+                  />
+                  <textarea
+                    value={levelDescriptors}
+                    onChange={(event) => setLevelDescriptors(event.target.value)}
+                    placeholder="Level descriptors or grade bands (optional)"
+                    className="min-h-24 rounded-2xl border border-brand-line bg-white px-4 py-3 text-sm text-brand-ink outline-none focus:border-brand-gold focus:ring-2 focus:ring-brand-gold/35"
+                  />
+                  <textarea
+                    value={additionalContext}
+                    onChange={(event) => setAdditionalContext(event.target.value)}
+                    placeholder="Any extra context for the marker (optional)"
+                    className="min-h-24 rounded-2xl border border-brand-line bg-white px-4 py-3 text-sm text-brand-ink outline-none focus:border-brand-gold focus:ring-2 focus:ring-brand-gold/35"
+                  />
+                  <p className="text-sm leading-6 text-brand-muted">
+                    Leave these blank if you just want the AI to infer the task from the upload itself.
+                  </p>
+                </div>
+              </details>
             </div>
           )}
 
@@ -414,6 +493,17 @@ export function StudentUploadForm({ assignments, initialAssignmentId }: StudentU
                     ? `Quick Upload: ${subject.trim()}`
                     : "Quick Upload: subject and title will be filled after OCR if you leave them blank."}
               </p>
+              {taskDescription.trim() || maxMarks.trim() || examBoard.trim() ? (
+                <p className="mt-2 text-sm text-brand-muted">
+                  {[
+                    examBoard.trim() ? examBoard.trim() : "",
+                    maxMarks.trim() ? `${maxMarks.trim()} marks` : "",
+                    taskDescription.trim() ? taskDescription.trim() : ""
+                  ]
+                    .filter(Boolean)
+                    .join(" • ")}
+                </p>
+              ) : null}
             </div>
           ) : null}
           <div className="rounded-[24px] border border-brand-line bg-white px-4 py-4">
@@ -421,7 +511,7 @@ export function StudentUploadForm({ assignments, initialAssignmentId }: StudentU
             <p className="mt-1">
               {mode === "assignment"
                 ? "Your photos are attached to the selected task, the assignment moves to submitted, and OCR marking starts."
-                : "A fresh task is created for your tutor, photos are stored, OCR marking starts, and the subject/title can update automatically from the work."}
+                : "A fresh task is created for your tutor, photos are stored, OCR marking starts, and the subject, title, and marking context can all be inferred from the work if you leave them blank."}
             </p>
           </div>
           {status ? (

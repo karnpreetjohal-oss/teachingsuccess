@@ -10,6 +10,8 @@ const AZURE_CV_KEY = Deno.env.get("AZURE_CV_KEY") || OCR_API_KEY;
 const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY") || "";
 const OPENAI_MODEL = Deno.env.get("OPENAI_MODEL") || "gpt-4o-mini";
 const SUBMISSION_BUCKET = "submission-files";
+const ASSIGNMENT_SELECT_FIELDS =
+  "id,subject,title,description,exam_board,marking_context,automark_enabled,automark_keywords,automark_target_words,marking_mode";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -418,6 +420,302 @@ function parseQuestionBreakdown(value: unknown): QuestionBreakdownItem[] {
     })
     .filter((item): item is QuestionBreakdownItem => Boolean(item))
     .slice(0, 12);
+}
+
+type QuickUploadMarkingContext = {
+  topic: string | null;
+  taskDescription: string | null;
+  maxMarks: number | null;
+  markScheme: string | null;
+  levelDescriptors: string | null;
+  additionalContext: string | null;
+  examBoard: string | null;
+};
+
+type UniversalOpenAiAssessment = {
+  inferred_subject: string;
+  inferred_title: string;
+  inferred_task: string | null;
+  exam_board: string | null;
+  transcription: string;
+  score: number | null;
+  max_marks: number | null;
+  percentage: number | null;
+  grade_equivalent: string | null;
+  level: string | null;
+  strengths: string[];
+  improvements: string[];
+  detailed_feedback: string;
+  mark_commentary: string;
+  next_steps: string[];
+  exemplar_addition: string | null;
+  confidence: number;
+};
+
+function parseNullableNumber(value: unknown, { min, max }: { min?: number; max?: number } = {}) {
+  if (value === null || value === undefined || value === "") {
+    return null;
+  }
+
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) {
+    return null;
+  }
+
+  if (min !== undefined && parsed < min) {
+    return null;
+  }
+  if (max !== undefined && parsed > max) {
+    return null;
+  }
+
+  return Number(parsed);
+}
+
+function parseQuickUploadMarkingContext(value: unknown): QuickUploadMarkingContext {
+  if (!value || typeof value !== "object") {
+    return {
+      topic: null,
+      taskDescription: null,
+      maxMarks: null,
+      markScheme: null,
+      levelDescriptors: null,
+      additionalContext: null,
+      examBoard: null,
+    };
+  }
+
+  const record = value as Record<string, unknown>;
+  return {
+    topic: String(record.topic || "").trim() || null,
+    taskDescription: String(record.task_description || "").trim() || null,
+    maxMarks: parseNullableNumber(record.max_marks, { min: 0, max: 1000 }),
+    markScheme: String(record.mark_scheme || "").trim() || null,
+    levelDescriptors: String(record.level_descriptors || "").trim() || null,
+    additionalContext: String(record.additional_context || "").trim() || null,
+    examBoard: String(record.exam_board || "").trim() || null,
+  };
+}
+
+function validateUniversalOpenAiAssessment(payload: Record<string, unknown>): UniversalOpenAiAssessment | null {
+  const inferredSubject = String(payload.inferred_subject || "").trim() || "General";
+  const inferredTitle = String(payload.inferred_title || "").trim() || "Quick Upload: Student work";
+  const transcription = String(payload.transcription || "").trim();
+  const detailedFeedback = String(payload.detailed_feedback || "").trim();
+  const markCommentary = String(payload.mark_commentary || "").trim();
+  const inferredTask = String(payload.inferred_task || "").trim() || null;
+  const examBoard = String(payload.exam_board || "").trim() || null;
+  const rawScore = parseNullableNumber(payload.score, { min: 0, max: 1000 });
+  const rawMaxMarks = parseNullableNumber(payload.max_marks, { min: 0, max: 1000 });
+  let percentage = parseNullableNumber(payload.percentage, { min: 0, max: 100 });
+
+  if (percentage === null && rawScore !== null && rawMaxMarks !== null && rawMaxMarks > 0) {
+    percentage = Number(((rawScore / rawMaxMarks) * 100).toFixed(2));
+  }
+
+  if (!transcription || !detailedFeedback || !markCommentary) {
+    return null;
+  }
+
+  return {
+    inferred_subject: inferredSubject,
+    inferred_title: inferredTitle,
+    inferred_task: inferredTask,
+    exam_board: examBoard,
+    transcription,
+    score: rawScore,
+    max_marks: rawMaxMarks,
+    percentage,
+    grade_equivalent: String(payload.grade_equivalent || "").trim() || null,
+    level: String(payload.level || "").trim() || null,
+    strengths: parseStringArray(payload.strengths),
+    improvements: parseStringArray(payload.improvements),
+    detailed_feedback: detailedFeedback,
+    mark_commentary: markCommentary,
+    next_steps: parseStringArray(payload.next_steps),
+    exemplar_addition: String(payload.exemplar_addition || "").trim() || null,
+    confidence: parseNullableNumber(payload.confidence, { min: 0, max: 100 }) ?? 64,
+  };
+}
+
+async function requestOpenAiUniversalAssessment({
+  combinedText,
+  assignmentTitle,
+  assignmentSubject,
+  yearGroup,
+  quickUploadContext,
+  studentNotes,
+  imagePayloads,
+}: {
+  combinedText: string;
+  assignmentTitle: string;
+  assignmentSubject: string;
+  yearGroup: string | number | null | undefined;
+  quickUploadContext: QuickUploadMarkingContext;
+  studentNotes: string;
+  imagePayloads: Array<{ mimeType: string; base64: string }>;
+}): Promise<UniversalOpenAiAssessment | null> {
+  if (!OPENAI_API_KEY || (!combinedText.trim() && !imagePayloads.length)) {
+    return null;
+  }
+
+  const providedContextLines = [
+    `Student year group: ${yearGroup || "unknown"}`,
+    `Current subject label: ${assignmentSubject || "General"}`,
+    `Current task title: ${assignmentTitle || "Quick Upload: Student work"}`,
+    `Provided topic: ${quickUploadContext.topic || "none"}`,
+    `Provided exam board / framework: ${quickUploadContext.examBoard || "none"}`,
+    `Provided task / question: ${quickUploadContext.taskDescription || "none"}`,
+    `Provided maximum marks: ${quickUploadContext.maxMarks ?? "unknown"}`,
+    quickUploadContext.markScheme ? `Provided mark scheme:\n${quickUploadContext.markScheme}` : "Provided mark scheme: none",
+    quickUploadContext.levelDescriptors
+      ? `Provided level descriptors:\n${quickUploadContext.levelDescriptors}`
+      : "Provided level descriptors: none",
+    quickUploadContext.additionalContext
+      ? `Additional teacher context:\n${quickUploadContext.additionalContext}`
+      : "Additional teacher context: none",
+    studentNotes.trim() ? `Student note:\n${studentNotes.trim()}` : "Student note: none",
+    combinedText.trim()
+      ? `OCR text and notes:\n${combinedText}`
+      : "OCR text was empty or unreliable, so infer directly from the uploaded image.",
+  ];
+
+  const userContent: Array<Record<string, unknown>> = [
+    {
+      type: "input_text",
+      text: providedContextLines.join("\n\n"),
+    },
+  ];
+
+  imagePayloads.slice(0, 6).forEach((payload) => {
+    userContent.push({
+      type: "input_image",
+      image_url: `data:${payload.mimeType};base64,${payload.base64}`,
+    });
+  });
+
+  const response = await fetch("https://api.openai.com/v1/responses", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${OPENAI_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: OPENAI_MODEL,
+      input: [
+        {
+          role: "system",
+          content: [
+            {
+              type: "input_text",
+              text: [
+                "You are an expert teacher and examiner acting as a universal marker for uploaded student work.",
+                "The upload may be from any mainstream school subject and may or may not include the full question, mark scheme, or total marks.",
+                "Use supplied context when present. When context is missing, infer conservatively from the visible work and OCR text.",
+                "First read and transcribe the student's work from the images and OCR text.",
+                "Then mark it using the supplied mark scheme if available, otherwise use appropriate curriculum or exam expectations for the inferred subject and year group.",
+                "Keep marks evidence-led and conservative. Do not invent unseen content.",
+                "If the raw score or total marks cannot be justified, return null for score and/or max_marks, but still provide a percentage estimate if a sensible overall judgement is possible.",
+              ].join(" "),
+            },
+          ],
+        },
+        {
+          role: "user",
+          content: userContent,
+        },
+      ],
+      text: {
+        format: {
+          type: "json_schema",
+          name: "universal_work_marker",
+          strict: true,
+          schema: {
+            type: "object",
+            additionalProperties: false,
+            properties: {
+              inferred_subject: { type: "string" },
+              inferred_title: { type: "string" },
+              inferred_task: {
+                anyOf: [{ type: "string" }, { type: "null" }],
+              },
+              exam_board: {
+                anyOf: [{ type: "string" }, { type: "null" }],
+              },
+              transcription: { type: "string" },
+              score: {
+                anyOf: [{ type: "number", minimum: 0, maximum: 1000 }, { type: "null" }],
+              },
+              max_marks: {
+                anyOf: [{ type: "number", minimum: 0, maximum: 1000 }, { type: "null" }],
+              },
+              percentage: {
+                anyOf: [{ type: "number", minimum: 0, maximum: 100 }, { type: "null" }],
+              },
+              grade_equivalent: {
+                anyOf: [{ type: "string" }, { type: "null" }],
+              },
+              level: {
+                anyOf: [{ type: "string" }, { type: "null" }],
+              },
+              strengths: {
+                type: "array",
+                items: { type: "string" },
+                maxItems: 4,
+              },
+              improvements: {
+                type: "array",
+                items: { type: "string" },
+                maxItems: 4,
+              },
+              detailed_feedback: { type: "string" },
+              mark_commentary: { type: "string" },
+              next_steps: {
+                type: "array",
+                items: { type: "string" },
+                maxItems: 4,
+              },
+              exemplar_addition: {
+                anyOf: [{ type: "string" }, { type: "null" }],
+              },
+              confidence: { type: "number", minimum: 0, maximum: 100 },
+            },
+            required: [
+              "inferred_subject",
+              "inferred_title",
+              "inferred_task",
+              "exam_board",
+              "transcription",
+              "score",
+              "max_marks",
+              "percentage",
+              "grade_equivalent",
+              "level",
+              "strengths",
+              "improvements",
+              "detailed_feedback",
+              "mark_commentary",
+              "next_steps",
+              "exemplar_addition",
+              "confidence",
+            ],
+          },
+        },
+      },
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`OpenAI universal marking request failed with ${response.status}`);
+  }
+
+  const responseJson = await response.json();
+  const parsed = extractOpenAiJson(responseJson);
+  if (!parsed) {
+    return null;
+  }
+
+  return validateUniversalOpenAiAssessment(parsed);
 }
 
 function validateOpenAiDraft(payload: Record<string, unknown>): OpenAiDraft | null {
@@ -1139,7 +1437,7 @@ Deno.serve(async (req) => {
 
     const { data: assignment, error: asgErr } = await supabase
       .from("assignments")
-      .select("id,subject,title,description,automark_enabled,automark_keywords,automark_target_words,marking_mode")
+      .select(ASSIGNMENT_SELECT_FIELDS)
       .eq("id", submission.assignment_id)
       .single();
     if (asgErr || !assignment) throw new Error(asgErr?.message || "Assignment not found");
@@ -1194,13 +1492,24 @@ Deno.serve(async (req) => {
 
     const combined = [submission.notes || "", ...ocrTexts].filter(Boolean).join("\n\n");
     const isQuickUpload = /^quick upload:/i.test(String(assignment.title || ""));
+    const quickUploadContext = parseQuickUploadMarkingContext(assignment.marking_context);
+    const combinedForInference = [
+      combined,
+      quickUploadContext.taskDescription || "",
+      quickUploadContext.markScheme || "",
+      quickUploadContext.levelDescriptors || "",
+      quickUploadContext.additionalContext || "",
+    ]
+      .filter(Boolean)
+      .join("\n\n");
     const inferredMeta = inferQuickUploadMetadata({
-      combinedText: combined,
+      combinedText: combinedForInference || combined,
       existingSubject: assignment.subject,
       existingTitle: assignment.title,
       existingDescription: assignment.description,
       yearGroup: studentProfile?.year_group ?? null,
     });
+    const hasStudentSuppliedExamBoard = Boolean(quickUploadContext.examBoard);
 
     let workingAssignment = assignment;
     if (isQuickUpload) {
@@ -1222,13 +1531,16 @@ Deno.serve(async (req) => {
       if ((inferredMeta.targetWords || null) !== (assignment.automark_target_words || null)) {
         updates.automark_target_words = inferredMeta.targetWords;
       }
+      if (quickUploadContext.examBoard && quickUploadContext.examBoard !== assignment.exam_board) {
+        updates.exam_board = quickUploadContext.examBoard;
+      }
 
       if (Object.keys(updates).length) {
         const { data: updatedAssignment, error: assignmentUpdateErr } = await supabase
           .from("assignments")
           .update(updates)
           .eq("id", assignment.id)
-          .select("id,subject,title,description,automark_enabled,automark_keywords,automark_target_words,marking_mode")
+          .select(ASSIGNMENT_SELECT_FIELDS)
           .single();
 
         if (assignmentUpdateErr) throw new Error(assignmentUpdateErr.message);
@@ -1261,8 +1573,27 @@ Deno.serve(async (req) => {
         ? heuristicModeSpecific.marking_basis
         : null;
 
+      let universalAssessment: UniversalOpenAiAssessment | null = null;
+      if (isQuickUpload && OPENAI_API_KEY && (combined.trim() || imagePayloads.length)) {
+        try {
+          universalAssessment = await requestOpenAiUniversalAssessment({
+            combinedText: combined,
+            assignmentTitle: workingAssignment.title || "Quick Upload: Student work",
+            assignmentSubject: workingAssignment.subject || "General",
+            yearGroup: studentProfile?.year_group ?? null,
+            quickUploadContext,
+            studentNotes: submission.notes || "",
+            imagePayloads,
+          });
+        } catch (openAiError) {
+          fileErrors.push(
+            `[openai-universal] ${openAiError instanceof Error ? openAiError.message : "Universal marking failed"}`
+          );
+        }
+      }
+
       let openAiDraft: OpenAiDraft | null = null;
-      if (OPENAI_API_KEY && heuristicMarkingBasis !== "answer_key_match" && (combined.trim() || imagePayloads.length)) {
+      if (!universalAssessment && OPENAI_API_KEY && heuristicMarkingBasis !== "answer_key_match" && (combined.trim() || imagePayloads.length)) {
         try {
           openAiDraft = await requestOpenAiDraftAssessment({
             combinedText: combined,
@@ -1270,6 +1601,10 @@ Deno.serve(async (req) => {
               workingAssignment.subject || "",
               workingAssignment.title || "",
               workingAssignment.description || "",
+              quickUploadContext.taskDescription || "",
+              quickUploadContext.markScheme || "",
+              quickUploadContext.levelDescriptors || "",
+              quickUploadContext.additionalContext || "",
             ]
               .filter(Boolean)
               .join("\n"),
@@ -1286,7 +1621,7 @@ Deno.serve(async (req) => {
         }
       }
 
-      if (!combined.trim() && !openAiDraft) {
+      if (!combined.trim() && !openAiDraft && !universalAssessment) {
         fileErrors.push(
           OCR_PROVIDER === "none" && !OPENAI_API_KEY
             ? "No OCR provider or OpenAI image analysis is configured for automatic marking."
@@ -1294,7 +1629,46 @@ Deno.serve(async (req) => {
         );
       }
 
-      if (openAiDraft && isQuickUpload) {
+      if (universalAssessment && isQuickUpload) {
+        const universalAssignmentUpdates: Record<string, unknown> = {};
+        if (
+          !inferredMeta.hasStudentSuppliedSubject &&
+          universalAssessment.inferred_subject &&
+          universalAssessment.inferred_subject !== workingAssignment.subject &&
+          universalAssessment.inferred_subject !== "General"
+        ) {
+          universalAssignmentUpdates.subject = universalAssessment.inferred_subject;
+        }
+        if (
+          !inferredMeta.hasStudentSuppliedTitle &&
+          universalAssessment.inferred_title &&
+          universalAssessment.inferred_title !== workingAssignment.title
+        ) {
+          universalAssignmentUpdates.title = universalAssessment.inferred_title;
+        }
+        if (
+          !hasStudentSuppliedExamBoard &&
+          universalAssessment.exam_board &&
+          universalAssessment.exam_board !== workingAssignment.exam_board
+        ) {
+          universalAssignmentUpdates.exam_board = universalAssessment.exam_board;
+        }
+
+        if (Object.keys(universalAssignmentUpdates).length) {
+          const { data: updatedAssignment, error: universalAssignmentErr } = await supabase
+            .from("assignments")
+            .update(universalAssignmentUpdates)
+            .eq("id", assignment.id)
+            .select(ASSIGNMENT_SELECT_FIELDS)
+            .single();
+
+          if (universalAssignmentErr) {
+            fileErrors.push(`[assignment-update] ${universalAssignmentErr.message}`);
+          } else if (updatedAssignment) {
+            workingAssignment = updatedAssignment;
+          }
+        }
+      } else if (openAiDraft && isQuickUpload) {
         const openAiAssignmentUpdates: Record<string, unknown> = {};
         if (
           !inferredMeta.hasStudentSuppliedSubject &&
@@ -1323,7 +1697,7 @@ Deno.serve(async (req) => {
             .from("assignments")
             .update(openAiAssignmentUpdates)
             .eq("id", assignment.id)
-            .select("id,subject,title,description,automark_enabled,automark_keywords,automark_target_words,marking_mode")
+            .select(ASSIGNMENT_SELECT_FIELDS)
             .single();
 
           if (openAiAssignmentErr) {
@@ -1334,7 +1708,46 @@ Deno.serve(async (req) => {
         }
       }
 
-      const result = openAiDraft
+      const result = universalAssessment
+        ? {
+            mode: workingAssignment.marking_mode || "generic_completion_review",
+            confidence: universalAssessment.confidence,
+            score: universalAssessment.percentage,
+            grade:
+              universalAssessment.grade_equivalent ||
+              universalAssessment.level ||
+              (universalAssessment.percentage === null ? null : gradeFromPercent(universalAssessment.percentage)),
+            feedback: universalAssessment.detailed_feedback,
+            details: [
+              `Why this mark was awarded: ${universalAssessment.mark_commentary}`,
+              ...universalAssessment.strengths.map((item) => `Strength: ${item}`),
+              ...universalAssessment.improvements.map((item) => `Improve: ${item}`),
+              ...universalAssessment.next_steps.map((item) => `Next: ${item}`),
+            ].slice(0, 8),
+            question_breakdown: [] as QuestionBreakdownItem[],
+            mode_specific: {
+              draft_source: "openai",
+              model: OPENAI_MODEL,
+              marking_strategy: "universal_quick_upload",
+              raw_score: universalAssessment.score,
+              max_marks: universalAssessment.max_marks,
+              transcription: universalAssessment.transcription,
+              inferred_task: universalAssessment.inferred_task,
+              exemplar_addition: universalAssessment.exemplar_addition,
+              strengths: universalAssessment.strengths,
+              issues: universalAssessment.improvements,
+              improvements: universalAssessment.improvements,
+              next_steps: universalAssessment.next_steps,
+              heuristic_summary: heuristicResult.feedback,
+              context_used: {
+                has_task_description: Boolean(quickUploadContext.taskDescription),
+                has_mark_scheme: Boolean(quickUploadContext.markScheme),
+                has_level_descriptors: Boolean(quickUploadContext.levelDescriptors),
+                has_max_marks: quickUploadContext.maxMarks !== null,
+              },
+            },
+          }
+        : openAiDraft
         ? {
             mode: workingAssignment.marking_mode || openAiDraft.suggested_marking_mode,
             confidence: openAiDraft.confidence,
@@ -1378,28 +1791,59 @@ Deno.serve(async (req) => {
       const finalTitleInferred =
         inferredMeta.titleInferred ||
         (!inferredMeta.hasStudentSuppliedTitle && workingAssignment.title !== assignment.title);
+      const finalExamBoardInferred =
+        !hasStudentSuppliedExamBoard &&
+        Boolean(workingAssignment.exam_board) &&
+        workingAssignment.exam_board !== assignment.exam_board;
       autoResult = {
         mode: result.mode,
         confidence: result.confidence,
-        summary: result.feedback,
+        summary: universalAssessment ? universalAssessment.mark_commentary : result.feedback,
         details: result.details,
         question_breakdown: result.question_breakdown || [],
         mode_specific: result.mode_specific || null,
+        transcription: universalAssessment?.transcription || null,
+        score: universalAssessment?.score ?? null,
+        max_marks: universalAssessment?.max_marks ?? null,
+        percentage: universalAssessment?.percentage ?? null,
+        grade_equivalent: universalAssessment?.grade_equivalent || null,
+        level: universalAssessment?.level || null,
+        strengths: universalAssessment?.strengths || [],
+        improvements: universalAssessment?.improvements || [],
+        detailed_feedback: universalAssessment?.detailed_feedback || null,
+        mark_commentary: universalAssessment?.mark_commentary || null,
+        next_steps: universalAssessment?.next_steps || [],
+        exemplar_addition: universalAssessment?.exemplar_addition || null,
+        inferred_context: universalAssessment
+          ? {
+              subject: universalAssessment.inferred_subject,
+              task: universalAssessment.inferred_task,
+              exam_board: universalAssessment.exam_board,
+            }
+          : null,
         inferred_assignment: isQuickUpload
           ? {
               subject: workingAssignment.subject,
               title: workingAssignment.title,
+              exam_board: workingAssignment.exam_board,
               marking_mode: workingAssignment.marking_mode,
               subject_inferred: finalSubjectInferred,
               title_inferred: finalTitleInferred,
+              exam_board_inferred: finalExamBoardInferred,
             }
           : null,
       };
-      if (fileErrors.length) {
-        autoFeedback = `${autoFeedback} · OCR warnings: ${fileErrors.join("; ")}`;
-      }
     } else if (fileErrors.length) {
       autoFeedback = `OCR warnings: ${fileErrors.join("; ")}`;
+    }
+
+    if (fileErrors.length) {
+      autoFeedback = autoFeedback
+        ? `${autoFeedback}\n\nOCR warnings: ${fileErrors.join("; ")}`
+        : `OCR warnings: ${fileErrors.join("; ")}`;
+      if (autoResult) {
+        autoResult.warnings = fileErrors;
+      }
     }
 
     const { error: updateErr } = await supabase

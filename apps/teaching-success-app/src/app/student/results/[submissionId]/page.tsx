@@ -20,6 +20,14 @@ function asStringArray(value: unknown) {
   return value.filter((item): item is string => typeof item === "string" && item.trim().length > 0);
 }
 
+function asNullableString(value: unknown) {
+  return typeof value === "string" && value.trim().length > 0 ? value.trim() : null;
+}
+
+function asNullableNumber(value: unknown) {
+  return typeof value === "number" && Number.isFinite(value) ? Number(value) : null;
+}
+
 function scoreTone(mark: number | null) {
   if (mark === null) return "amber";
   if (mark >= 80) return "green";
@@ -48,10 +56,21 @@ export default async function StudentResultsPage({
       ? (autoResult.mode_specific as Record<string, unknown>)
       : {};
   const details = asStringArray(autoResult.details);
+  const strengths = asStringArray(autoResult.strengths);
+  const improvements = asStringArray(autoResult.improvements);
   const nextSteps = asStringArray(modeSpecific.next_steps);
+  const universalNextSteps = asStringArray(autoResult.next_steps);
+  const warnings = asStringArray(autoResult.warnings);
   const questionBreakdown = Array.isArray(autoResult.question_breakdown)
     ? (autoResult.question_breakdown as QuestionBreakdown[])
     : [];
+  const rawScore = asNullableNumber(autoResult.score);
+  const maxMarks = asNullableNumber(autoResult.max_marks);
+  const transcription = asNullableString(autoResult.transcription) || asNullableString(modeSpecific.transcription);
+  const level = asNullableString(autoResult.level);
+  const detailedFeedback = asNullableString(autoResult.detailed_feedback);
+  const markCommentary = asNullableString(autoResult.mark_commentary);
+  const exemplarAddition = asNullableString(autoResult.exemplar_addition) || asNullableString(modeSpecific.exemplar_addition);
   const score =
     submission.mark === null || submission.mark === undefined
       ? submission.auto_mark === null || submission.auto_mark === undefined
@@ -67,6 +86,7 @@ export default async function StudentResultsPage({
   const summary =
     submission.tutor_feedback ||
     submission.auto_feedback ||
+    detailedFeedback ||
     (typeof autoResult.summary === "string" ? autoResult.summary : "") ||
     "No feedback has been generated yet.";
   const needsClearerPhoto =
@@ -122,6 +142,7 @@ export default async function StudentResultsPage({
               <p className="mt-2">
                 {submission.submission_files?.length || 0} photo{submission.submission_files?.length === 1 ? "" : "s"} uploaded
                 {confidence !== null ? ` • ${confidence}% AI confidence` : ""}
+                {rawScore !== null && maxMarks !== null ? ` • ${rawScore}/${maxMarks} raw marks` : ""}
               </p>
             </div>
             {submission.tutor_feedback && submission.tutor_feedback !== submission.auto_feedback ? (
@@ -147,29 +168,96 @@ export default async function StudentResultsPage({
               <div className="rounded-[24px] border border-brand-line bg-brand-surface p-4 text-brand-ink">
                 Your submission is stored and the result will appear here as soon as the OCR function finishes.
               </div>
-            ) : details.length ? (
-              <div className="rounded-[24px] border border-brand-green/18 bg-brand-green/8 p-4">
-                <p className="font-semibold text-brand-ink">Feedback detail</p>
-                <ul className="mt-2 grid gap-2">
-                  {details.map((detail) => (
-                    <li key={detail}>{detail}</li>
-                  ))}
-                </ul>
-              </div>
             ) : (
-              <div className="rounded-[24px] border border-brand-green/18 bg-brand-green/8 p-4 text-brand-ink">
-                {summary}
-              </div>
+              <>
+                {(rawScore !== null && maxMarks !== null) || grade || level ? (
+                  <div className="rounded-[24px] border border-brand-line bg-brand-surface p-4 text-brand-ink">
+                    <p className="font-semibold">Mark overview</p>
+                    <p className="mt-2">
+                      {rawScore !== null && maxMarks !== null ? `${rawScore}/${maxMarks}` : "Raw score unavailable"}
+                      {score !== null ? ` • ${score}%` : ""}
+                      {grade ? ` • ${grade}` : ""}
+                      {level ? ` • ${level}` : ""}
+                    </p>
+                  </div>
+                ) : null}
+                {markCommentary ? (
+                  <div className="rounded-[24px] border border-brand-blue/20 bg-brand-blue/10 p-4 text-brand-ink">
+                    <p className="font-semibold">Why this mark was awarded</p>
+                    <p className="mt-2">{markCommentary}</p>
+                  </div>
+                ) : null}
+                <div className="rounded-[24px] border border-brand-green/18 bg-brand-green/8 p-4 text-brand-ink">
+                  <p className="font-semibold">Feedback</p>
+                  <p className="mt-2">{detailedFeedback || summary}</p>
+                </div>
+                {strengths.length || improvements.length ? (
+                  <div className="grid gap-4 lg:grid-cols-2">
+                    {strengths.length ? (
+                      <div className="rounded-[24px] border border-brand-green/18 bg-brand-green/8 p-4 text-brand-ink">
+                        <p className="font-semibold">Strengths</p>
+                        <ul className="mt-2 grid gap-2">
+                          {strengths.map((item) => (
+                            <li key={item}>{item}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    ) : null}
+                    {improvements.length ? (
+                      <div className="rounded-[24px] border border-brand-amber/18 bg-brand-amber/8 p-4 text-brand-ink">
+                        <p className="font-semibold">To improve</p>
+                        <ul className="mt-2 grid gap-2">
+                          {improvements.map((item) => (
+                            <li key={item}>{item}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    ) : null}
+                  </div>
+                ) : null}
+                {details.length ? (
+                  <div className="rounded-[24px] border border-brand-line bg-white p-4 text-brand-ink">
+                    <p className="font-semibold">Marking detail</p>
+                    <ul className="mt-2 grid gap-2">
+                      {details.map((detail) => (
+                        <li key={detail}>{detail}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+                {warnings.length ? (
+                  <div className="rounded-[24px] border border-brand-red/20 bg-brand-red/10 p-4 text-brand-ink">
+                    <p className="font-semibold">OCR warnings</p>
+                    <ul className="mt-2 grid gap-2">
+                      {warnings.map((warning) => (
+                        <li key={warning}>{warning}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+              </>
             )}
-            {nextSteps.length ? (
+            {(universalNextSteps.length || nextSteps.length) && !processing ? (
               <div className="rounded-[24px] border border-brand-amber/18 bg-brand-amber/8 p-4">
                 <p className="font-semibold text-brand-ink">Next steps</p>
                 <ul className="mt-2 grid gap-2">
-                  {nextSteps.map((step) => (
+                  {(universalNextSteps.length ? universalNextSteps : nextSteps).map((step) => (
                     <li key={step}>{step}</li>
                   ))}
                 </ul>
               </div>
+            ) : null}
+            {exemplarAddition && !processing ? (
+              <div className="rounded-[24px] border border-brand-blue/20 bg-brand-blue/10 p-4 text-brand-ink">
+                <p className="font-semibold">To push this higher</p>
+                <p className="mt-2">{exemplarAddition}</p>
+              </div>
+            ) : null}
+            {transcription && !processing ? (
+              <details className="rounded-[24px] border border-brand-line bg-white p-4 text-brand-ink">
+                <summary className="cursor-pointer font-semibold">View transcription</summary>
+                <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-brand-muted">{transcription}</p>
+              </details>
             ) : null}
             <div className="flex flex-wrap gap-3">
               <Link href="/student/practice" className={buttonVariants()}>

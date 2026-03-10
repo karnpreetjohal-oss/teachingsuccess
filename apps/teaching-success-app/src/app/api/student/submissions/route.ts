@@ -26,6 +26,12 @@ export async function POST(request: Request) {
     const topic = String(formData.get("topic") || "").trim();
     const title = String(formData.get("title") || "").trim();
     const markingMode = String(formData.get("markingMode") || "").trim();
+    const examBoard = String(formData.get("examBoard") || "").trim();
+    const taskDescription = String(formData.get("taskDescription") || "").trim();
+    const maxMarks = String(formData.get("maxMarks") || "").trim();
+    const markScheme = String(formData.get("markScheme") || "").trim();
+    const levelDescriptors = String(formData.get("levelDescriptors") || "").trim();
+    const additionalContext = String(formData.get("additionalContext") || "").trim();
     const files = formData
       .getAll("photos")
       .filter((value): value is File => value instanceof File && value.size > 0);
@@ -39,7 +45,13 @@ export async function POST(request: Request) {
         topic,
         title,
         notes,
-        markingMode
+        markingMode,
+        examBoard,
+        taskDescription,
+        maxMarks,
+        markScheme,
+        levelDescriptors,
+        additionalContext
       });
       assignmentId = created.id;
       assignmentTitle = created.title;

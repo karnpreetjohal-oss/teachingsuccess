@@ -13,6 +13,22 @@ type QuickUploadInput = {
   title?: string;
   notes?: string;
   markingMode?: string;
+  examBoard?: string;
+  taskDescription?: string;
+  maxMarks?: string;
+  markScheme?: string;
+  levelDescriptors?: string;
+  additionalContext?: string;
+};
+
+type QuickUploadMarkingContext = {
+  topic?: string;
+  task_description?: string;
+  max_marks?: number;
+  mark_scheme?: string;
+  level_descriptors?: string;
+  additional_context?: string;
+  exam_board?: string;
 };
 
 function inferExtension(file: File) {
@@ -21,6 +37,20 @@ function inferExtension(file: File) {
   if (name.endsWith(".webp")) return "webp";
   if (name.endsWith(".heic")) return "heic";
   return "jpg";
+}
+
+function parseOptionalNonNegativeNumber(value: string | null | undefined, label: string) {
+  const trimmed = String(value || "").trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  const parsed = Number(trimmed);
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    throw new Error(`${label} must be a valid non-negative number.`);
+  }
+
+  return parsed;
 }
 
 export async function resolveTutorForQuickUpload(supabase: SupabaseClient, studentId: string) {
@@ -152,6 +182,12 @@ export async function createQuickUploadAssignment(
   const dateLabel = now.toLocaleDateString("en-GB");
   const subject = input.subject?.trim() || "General";
   const topic = input.topic?.trim() || "";
+  const examBoard = input.examBoard?.trim() || null;
+  const taskDescription = input.taskDescription?.trim() || "";
+  const maxMarks = parseOptionalNonNegativeNumber(input.maxMarks, "Maximum marks");
+  const markScheme = input.markScheme?.trim() || "";
+  const levelDescriptors = input.levelDescriptors?.trim() || "";
+  const additionalContext = input.additionalContext?.trim() || "";
   const studentYearGroup = await getStudentYearGroup(supabase, studentId);
 
   const title = input.title?.trim()
@@ -169,6 +205,17 @@ export async function createQuickUploadAssignment(
     .filter(Boolean)
     .join("\n");
 
+  const markingContext: QuickUploadMarkingContext = {
+    ...(topic ? { topic } : {}),
+    ...(taskDescription ? { task_description: taskDescription } : {}),
+    ...(maxMarks !== null ? { max_marks: maxMarks } : {}),
+    ...(markScheme ? { mark_scheme: markScheme } : {}),
+    ...(levelDescriptors ? { level_descriptors: levelDescriptors } : {}),
+    ...(additionalContext ? { additional_context: additionalContext } : {}),
+    ...(examBoard ? { exam_board: examBoard } : {})
+  };
+  const hasMarkingContext = Object.keys(markingContext).length > 0;
+
   const { data, error } = await supabase
     .from("assignments")
     .insert({
@@ -179,7 +226,9 @@ export async function createQuickUploadAssignment(
       description: description || null,
       status: "submitted",
       due_date: null,
+      exam_board: examBoard,
       marking_mode: input.markingMode || getDefaultMarkingMode(subject, studentYearGroup),
+      marking_context: hasMarkingContext ? markingContext : null,
       automark_enabled: true
     })
     .select("id,title")
