@@ -50,6 +50,18 @@ function parseYearGroupInt(value: string | number | null | undefined): number | 
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+function bytesToBase64(bytes: Uint8Array): string {
+  const chunkSize = 0x8000;
+  let binary = "";
+
+  for (let index = 0; index < bytes.length; index += chunkSize) {
+    const chunk = bytes.subarray(index, index + chunkSize);
+    binary += String.fromCharCode(...chunk);
+  }
+
+  return btoa(binary);
+}
+
 function normalizeDetectedSubject(value: string | null | undefined) {
   const subject = String(value || "").trim().toLowerCase();
   if (!subject) return "general";
@@ -1331,7 +1343,7 @@ async function ocrWithOcrSpace(imageBytes: Uint8Array, mimeType: string): Promis
     throw new Error("OCR.Space API key is missing.");
   }
 
-  const b64 = btoa(String.fromCharCode(...imageBytes));
+  const b64 = bytesToBase64(imageBytes);
   const body = new FormData();
   body.append("base64Image", `data:${mimeType};base64,${b64}`);
   body.append("isOverlayRequired", "false");
@@ -1356,7 +1368,7 @@ async function ocrWithGoogle(imageBytes: Uint8Array): Promise<string> {
     throw new Error("Google Vision API key is missing.");
   }
 
-  const b64 = btoa(String.fromCharCode(...imageBytes));
+  const b64 = bytesToBase64(imageBytes);
   const body = {
     requests: [{ image: { content: b64 }, features: [{ type: "TEXT_DETECTION" }] }],
   };
@@ -1476,7 +1488,7 @@ Deno.serve(async (req) => {
         const imageBytes = new Uint8Array(await blob.arrayBuffer());
         imagePayloads.push({
           mimeType,
-          base64: btoa(String.fromCharCode(...imageBytes)),
+          base64: bytesToBase64(imageBytes),
         });
         const text = await runOCR(imageBytes, mimeType);
         ocrTexts.push(text || "");
