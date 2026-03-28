@@ -3,6 +3,5 @@ Allow: /
 Disallow: /portal.html
 Disallow: /portal-tutor.html
 Disallow: /portal-student.html
-Disallow: /resources.html
 
 Sitemap: https://www.teachingsuccess.co.uk/sitemap.xml

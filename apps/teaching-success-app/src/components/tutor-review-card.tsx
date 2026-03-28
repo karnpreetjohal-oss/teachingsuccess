@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
+import { AiFeedbackPanel } from "@/components/ai-feedback-panel";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -130,6 +131,14 @@ export function TutorReviewCard({
           </div>
 
           <div className="grid gap-3 rounded-2xl border border-brand-line bg-white px-4 py-4">
+            <AiFeedbackPanel
+              submissionId={submissionId}
+              onApprove={(comment, nextGrade) => {
+                setFeedback(comment);
+                setGrade(nextGrade);
+                setStatusMessage("AI suggestion copied into the final feedback fields.");
+              }}
+            />
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="grid gap-2">
                 <label className="text-sm font-semibold text-brand-ink" htmlFor={`mark-${submissionId}`}>
