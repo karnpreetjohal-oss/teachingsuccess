@@ -1,0 +1,9 @@
+RewriteEngine On
+
+# Canonical home URL
+Redirect 301 /index.html /
+
+# Redirect retired pages to their replacement URLs
+Redirect 301 /blog/tutor-near-me-smethwick.html /blog/tutor-near-me-smethwick-birmingham.html
+Redirect 301 /blog/tutoring-bearwood-guide.html /blog/private-tutor-bearwood.html
+Redirect 301 /blog/tutoring-oldbury-guide.html /blog/private-tutor-oldbury.html
