@@ -477,85 +477,46 @@ body.modal-open{overflow:hidden}
     padding-left: 1rem;
     padding-right: 1rem;
   }
+  .navbar {
+    padding-top: .9rem;
+    padding-bottom: .9rem;
+    gap: .75rem;
+  }
+  .nlogo {
+    min-width: 0;
+  }
   .nlogo-txt {
-    font-size: 1.08rem;
-  }
-  .nphone {
-    font-size: .82rem;
-  }
-  .nlinks a,
-  .nlinks-side a {
-    font-size: .8rem;
-  }
-  .hero {
-    min-height: auto;
-    padding-top: 1rem;
-    padding-bottom: 1rem;
-  }
-  .hero-l {
-    align-items: stretch;
-    justify-content: flex-start;
-  }
-  .hero-glass {
-    max-width: 100%;
-    margin: 0 0 .75rem;
-    padding: .9rem 1rem;
-  }
-  .hero-search-box {
-    max-width: 100%;
-    padding: .48rem .72rem;
-  }
-  .hero-search-box h1 {
-    font-size: .74rem;
-    letter-spacing: .06em;
-  }
-  .hero-stack {
-    position: relative;
-    top: auto;
-    left: auto;
-    max-width: 100%;
-    gap: .45rem;
-  }
-  .hero-manifesto {
-    font-size: 2rem;
-    line-height: 1.1;
-  }
-  .hero-caption {
-    font-size: .86rem;
-    width: 100%;
-    justify-self: stretch;
-    padding: .55rem .75rem;
-  }
-  .hero-price-top {
-    font-size: .95rem;
-    padding: .42rem .85rem;
-    white-space: normal;
-  }
-  .hero-cta-row {
-    position: relative;
-    bottom: auto;
-    left: auto;
-    right: auto;
-    transform: none;
-    margin: .75rem 0 0;
-    flex-wrap: wrap;
-    justify-content: center;
-    white-space: normal;
-    max-width: 100%;
-  }
-  .hero-cta-row .btn {
-    width: 100%;
-    justify-content: center;
-  }
-  .ac-top h3 {
     font-size: 1rem;
+    line-height: 1.05;
   }
-  .aamt {
-    font-size: 1.28rem;
+  .nnav {
+    order: 3;
+    width: 100%;
+    align-items: stretch;
   }
-}
-
-@media (max-width: 480px) {
+  .nlinks {
+    width: 100%;
+    padding: 0;
+    gap: .55rem;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .nlinks::-webkit-scrollbar {
+    display: none;
+  }
+  .nlinks a {
+    flex: 0 0 auto;
+    min-height: 38px;
+    padding: .58rem .9rem;
+    border-radius: 999px;
+    font-size: .78rem;
+    background: rgba(255,255,255,.08);
+  }
   .nacts {
     width: 100%;
     margin-left: 0;
@@ -564,22 +525,185 @@ body.modal-open{overflow:hidden}
     display: inline-flex;
     width: 100%;
     justify-content: center;
-    padding: .35rem .6rem;
-    border: 1px solid rgba(255,255,255,.22);
-    border-radius: 8px;
-    background: rgba(255,255,255,.08);
+    padding: .72rem .85rem;
+    border: 1px solid rgba(255,255,255,.18);
+    border-radius: 14px;
+    background: rgba(255,255,255,.06);
+    font-size: .98rem;
+  }
+  .hero {
+    display: block;
+    min-height: auto;
+    padding: 0 0 1.25rem;
+  }
+  .hero::after {
+    display: none;
+  }
+  .hero-bg-img {
+    position: relative;
+    height: 260px;
+    object-position: center 24%;
+  }
+  .hero-l {
+    margin-top: -2.85rem;
+    padding: 0 1rem;
+    align-items: stretch;
+    justify-content: flex-end;
+  }
+  .hero-stack {
+    position: relative;
+    top: auto;
+    left: auto;
+    max-width: 100%;
+    gap: .7rem;
+    padding: 1rem;
+    border-radius: 24px;
+    background: linear-gradient(180deg, rgba(30,42,61,.95), rgba(44,58,82,.95));
+    border: 1px solid rgba(255,255,255,.08);
+    box-shadow: 0 18px 40px rgba(10,16,30,.24);
+  }
+  .hero-search-box {
+    width: 100%;
+    max-width: 100%;
+    padding: 0;
+    border: none;
+    background: transparent;
+    box-shadow: none;
   }
   .hero-search-box h1 {
-    font-size: .7rem;
+    font-family: 'Fraunces', serif;
+    font-size: 1.45rem;
+    font-weight: 900;
+    letter-spacing: -.02em;
+    line-height: 1.12;
+    text-transform: none;
+  }
+  .hero-glass {
+    width: auto;
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+    border: none;
+    background: transparent;
+    box-shadow: none;
   }
   .hero-manifesto {
-    font-size: 1.72rem;
+    font-size: 1.78rem;
+    line-height: .96;
   }
   .hero-caption {
-    font-size: .81rem;
+    width: 100%;
+    padding: 0;
+    border: none;
+    background: transparent;
+    box-shadow: none;
+    color: rgba(255,255,255,.76);
+    font-size: .9rem;
+    line-height: 1.45;
+  }
+  .hero-price-top {
+    align-self: flex-start;
+    font-size: .84rem;
+    padding: .38rem .72rem;
+    white-space: nowrap;
+    background: rgba(245,200,66,.14);
+    border-color: rgba(245,200,66,.24);
+  }
+  .hero-cta-row {
+    position: static;
+    margin: .15rem 0 0;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    white-space: normal;
+    max-width: 100%;
+    gap: .65rem;
+  }
+  .hero-cta-row .btn {
+    width: 100%;
+    justify-content: center;
+    min-height: 48px;
+    border-radius: 14px;
+  }
+  .strip {
+    padding: .78rem 1rem;
+    gap: 1rem;
+    scroll-snap-type: x proximity;
+  }
+  .si2 {
+    scroll-snap-align: start;
+    font-size: .78rem;
+  }
+  .section {
+    padding-top: 3.5rem;
+    padding-bottom: 3.5rem;
+  }
+  .ac-top h3 {
+    font-size: 1rem;
+  }
+  .aamt {
+    font-size: 1.28rem;
+  }
+  .wa-box {
+    left: auto;
+    right: .75rem;
+    bottom: .85rem;
+    width: min(320px, calc(100vw - 1.5rem));
+  }
+  .wa-box.collapsed {
+    width: auto;
+  }
+  .wa-box.collapsed .wa-toggle {
+    font-size: .78rem;
+    padding: .5rem .82rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .navbar {
+    padding-top: .8rem;
+    padding-bottom: .8rem;
+  }
+  .nlogo-mark {
+    width: 32px;
+    height: 32px;
+    font-size: .92rem;
+  }
+  .nlogo-txt {
+    font-size: .95rem;
+  }
+  .nphone {
+    font-size: .92rem;
+    padding: .68rem .78rem;
+  }
+  .hero-bg-img {
+    height: 228px;
+    object-position: center 20%;
+  }
+  .hero-l {
+    margin-top: -2.35rem;
+  }
+  .hero-stack {
+    padding: .95rem;
+    border-radius: 20px;
+  }
+  .hero-search-box h1 {
+    font-size: 1.28rem;
+  }
+  .hero-manifesto {
+    font-size: 1.54rem;
+  }
+  .hero-caption {
+    display: none;
+  }
+  .hero-price-top {
+    font-size: .8rem;
+  }
+  .hero-cta-row {
+    gap: .55rem;
   }
   .sec-h2 {
-    font-size: 1.9rem;
+    font-size: 1.95rem;
   }
   .footer-links {
     width: 100%;
