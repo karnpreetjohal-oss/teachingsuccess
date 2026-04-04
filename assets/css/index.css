@@ -26,7 +26,7 @@ body.modal-open{overflow:hidden}
 .book-submit-btn{width:100%;justify-content:center;padding:.88rem}
 
 /* NAV */
-.navbar{display:flex;align-items:center;justify-content:space-between;padding:1.2rem 4rem;background:var(--ink);position:sticky;top:0;z-index:200}
+.navbar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:1.2rem 4rem;background:var(--ink);position:sticky;top:0;z-index:200;gap:.5rem}
 .nlogo{display:flex;align-items:center;gap:.6rem}
 .nlogo-mark{width:36px;height:36px;background:var(--gold);border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-size:1rem;font-weight:900;color:var(--ink)}
 .nlogo-txt{font-family:'Fraunces',serif;font-size:1.3rem;font-weight:900;color:white}
@@ -72,6 +72,13 @@ body.modal-open{overflow:hidden}
 .nlinks-side a:hover{color:white}
 .nacts{display:flex;gap:.7rem;align-items:center}
 .nphone{color:var(--gold);font-weight:700;font-size:.88rem;text-decoration:none}
+
+/* HAMBURGER — hidden on desktop */
+.nav-hamburger{display:none;flex-direction:column;justify-content:center;gap:5px;width:40px;height:40px;padding:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);border-radius:8px;cursor:pointer;flex-shrink:0}
+.nav-hamburger span{display:block;height:2px;border-radius:2px;background:white;transition:transform .25s,opacity .2s}
+.navbar.nav-open .nav-hamburger span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+.navbar.nav-open .nav-hamburger span:nth-child(2){opacity:0}
+.navbar.nav-open .nav-hamburger span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
 
 /* WHATSAPP DIRECT BOX */
 .wa-box{position:fixed;right:1rem;bottom:1.1rem;z-index:400;background:rgba(30,42,61,.96);border:1px solid rgba(255,255,255,.2);border-radius:12px;padding:.8rem;width:320px;box-shadow:0 14px 36px rgba(0,0,0,.28)}
@@ -270,11 +277,37 @@ body.modal-open{overflow:hidden}
   .faq-grid{grid-template-columns:1fr}
   .tgrid,.ttgrid{grid-template-columns:1fr}
 }
+
+/* Mobile nav: hamburger takes over below 768px */
 @media(max-width:768px){
-  .navbar{flex-wrap:wrap;row-gap:.8rem}
-  .nnav{order:3;width:100%;justify-content:space-between}
-  .nlinks{gap:.8rem;flex-wrap:wrap}
-  .nlinks-side{border-left:none;padding-left:0;gap:.8rem}
+  .navbar{padding:.85rem 1rem;row-gap:0}
+  .nav-hamburger{display:flex}
+
+  /* Hide nav links by default; show when .nav-open is on the navbar */
+  .nnav{
+    display:none;
+    order:3;
+    width:100%;
+    padding:.6rem 0 .4rem;
+    border-top:1px solid rgba(255,255,255,.1);
+    margin-top:.5rem;
+  }
+  .navbar.nav-open .nnav{display:flex;flex-direction:column;gap:.4rem}
+  .nlinks{
+    width:100%;
+    flex-direction:column;
+    gap:.35rem;
+    padding:.35rem;
+    border-radius:12px;
+  }
+  .nlinks a{
+    width:100%;
+    min-height:44px;
+    justify-content:flex-start;
+    padding:.65rem .9rem;
+    font-size:.92rem;
+  }
+  .nlinks-side{border-left:none;padding-left:0;gap:.5rem;flex-wrap:wrap;width:100%}
   .wa-box{left:1rem;right:1rem;width:auto}
   .hero h1{font-size:2.4rem}
   .proof-wrap{grid-template-columns:1fr}
@@ -427,31 +460,6 @@ body.modal-open{overflow:hidden}
 }
 
 @media (max-width: 980px) {
-  .navbar {
-    flex-wrap: wrap;
-    row-gap: .75rem;
-    align-items: flex-start;
-  }
-  .nnav {
-    order: 3;
-    width: 100%;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: .55rem;
-  }
-  .nlinks {
-    width: 100%;
-    flex-wrap: wrap;
-    gap: .6rem;
-    padding: .35rem;
-  }
-  .nlinks-side {
-    width: 100%;
-    border-left: 0;
-    padding-left: 0;
-    flex-wrap: wrap;
-    gap: .5rem .9rem;
-  }
   .nacts {
     margin-left: auto;
   }
@@ -469,7 +477,6 @@ body.modal-open{overflow:hidden}
 }
 
 @media (max-width: 768px) {
-  .navbar,
   .section,
   .hiw,
   .ctaband,
@@ -479,13 +486,6 @@ body.modal-open{overflow:hidden}
   }
   .nlogo-txt {
     font-size: 1.08rem;
-  }
-  .nphone {
-    font-size: .82rem;
-  }
-  .nlinks a,
-  .nlinks-side a {
-    font-size: .8rem;
   }
   .hero {
     min-height: auto;
@@ -556,18 +556,8 @@ body.modal-open{overflow:hidden}
 }
 
 @media (max-width: 480px) {
-  .nacts {
-    width: 100%;
-    margin-left: 0;
-  }
   .nphone {
-    display: inline-flex;
-    width: 100%;
-    justify-content: center;
-    padding: .35rem .6rem;
-    border: 1px solid rgba(255,255,255,.22);
-    border-radius: 8px;
-    background: rgba(255,255,255,.08);
+    font-size: .82rem;
   }
   .hero-search-box h1 {
     font-size: .7rem;
