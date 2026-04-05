@@ -79,8 +79,20 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://www.teachingsuccess.co.uk/blog/11-plus-mock-exams-birmingham.html</loc>
+    <lastmod>2026-04-04</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.teachingsuccess.co.uk/blog/11-plus-mock-test-smethwick.html</loc>
+    <lastmod>2026-04-04</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://www.teachingsuccess.co.uk/blog/11-plus-primary-smethwick.html</loc>
-    <lastmod>2026-04-02</lastmod>
+    <lastmod>2026-04-04</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -573,6 +585,54 @@
   <url>
     <loc>https://www.teachingsuccess.co.uk/blog/mock-exam-preparation-smethwick.html</loc>
     <lastmod>2026-04-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.teachingsuccess.co.uk/blog/11-plus-maths-tutor-smethwick.html</loc>
+    <lastmod>2026-04-04</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.teachingsuccess.co.uk/blog/11-plus-english-tutor-smethwick.html</loc>
+    <lastmod>2026-04-04</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.teachingsuccess.co.uk/blog/11-plus-tutor-birmingham.html</loc>
+    <lastmod>2026-04-04</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.teachingsuccess.co.uk/blog/11-plus-tutor-oldbury.html</loc>
+    <lastmod>2026-04-04</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.teachingsuccess.co.uk/blog/11-plus-tutor-west-bromwich.html</loc>
+    <lastmod>2026-04-04</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.teachingsuccess.co.uk/blog/11-plus-tutor-bearwood.html</loc>
+    <lastmod>2026-04-04</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.teachingsuccess.co.uk/blog/king-edwards-11-plus-preparation.html</loc>
+    <lastmod>2026-04-04</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.teachingsuccess.co.uk/blog/11-plus-year-5-smethwick.html</loc>
+    <lastmod>2026-04-04</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
