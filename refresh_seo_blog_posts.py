@@ -15,13 +15,14 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 BLOG_DIR = ROOT / "blog"
 SITEMAP_PATH = ROOT / "sitemap.xml"
-DATE = "2026-04-17"
+DATE = "2026-05-02"
 SKIP = {
     "english-tutor-smethwick",
     "tutor-near-me-smethwick-birmingham",
     "smethwick-tuition-centre",
-    "private-tutor-willenhall",
-    "private-tutor-bloxwich",
+    "maths-tutor-smethwick",
+    "11-plus-primary-smethwick",
+    "a-level-chemistry-tutor-birmingham",
 }
 
 
@@ -1052,6 +1053,248 @@ SPECIAL_YEAR_SLUGS = {
         ],
     },
 }
+
+
+LOCATION_META.update(
+    {
+        "bloxwich": {
+            "focus": "GCSE Maths, GCSE Science and KS3 English through the Walsall tutor route rather than a generic marketplace listing",
+            "journey": "Bloxwich families usually need a practical Walsall-side option where weekly lessons can stay consistent without travelling across Birmingham.",
+            "format": "In-person can work well through the Walsall route, while online is useful when school, clubs and family transport make the week tighter.",
+            "school_context": "The search often starts when Year 7 to Year 9 gaps begin to show up before GCSE choices and mock pressure arrive.",
+            "links": [
+                ("/blog/private-tutor-walsall.html", "Private tutor in Walsall"),
+                ("/blog/private-tutor-willenhall.html", "Tutor in Willenhall"),
+                ("/blog/gcse-maths-walsall.html", "GCSE Maths tutor in Walsall"),
+                ("/blog/gcse-science-walsall.html", "GCSE Science tutor in Walsall"),
+            ],
+        },
+        "manchester": {
+            "focus": "GCSE Maths and GCSE Science support through Miss Kay's Manchester route",
+            "journey": "Manchester families are usually looking for a local teacher-led route rather than support based around the Smethwick centre.",
+            "format": "Manchester enquiries often work best as a local or online route depending on the student's timetable and the exact subject need.",
+            "school_context": "The strongest enquiries tend to be exam-stage focused: algebra, paper technique, science explanations and confidence after mocks.",
+            "links": [
+                ("/blog/gcse-maths-manchester.html", "GCSE Maths tutor in Manchester"),
+                ("/blog/gcse-science-manchester.html", "GCSE Science tutor in Manchester"),
+                ("/tutors/miss-kay-manchester.html", "Miss Kay Manchester tutor profile"),
+                ("/blog/online-tutor-smethwick-birmingham.html", "Online tuition options"),
+            ],
+        },
+        "walsall": {
+            "focus": "maths, science and KS3 English support through Mr Vasta's Walsall route",
+            "journey": "Walsall families usually want a tutor close enough for a stable routine but still connected to the wider Teaching Success standards.",
+            "format": "In-person works well for local Walsall families, while online is a useful fallback when transport or after-school timing gets difficult.",
+            "school_context": "Most Walsall searches are tied to KS3 confidence, GCSE Maths, GCSE Science or a need for clearer written structure in English.",
+            "links": [
+                ("/tutors/mr-vasta-walsall.html", "Mr Vasta Walsall tutor profile"),
+                ("/blog/gcse-maths-walsall.html", "GCSE Maths tutor in Walsall"),
+                ("/blog/gcse-science-walsall.html", "GCSE Science tutor in Walsall"),
+                ("/blog/private-tutor-bloxwich.html", "Private tutor in Bloxwich"),
+            ],
+        },
+        "willenhall": {
+            "focus": "GCSE Maths, GCSE Science and KS3 English support for families using the Walsall tutor route",
+            "journey": "Willenhall families are close enough to the Walsall route for in-person support to be realistic without losing the week to travel.",
+            "format": "The best format depends on age: KS3 students often benefit from in-person structure, while GCSE students can also work effectively online.",
+            "school_context": "Enquiries usually start when maths, science or written English gaps begin to affect school confidence before GCSE pressure fully arrives.",
+            "links": [
+                ("/blog/private-tutor-walsall.html", "Private tutor in Walsall"),
+                ("/blog/private-tutor-bloxwich.html", "Private tutor in Bloxwich"),
+                ("/blog/maths-tutor-walsall.html", "Maths tutor in Walsall"),
+                ("/blog/gcse-science-walsall.html", "GCSE Science tutor in Walsall"),
+            ],
+        },
+        "wolverhampton": {
+            "focus": "secondary Maths and Science support through Mr Olu's Wolverhampton route",
+            "journey": "Wolverhampton families usually need a local secondary route rather than travelling into Smethwick every week.",
+            "format": "In-person lessons can work through the Wolverhampton route, with online support available where a flexible routine is more realistic.",
+            "school_context": "The main pressure points are KS3 foundations, GCSE Maths, GCSE Science and exam technique before or after mock results.",
+            "links": [
+                ("/tutors/mr-olu-wolverhampton.html", "Mr Olu Wolverhampton tutor profile"),
+                ("/blog/maths-tutor-wolverhampton.html", "Maths tutor in Wolverhampton"),
+                ("/blog/gcse-maths-wolverhampton.html", "GCSE Maths tutor in Wolverhampton"),
+                ("/blog/gcse-science-wolverhampton.html", "GCSE Science tutor in Wolverhampton"),
+            ],
+        },
+    }
+)
+
+
+GUIDE_META.update(
+    {
+        "tuition-in-smethwick": {
+            "service": "tuition in Smethwick",
+            "intro": "A broad tuition search usually means the family knows help is needed but has not yet chosen the subject, stage or format. The page should help them move from a general local search into the right teaching route.",
+            "points": [
+                "A clear overview of primary, 11+, KS3, GCSE and selected A-Level tuition",
+                "Guidance on choosing the first subject based on the student's actual pressure point",
+                "A distinction between the broader tuition offer, the tutor-near-me guide and the Smethwick tuition centre page",
+                "Direct links into maths, English, science, 11+ and GCSE routes so the page acts as a real hub",
+            ],
+            "fit": "This page is best for parents searching broadly for tuition in Smethwick before they know whether maths, English, science, 11+ or GCSE support should come first.",
+            "links": [
+                ("/blog/tutor-near-me-smethwick-birmingham.html", "Tutors in Smethwick"),
+                ("/blog/smethwick-tuition-centre.html", "Smethwick tuition centre"),
+                ("/blog/maths-tutor-smethwick.html", "Maths teacher in Smethwick"),
+                ("/blog/english-tutor-smethwick.html", "English teacher in Smethwick"),
+            ],
+        },
+        "11-plus-tutor-wolverhampton": {
+            "service": "11+ tutoring in Wolverhampton",
+            "intro": "A Wolverhampton 11+ search is usually about selective-school readiness, but the useful starting point is still the same: reading, maths and reasoning have to be built together before mock scores mean much.",
+            "points": [
+                "Checking whether the child needs core KS2 repair before heavier reasoning work",
+                "Balancing verbal and non-verbal reasoning instead of only repeating favourite question types",
+                "Using mock-style tasks to expose timing and confidence issues without overtesting",
+                "Linking the Wolverhampton route back to wider West Midlands grammar-school preparation where relevant",
+            ],
+            "fit": "This route is best for Wolverhampton families who want 11+ preparation explained clearly before choosing a mock-test or subject-specific page.",
+            "links": [
+                ("/blog/11-plus-primary-smethwick.html", "11 plus tuition in Smethwick"),
+                ("/blog/grammar-school-tutor-birmingham.html", "Grammar school tutor in Birmingham"),
+                ("/blog/11-plus-mock-exams-birmingham.html", "11+ mock exams"),
+                ("/blog/private-tutor-wolverhampton.html", "Private tutor in Wolverhampton"),
+            ],
+        },
+        "11-plus-year-4-smethwick": {
+            "service": "Year 4 11+ preparation",
+            "intro": "Year 4 should not feel like a full exam year. The most useful work is building calm foundations: reading accuracy, number confidence, vocabulary and early reasoning habits.",
+            "points": [
+                "Light-touch reasoning practice so pupils learn the patterns without pressure",
+                "Reading and vocabulary routines that support both school English and later 11+ work",
+                "Maths fluency checks before harder multi-step reasoning appears",
+                "A measured plan that avoids burning out a child before Year 5 preparation begins",
+            ],
+            "fit": "This page suits families who want an early 11+ start but still want the work to feel age-appropriate.",
+            "links": [
+                ("/blog/11-plus-primary-smethwick.html", "11 plus tuition in Smethwick"),
+                ("/blog/11-plus-year-5-smethwick.html", "Year 5 11+ preparation"),
+                ("/blog/year-4-english-tutor-smethwick.html", "Year 4 English tutor"),
+                ("/blog/year-4-maths-tutor-smethwick.html", "Year 4 Maths tutor"),
+            ],
+        },
+        "11-plus-year-6-smethwick": {
+            "service": "Year 6 11+ preparation",
+            "intro": "Year 6 11+ support has to become sharper and calmer at the same time. The focus is no longer broad exploration; it is timed performance, mock feedback and the exact weaknesses still costing marks.",
+            "points": [
+                "Turning mock results into a short priority list for the next few weeks",
+                "Building exam timing without making every lesson feel like a test",
+                "Reviewing reading, maths and reasoning errors separately so fixes are precise",
+                "Keeping confidence stable as the real exam approaches",
+            ],
+            "fit": "This route suits families close to the exam who need focused 11+ correction rather than more general practice.",
+            "links": [
+                ("/blog/11-plus-primary-smethwick.html", "11 plus tuition in Smethwick"),
+                ("/blog/11-plus-mock-test-smethwick.html", "11+ mock test in Smethwick"),
+                ("/blog/11-plus-mock-exams-birmingham.html", "11+ mock exams Birmingham"),
+                ("/blog/year-6-tutor-smethwick.html", "Year 6 tutor in Smethwick"),
+            ],
+        },
+        "a-level-tutor-wolverhampton": {
+            "service": "A-Level tutoring in Wolverhampton",
+            "intro": "A-Level support in Wolverhampton is usually about independence as much as content. Students often understand lessons but need sharper routines for practice, review and exam performance.",
+            "points": [
+                "Identifying whether the issue is subject knowledge, paper technique or weak independent practice",
+                "Using past-paper evidence rather than vague revision confidence to plan lessons",
+                "Supporting students through the jump from GCSE success to sixth-form depth",
+                "Choosing online or local support based on consistency, not convenience alone",
+            ],
+            "fit": "This page is best for Wolverhampton sixth-form students who need a clear plan before choosing a subject-specific A-Level route.",
+            "links": [
+                ("/blog/a-level-maths-tutor-birmingham.html", "A-Level Maths tutor"),
+                ("/blog/a-level-physics-tutor-birmingham.html", "A-Level Physics tutor"),
+                ("/blog/year-12-tutor-smethwick.html", "Year 12 tutor"),
+                ("/blog/year-13-tutor-smethwick.html", "Year 13 tutor"),
+            ],
+        },
+        "english-tutor-walsall": {
+            "service": "English tutoring in Walsall",
+            "intro": "English support in Walsall is usually about written clarity: reading a question accurately, choosing evidence, and building a paragraph that says enough without drifting.",
+            "points": [
+                "Separating reading comprehension, vocabulary and written structure before setting more work",
+                "Supporting KS3 pupils before weak written habits become GCSE problems",
+                "Teaching students how to explain rather than simply retell",
+                "Using Mr Vasta's Walsall route for families who need local KS3 English support",
+            ],
+            "fit": "This page suits Walsall families whose child can often talk through an answer but struggles to put it down clearly in writing.",
+            "links": [
+                ("/tutors/mr-vasta-walsall.html", "Mr Vasta Walsall tutor profile"),
+                ("/blog/private-tutor-walsall.html", "Private tutor in Walsall"),
+                ("/blog/gcse-english-tutor-smethwick.html", "GCSE English tutor"),
+                ("/blog/english-tutor-smethwick.html", "English teacher in Smethwick"),
+            ],
+        },
+        "english-tutor-wolverhampton": {
+            "service": "English tutoring in Wolverhampton",
+            "intro": "Wolverhampton English support is most useful when it identifies whether the barrier is reading, vocabulary, essay structure, confidence or timing.",
+            "points": [
+                "Checking comprehension and written explanation separately",
+                "Helping KS3 students build stronger paragraphs before GCSE texts become demanding",
+                "Using model answers carefully without turning lessons into copying",
+                "Linking English work to wider secondary support through the Wolverhampton route",
+            ],
+            "fit": "This page suits families who want a secondary English route but still need to know which part of English is actually holding progress back.",
+            "links": [
+                ("/blog/private-tutor-wolverhampton.html", "Private tutor in Wolverhampton"),
+                ("/blog/secondary-tutor-wolverhampton.html", "Secondary tutor in Wolverhampton"),
+                ("/blog/gcse-english-tutor-smethwick.html", "GCSE English tutor"),
+                ("/tutors/mr-olu-wolverhampton.html", "Mr Olu Wolverhampton profile"),
+            ],
+        },
+        "gcse-maths-manchester": {
+            "service": "GCSE Maths tutoring in Manchester",
+            "intro": "Manchester GCSE Maths support should begin with the paper evidence: which topics are costing marks, whether the student is on the right tier, and how much of the issue is method rather than knowledge.",
+            "points": [
+                "Foundation or Higher tier support based on the student's actual paper profile",
+                "Focused work on algebra, geometry, number, ratio and statistics where marks are leaking",
+                "AQA-style exam practice where that matches the student's school route",
+                "A clear link between Miss Kay's teaching and the student's next school assessment",
+            ],
+            "fit": "This route suits Manchester students who need targeted GCSE Maths improvement rather than another broad revision timetable.",
+            "links": [
+                ("/tutors/miss-kay-manchester.html", "Miss Kay Manchester tutor profile"),
+                ("/blog/gcse-science-manchester.html", "GCSE Science tutor in Manchester"),
+                ("/blog/gcse-maths-wolverhampton.html", "GCSE Maths Wolverhampton"),
+                ("/blog/exam-technique-gcse-smethwick.html", "GCSE exam technique"),
+            ],
+        },
+        "gcse-science-manchester": {
+            "service": "GCSE Science tutoring in Manchester",
+            "intro": "GCSE Science in Manchester usually needs a blend of content repair, practical-question confidence and better written explanations for Biology, Chemistry and Physics.",
+            "points": [
+                "Separating Biology, Chemistry and Physics gaps instead of treating science as one block",
+                "Improving required-practical, data and graph questions that students often underestimate",
+                "Building stronger six-mark answers through structure and scientific vocabulary",
+                "Using exam-board practice so revision connects to the papers students actually sit",
+            ],
+            "fit": "This route suits Manchester students whose science grade is being held back by explanations, practical questions or uneven performance across the three sciences.",
+            "links": [
+                ("/tutors/miss-kay-manchester.html", "Miss Kay Manchester tutor profile"),
+                ("/blog/gcse-maths-manchester.html", "GCSE Maths tutor in Manchester"),
+                ("/blog/gcse-science-tutor-smethwick.html", "GCSE Science tutor in Smethwick"),
+                ("/blog/gcse-science-wolverhampton.html", "GCSE Science Wolverhampton"),
+            ],
+        },
+        "sats-preparation-birmingham": {
+            "service": "SATs preparation in Birmingham",
+            "intro": "SATs preparation should build calm Year 6 readiness rather than turn the spring term into constant testing. The most useful support strengthens reading, arithmetic, reasoning and SPaG in a balanced way.",
+            "points": [
+                "Checking arithmetic fluency before moving into harder reasoning questions",
+                "Building reading stamina and evidence habits for comprehension papers",
+                "Practising SPaG without making writing feel mechanical",
+                "Using short assessment cycles so parents know what has improved before May",
+            ],
+            "fit": "This route suits Birmingham families who want SATs support that improves confidence as well as test scores.",
+            "links": [
+                ("/blog/sats-preparation-smethwick.html", "SATs preparation in Smethwick"),
+                ("/blog/year-6-tutor-smethwick.html", "Year 6 tutor in Smethwick"),
+                ("/blog/year-6-english-tutor-smethwick.html", "Year 6 English tutor"),
+                ("/blog/year-6-maths-tutor-smethwick.html", "Year 6 Maths tutor"),
+            ],
+        },
+    }
+)
 
 
 def section(title: str, body_html: str) -> str:
