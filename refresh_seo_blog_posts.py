@@ -9,21 +9,15 @@ current workspace are skipped.
 from __future__ import annotations
 
 import re
+import json
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parent
 BLOG_DIR = ROOT / "blog"
 SITEMAP_PATH = ROOT / "sitemap.xml"
-DATE = "2026-05-02"
-SKIP = {
-    "english-tutor-smethwick",
-    "tutor-near-me-smethwick-birmingham",
-    "smethwick-tuition-centre",
-    "maths-tutor-smethwick",
-    "11-plus-primary-smethwick",
-    "a-level-chemistry-tutor-birmingham",
-}
+DATE = "2026-07-01"
+SKIP = set()
 
 
 YEAR_DETAILS = {
@@ -101,6 +95,47 @@ YEAR_DETAILS = {
     },
 }
 
+YEAR_SEARCH_ANGLES = {
+    2: "early confidence, parent-visible routines and gentle correction before small gaps become habits",
+    3: "the first full Key Stage 2 step up, especially when reading stamina or times tables start to slow schoolwork down",
+    4: "more independent written work, stronger multiplication recall and the bridge into upper-KS2 expectations",
+    5: "upper-KS2 momentum, SATs foundations and, where relevant, a calm start to 11+ preparation",
+    6: "SATs, secondary readiness and keeping confidence steady while school assessment pressure rises",
+    7: "the secondary-school transition, new routines and making sure primary gaps do not follow the pupil into KS3",
+    8: "KS3 drift: the year where a student can look fine on the surface while habits and confidence quietly weaken",
+    9: "the GCSE runway, when option choices and harder subject language start to expose older gaps",
+    10: "early GCSE intervention, mock preparation and building revision habits before Year 11 becomes urgent",
+    11: "final GCSE improvement, converting mock feedback into marks and choosing revision priorities properly",
+    12: "the sixth-form jump, where independent study and subject depth become as important as lesson understanding",
+    13: "final A-Level execution, paper judgement and keeping revision focused while deadlines tighten",
+}
+
+ENGLISH_YEAR_FOCUS = {
+    2: "phonics, handwriting and simple sentence control",
+    3: "reading fluency, vocabulary and complete written answers",
+    4: "paragraph control, comprehension evidence and grammar accuracy",
+    5: "inference, richer vocabulary and longer explanation",
+    6: "SATs reading, SPaG accuracy and writing stamina",
+    7: "secondary paragraph structure, quotations and evidence",
+    8: "analytical writing, unseen reading and clearer explanations",
+    9: "GCSE-style analysis, comparison and more mature argument",
+    10: "English Language timing, Literature structure and text knowledge",
+    11: "timed GCSE responses, question selection and exam-ready paragraph control",
+}
+
+MATHS_YEAR_FOCUS = {
+    2: "number bonds, place value and simple problem solving",
+    3: "times tables, column methods and choosing operations",
+    4: "multiplication, fractions, perimeter and multi-step reasoning",
+    5: "fractions, percentages, decimals and upper-KS2 reasoning",
+    6: "SATs arithmetic, reasoning marks and method accuracy",
+    7: "algebra basics, negatives, fractions and secondary written method",
+    8: "ratio, algebra manipulation, percentages and multi-step accuracy",
+    9: "graphs, proportion, algebra reasoning and GCSE foundations",
+    10: "GCSE topic repair, mixed papers and method marks",
+    11: "full-paper performance, weak-topic conversion and exam judgement",
+}
+
 
 LOCATION_META = {
     "bearwood": {
@@ -172,7 +207,7 @@ LOCATION_META = {
             ("/blog/11-plus-tutor-oldbury.html", "11+ tutor in Oldbury"),
             ("/blog/private-tutor-west-bromwich.html", "Private tutor in West Bromwich"),
             ("/blog/smethwick-tuition-centre.html", "Smethwick tuition centre"),
-            ("/blog/tutoring-oldbury-guide.html", "Tutoring in Oldbury"),
+            ("/blog/tuition-in-smethwick.html", "Tuition in Smethwick"),
         ],
     },
     "quinton": {
@@ -224,15 +259,15 @@ LOCATION_META = {
         ],
     },
     "west-bromwich": {
-        "focus": "GCSE core subjects, local secondary catch-up and selective-school comparisons where relevant",
+        "focus": "GCSE core subjects, local secondary catch-up, school English or English Language support, and selective-school comparisons where relevant",
         "journey": "West Bromwich is close enough to keep in-person options realistic, but online also works well for families who want less travel pressure.",
         "format": "The best fit depends on the pupil: some benefit from a physical teaching base, others work better once the lesson can happen straight after school at home.",
-        "school_context": "Many searches from West Bromwich are really about finding a reliable, teacher-led route for maths, English or science rather than a broad tutor marketplace.",
+        "school_context": "Many searches from West Bromwich are really about finding a reliable, teacher-led route for maths, English or science rather than a broad tutor marketplace. If the search says language tutor, this page keeps that honest by routing school English and English Language needs clearly instead of implying modern foreign language tuition.",
         "links": [
             ("/blog/11-plus-tutor-west-bromwich.html", "11+ tutor in West Bromwich"),
             ("/blog/private-tutor-oldbury.html", "Private tutor in Oldbury"),
+            ("/blog/english-tutor-smethwick.html", "English and English Language support"),
             ("/blog/gcse-maths-smethwick-birmingham.html", "GCSE Maths tuition"),
-            ("/blog/smethwick-tuition-centre.html", "Smethwick tuition centre"),
         ],
     },
 }
@@ -375,6 +410,31 @@ GUIDE_META = {
             ("/blog/ks2-maths-tuition-smethwick.html", "KS2 Maths tuition"),
         ],
     },
+    "english-tutor-smethwick": {
+        "service": "English tutoring in Smethwick",
+        "intro": "A strong English tutor page should not collapse reading, writing and exam technique into one vague offer. Families searching for English support, English Language help or even language tutors in Smethwick usually need a quick answer on whether the real issue is comprehension, vocabulary, paragraph structure, confidence or timed exam performance.",
+        "points": [
+            "A route from KS2 reading and writing into KS3 analysis and GCSE English Language or Literature",
+            "Live modelling of answers so pupils see how stronger sentences and paragraphs are built",
+            "Separate diagnosis for reading, writing, SPaG, vocabulary and exam timing",
+            "Clear wording for language-tutor searches: Teaching Success supports school English, GCSE English Language and written communication, not a modern foreign language course",
+            "Clear next steps into year-group, KS2 and GCSE English pages so families can choose the right level",
+        ],
+        "fit": "This page is the English hub for Smethwick families who know the subject is the issue but still need help choosing the exact stage and priority.",
+        "queries": [
+            "english teacher in Smethwick",
+            "language tutors in Smethwick",
+            "English tutor near me",
+            "GCSE English tutor Smethwick",
+        ],
+        "intent": "Families using English teacher or language-tutor wording need a clear school-English route. This page answers that wording honestly, then moves families into reading, writing, GCSE English Language or Literature support instead of creating a misleading modern-language page.",
+        "links": [
+            ("/blog/ks2-english-tuition-smethwick.html", "KS2 English tuition"),
+            ("/blog/gcse-english-tutor-smethwick.html", "GCSE English tutor"),
+            ("/blog/year-7-english-tutor-smethwick.html", "Year 7 English tutor"),
+            ("/blog/year-11-english-tutor-smethwick.html", "Year 11 English tutor"),
+        ],
+    },
     "in-person-tutor-smethwick": {
         "service": "in-person tuition",
         "intro": "In-person tuition is most valuable when live working, attention and physical routine make a meaningful difference to how the student learns.",
@@ -427,20 +487,53 @@ GUIDE_META = {
         ],
     },
     "maths-tutor-smethwick": {
-        "service": "a broad maths route in Smethwick",
-        "intro": "A broad maths page should help families move quickly into the right level rather than treating every maths problem as the same. The real job is to match the support to the stage, whether that is KS2 fluency, KS3 foundations, GCSE paper strategy or sixth-form depth.",
+        "service": "maths tutoring in Smethwick",
+        "intro": "A broad maths page should help families move quickly into the right level rather than treating every maths problem as the same. Families searching for a maths teacher in Smethwick need the answer quickly: qualified teacher, correct stage, clear diagnosis and a free trial route.",
         "points": [
             "A teacher-led route from primary number confidence through to A-Level Maths",
             "Clear diagnosis of whether the issue is topic knowledge, method, pace or exam judgement",
             "Internal routes into KS2, KS3, GCSE and A-Level pages so families do not get stuck on a generic overview",
+            "Early separation of arithmetic, algebra, reasoning and exam-technique issues so parents can see what will actually be taught",
             "In-person and online options depending on age, schedule and focus",
         ],
-        "fit": "This page is best used as the maths hub before moving into the year group or exam stage that matches your child most closely.",
+        "fit": "This page is best used as the maths hub before moving into the year group or exam stage that matches your child most closely, especially if the search started with maths teacher in Smethwick.",
+        "queries": [
+            "maths teacher in Smethwick",
+            "maths tutor Smethwick",
+            "maths tutor near me",
+            "GCSE maths tuition Smethwick",
+        ],
+        "intent": "This page gives parents a clearer reason to choose the result before they move into a narrower year-group or exam page: teacher-led maths support, the right stage and an obvious next step.",
         "links": [
             ("/blog/ks2-maths-tuition-smethwick.html", "KS2 Maths tuition in Smethwick"),
             ("/blog/gcse-maths-smethwick-birmingham.html", "GCSE Maths tuition"),
             ("/blog/a-level-maths-tutor-birmingham.html", "A-Level Maths tutor"),
             ("/blog/year-11-maths-tutor-smethwick.html", "Year 11 Maths tutor in Smethwick"),
+        ],
+    },
+    "smethwick-tuition-centre": {
+        "service": "the Smethwick tuition centre route",
+        "intro": "A tuition centre page should answer a practical question: why travel to a teaching base instead of arranging another online lesson or a home tutor? Families comparing centre-style searches need to understand the local base, teacher-led structure and free trial quickly.",
+        "points": [
+            "In-person teaching for pupils who focus better away from home distractions",
+            "A local base for Smethwick, Bearwood, Cape Hill, Oldbury and West Bromwich families",
+            "Teacher-led support across maths, English, science, SATs, 11+ and GCSE routes",
+            "Clear separation from broad tutor-near-me searches: this page is about the physical Smethwick learning routine",
+            "A free trial so families can judge fit before committing to weekly tuition",
+        ],
+        "fit": "This route suits families who want the structure of a physical teaching space and a local routine that can be maintained every week.",
+        "queries": [
+            "Smethwick tuition centre",
+            "Smethwick Windmill tuition centre",
+            "tuition centre near me",
+            "in-person tutor Smethwick",
+        ],
+        "intent": "This page answers centre-style searches directly, including Smethwick Windmill tuition centre wording, then separates the physical Smethwick base from broader tutor-near-me and online-tuition searches.",
+        "links": [
+            ("/blog/in-person-tutor-smethwick.html", "In-person tutor in Smethwick"),
+            ("/blog/tutor-near-me-smethwick-birmingham.html", "Tutors near Smethwick"),
+            ("/blog/private-tutor-bearwood.html", "Private tutor in Bearwood"),
+            ("/blog/tuition-in-smethwick.html", "Tuition in Smethwick"),
         ],
     },
     "maths-tutor-walsall": {
@@ -645,6 +738,31 @@ GUIDE_META = {
             ("/blog/in-person-tutor-smethwick.html", "In-person tutor in Smethwick"),
             ("/blog/catch-up-tuition-smethwick.html", "Catch-up tuition in Smethwick"),
             ("/blog/homework-help-smethwick.html", "Homework help in Smethwick"),
+        ],
+    },
+    "tutor-near-me-smethwick-birmingham": {
+        "service": "tutors in Smethwick",
+        "intro": "A tutor-near-me search is partly about distance, but a helpful local page also needs to answer the deeper parent question: who can actually teach the right subject, at the right level, in a format the family can keep up? This page works as the local decision hub for Smethwick families comparing nearby tuition options.",
+        "points": [
+            "A local comparison route for Smethwick, Bearwood, Oldbury, West Bromwich and Birmingham families",
+            "Clear links into maths, English, science, 11+, SATs, GCSE and A-Level support",
+            "A practical choice between in-person lessons at the Smethwick base and online tuition",
+            "A cleaner next step for desktop visitors who may be comparing several local tutor sites before calling",
+            "Qualified-teacher input rather than a generic directory-style tutor listing",
+        ],
+        "fit": "This page is the local search hub for families who want nearby help but still need to narrow the choice by subject, year group and lesson format.",
+        "queries": [
+            "tuition near me",
+            "tutors in Smethwick",
+            "tutor near me",
+            "tutoring near me",
+        ],
+        "intent": "This is the best landing page for near-me searches because it answers distance and choice first, then routes families into Smethwick tuition, the tuition centre, maths, English and 11+ pages. It is tuned to make comparison and calling easier for parents who are weighing up several local tutor options.",
+        "links": [
+            ("/blog/tuition-in-smethwick.html", "Tuition in Smethwick"),
+            ("/blog/smethwick-tuition-centre.html", "Smethwick tuition centre"),
+            ("/blog/maths-tutor-smethwick.html", "Maths tutor in Smethwick"),
+            ("/blog/english-tutor-smethwick.html", "English tutor in Smethwick"),
         ],
     },
     "ucat-tutor-birmingham": {
@@ -877,15 +995,16 @@ A_LEVEL_META = {
         ],
     },
     "a-level-chemistry-tutor-birmingham": {
-        "service": "A-Level Chemistry",
-        "intro": "A-Level Chemistry improves most when students build clearer systems for calculations, practical thinking and mechanism logic rather than treating each topic as a separate memory test.",
+        "service": "A-Level Chemistry tutor in Birmingham",
+        "intro": "A-Level Chemistry improves most when students build clearer systems for calculations, practical thinking and mechanism logic rather than treating each topic as a separate memory test. Around June and the summer planning window, the work usually shifts from topic coverage into sharper Paper 3, predicted-grade and Year 13 readiness decisions.",
         "points": [
             "Organic mechanisms, calculation chains and practical-method evaluation",
-            "Board-specific support that still keeps the bigger synoptic picture in view",
+            "AQA and OCR A support that still keeps the bigger synoptic picture in view",
             "More reliable working for the questions where marks disappear in stages rather than all at once",
             "A cleaner revision structure across physical, inorganic and organic Chemistry",
+            "Paper 3 and UCAS predicted-grade priorities for students moving from Year 12 into Year 13",
         ],
-        "fit": "This route suits students who feel they understand the lesson but cannot yet reproduce that understanding accurately on timed papers.",
+        "fit": "This route suits students who feel they understand the lesson but cannot yet reproduce that understanding accurately on timed AQA, OCR or synoptic papers.",
         "links": [
             ("/blog/a-level-biology-tutor-birmingham.html", "A-Level Biology tutor"),
             ("/blog/a-level-physics-tutor-birmingham.html", "A-Level Physics tutor"),
@@ -933,14 +1052,22 @@ A_LEVEL_META = {
 ELEVEN_PLUS_META = {
     "11-plus-primary-smethwick": {
         "service": "11+ preparation in Smethwick",
-        "intro": "A broad 11+ page should help families understand how reading, maths, verbal reasoning and non-verbal reasoning fit together rather than treating the process as one long sequence of practice papers.",
+        "intro": "A broad 11+ page should help families understand how reading, maths, verbal reasoning and non-verbal reasoning fit together rather than treating the process as one long sequence of practice papers. For families searching for 11 plus tuition in Smethwick, this page is the main parent route before choosing mock tests, subject support or school-specific preparation.",
         "points": [
             "A full route through reading, maths, verbal reasoning and non-verbal reasoning",
             "Year 4 and Year 5 planning so the process feels progressive rather than rushed",
             "The link between core KS2 skills and actual selective-school performance",
+            "Clearer wording for GL-style preparation, Birmingham exam practice and comprehension or reasoning searches",
             "A clear route into area-specific and mock-test pages once the family knows the target schools better",
         ],
         "fit": "This page works best as the central 11+ starting point before moving into school-specific, mock-test or subject-specific routes.",
+        "queries": [
+            "11 plus tuition Smethwick",
+            "11 plus base Smethwick reviews",
+            "GL 11 plus Birmingham",
+            "11 plus comprehension Birmingham",
+        ],
+        "intent": "This central 11+ landing page routes families into mock tests, English, maths and reasoning pages once the first planning question has been answered.",
         "links": [
             ("/blog/11-plus-english-tutor-smethwick.html", "11+ English tutor in Smethwick"),
             ("/blog/11-plus-maths-tutor-smethwick.html", "11+ Maths tutor in Smethwick"),
@@ -1058,15 +1185,27 @@ SPECIAL_YEAR_SLUGS = {
 LOCATION_META.update(
     {
         "bloxwich": {
-            "focus": "GCSE Maths, GCSE Science and KS3 English through the Walsall tutor route rather than a generic marketplace listing",
+            "focus": "a Bloxwich tuition plan for GCSE Maths, GCSE Science, KS3 English and English Language support through the Walsall tutor route rather than a generic marketplace listing",
             "journey": "Bloxwich families usually need a practical Walsall-side option where weekly lessons can stay consistent without travelling across Birmingham.",
             "format": "In-person can work well through the Walsall route, while online is useful when school, clubs and family transport make the week tighter.",
-            "school_context": "The search often starts when Year 7 to Year 9 gaps begin to show up before GCSE choices and mock pressure arrive.",
+            "school_context": "A tuition in Bloxwich search often starts when Year 7 to Year 9 gaps begin to show up before GCSE choices and mock pressure arrive. Maths teacher wording is routed into the Walsall maths plan, while language-tutor wording is treated as school English and English Language support unless the family specifically needs a modern foreign language route.",
             "links": [
                 ("/blog/private-tutor-walsall.html", "Private tutor in Walsall"),
                 ("/blog/private-tutor-willenhall.html", "Tutor in Willenhall"),
+                ("/blog/english-tutor-walsall.html", "English tutor in Walsall"),
                 ("/blog/gcse-maths-walsall.html", "GCSE Maths tutor in Walsall"),
-                ("/blog/gcse-science-walsall.html", "GCSE Science tutor in Walsall"),
+            ],
+        },
+        "dudley": {
+            "focus": "GCSE Maths, GCSE Science, KS3 English and practical online support for families who want teacher-led help without travelling across the Black Country",
+            "journey": "Dudley families can use online tuition most easily, with nearby Smethwick or Walsall routes considered when in-person support is the stronger fit.",
+            "format": "Online is usually the simplest starting point for Dudley students, especially at GCSE, because the lesson can stay consistent around school, travel and clubs.",
+            "school_context": "Most Dudley enquiries are subject-led rather than purely local: parents usually want maths, science or English support that gives clearer feedback than a broad tutor marketplace.",
+            "links": [
+                ("/blog/private-tutor-wolverhampton.html", "Private tutor in Wolverhampton"),
+                ("/blog/private-tutor-walsall.html", "Private tutor in Walsall"),
+                ("/blog/gcse-maths-smethwick-birmingham.html", "GCSE Maths tuition"),
+                ("/blog/online-tutor-smethwick-birmingham.html", "Online tutor in Smethwick and Birmingham"),
             ],
         },
         "manchester": {
@@ -1079,6 +1218,18 @@ LOCATION_META.update(
                 ("/blog/gcse-science-manchester.html", "GCSE Science tutor in Manchester"),
                 ("/tutors/miss-kay-manchester.html", "Miss Kay Manchester tutor profile"),
                 ("/blog/online-tutor-smethwick-birmingham.html", "Online tuition options"),
+            ],
+        },
+        "solihull": {
+            "focus": "11+ preparation, GCSE core subjects and A-Level support for families who value teacher-led online tuition over a generic local listing",
+            "journey": "Solihull families are usually far enough from the Smethwick base that online tuition is the cleanest route unless a specific in-person arrangement makes sense.",
+            "format": "Online often works best for older Solihull students, while 11+ or younger pupils may need a more careful conversation about routine, attention and parent support at home.",
+            "school_context": "Solihull searches often carry selective-school, GCSE or sixth-form pressure, so the page needs to route families into the right subject rather than just say 'private tutor'.",
+            "links": [
+                ("/blog/grammar-school-tutor-birmingham.html", "Grammar school tutor in Birmingham"),
+                ("/blog/11-plus-tutor-birmingham.html", "11+ tutor in Birmingham"),
+                ("/blog/a-level-maths-tutor-birmingham.html", "A-Level Maths tutor"),
+                ("/blog/online-tutor-smethwick-birmingham.html", "Online tutor in Smethwick and Birmingham"),
             ],
         },
         "walsall": {
@@ -1094,15 +1245,15 @@ LOCATION_META.update(
             ],
         },
         "willenhall": {
-            "focus": "GCSE Maths, GCSE Science and KS3 English support for families using the Walsall tutor route",
+            "focus": "GCSE Maths, GCSE Science, KS3 English and English Language support for families using the Walsall tutor route",
             "journey": "Willenhall families are close enough to the Walsall route for in-person support to be realistic without losing the week to travel.",
             "format": "The best format depends on age: KS3 students often benefit from in-person structure, while GCSE students can also work effectively online.",
-            "school_context": "Enquiries usually start when maths, science or written English gaps begin to affect school confidence before GCSE pressure fully arrives.",
+            "school_context": "Enquiries usually start when maths, science or written English gaps begin to affect school confidence before GCSE pressure fully arrives. Where searches use language-tutor wording, this is handled as English and English Language support, not a promise of MFL tuition.",
             "links": [
                 ("/blog/private-tutor-walsall.html", "Private tutor in Walsall"),
                 ("/blog/private-tutor-bloxwich.html", "Private tutor in Bloxwich"),
+                ("/blog/english-tutor-walsall.html", "English tutor in Walsall"),
                 ("/blog/maths-tutor-walsall.html", "Maths tutor in Walsall"),
-                ("/blog/gcse-science-walsall.html", "GCSE Science tutor in Walsall"),
             ],
         },
         "wolverhampton": {
@@ -1133,6 +1284,13 @@ GUIDE_META.update(
                 "Direct links into maths, English, science, 11+ and GCSE routes so the page acts as a real hub",
             ],
             "fit": "This page is best for parents searching broadly for tuition in Smethwick before they know whether maths, English, science, 11+ or GCSE support should come first.",
+            "queries": [
+                "tuition in Smethwick",
+                "tutors in Smethwick",
+                "tuition near me",
+                "Smethwick tuition centre",
+            ],
+            "intent": "The page is deliberately broader than a subject page because the search data shows parents often begin with a location-first tuition query before narrowing the need.",
             "links": [
                 ("/blog/tutor-near-me-smethwick-birmingham.html", "Tutors in Smethwick"),
                 ("/blog/smethwick-tuition-centre.html", "Smethwick tuition centre"),
@@ -1327,6 +1485,476 @@ def next_step(paragraph: str | None = None) -> str:
     return section("Next Step", f"<p>{text}</p>")
 
 
+def intent_section(primary: str, supporting: list[str], action: str) -> str:
+    terms = ", ".join(supporting[:4])
+    return section(
+        "Search intent this page is built for",
+        p(
+            f"This page is written for families searching for {primary}. It also helps when the search starts with related wording such as {terms}, because the useful next step is the same: identify the right stage, subject and lesson format before booking."
+        )
+        + p(action),
+    )
+
+
+def summer_section(title: str, lead: str, bullets: list[str], close: str | None = None) -> str:
+    final_bullet = close or (
+        "Keep the plan light enough to protect the holiday feel, but specific enough that September does not become a cold restart."
+    )
+    return section(
+        title,
+        p(lead)
+        + ul(
+            bullets
+            + [final_bullet]
+        ),
+    )
+
+
+def summer_year_general(year: int, detail: dict[str, str]) -> str:
+    if year <= 4:
+        lead = (
+            f"Early July 2026 is the point where Year {year} school reports, class books and teacher comments start to show what needs a calm summer plan. "
+            f"For this age, the best next step keeps {detail['general']} moving without making the break feel like another school term."
+        )
+        bullets = [
+            f"Use report comments to decide whether {detail['english']} needs more attention than general confidence work.",
+            f"Keep {detail['maths']} warm through short, repeated practice rather than long worksheet blocks.",
+            "Make the first September target visible before the holiday starts, so support has a clear purpose.",
+        ]
+    elif year == 5:
+        lead = (
+            "Early July 2026 is a useful Year 5 checkpoint because families can now see whether upper-KS2 confidence is ready for Year 6. "
+            "For some children that means SATs foundations; for others it means deciding whether 11+ preparation should become more structured over the summer."
+        )
+        bullets = [
+            f"Use recent class work to see whether {detail['english']} or {detail['maths']} is the more urgent first step.",
+            "Separate normal Year 6 readiness from selective-school preparation so the plan does not become overloaded.",
+            "Build a summer routine that can continue into September when homework and school expectations rise.",
+        ]
+    elif year == 6:
+        lead = (
+            "The 2026 KS2 tests are now behind Year 6 pupils and the published papers give families a clearer way to read the evidence. "
+            "Early July should be less about more test drilling and more about using SATs feedback, school reports and transition information to make the move into Year 7 feel steadier."
+        )
+        bullets = [
+            "Look at English and maths separately so secondary transition support starts with the subject most likely to affect confidence.",
+            "Turn SATs-style mistakes into a short transition list rather than repeating whole papers after the tests.",
+            "Practise the routines Year 7 will expect: recording method, explaining answers and organising work independently.",
+        ]
+    elif year <= 9:
+        lead = (
+            f"Early July 2026 is when Year {year} families can use end-of-year assessments and reports before the next timetable lands. "
+            "A few focused lessons can stop KS3 drift while the school evidence is still fresh."
+        )
+        bullets = [
+            "Review the school report and choose the one subject where a confidence lift would change the most next term.",
+            f"Revisit the routines behind {detail['general']} so the student returns with clearer habits.",
+            "Use summer lessons for slower explanations and practice, not just extra homework in disguise.",
+        ]
+    elif year == 10:
+        lead = (
+            "Early July 2026 gives Year 10 families a live preview of the GCSE pressure coming next year, while the current Year 11 exam cycle is still visible. "
+            "The useful move now is to turn Year 10 assessments into a repair plan before mock season becomes urgent."
+        )
+        bullets = [
+            "Compare recent topic tests with the question types that appear on full GCSE papers.",
+            "Choose the highest-value English, maths or science priority before Year 11 starts narrowing the timetable.",
+            "Build a weekly routine that mixes reteaching, retrieval and short timed practice.",
+        ]
+    elif year == 11:
+        lead = (
+            "By early July 2026, most Year 11 pupils are moving from final papers into the results-day and sixth-form bridge period. "
+            "Support should now be specific: fill the gaps that affect next steps, not restart broad GCSE revision for its own sake."
+        )
+        bullets = [
+            "Use the final-paper experience to note which skills felt least secure under time pressure.",
+            "Keep core English and maths warm if a resit plan might be needed after results day.",
+            "Start bridging work for sixth-form subjects where GCSE knowledge will be assumed in September.",
+        ]
+    elif year <= 11:
+        lead = (
+            f"For Year {year}, summer can turn mock feedback and school targets into a more useful plan before the pressure rises again. "
+            "It works best when the work is selective, not a full timetable copied into July and August."
+        )
+        bullets = [
+            "Pick the papers, topics or question habits that cost the most marks last term.",
+            "Use timed practice sparingly so exam stamina grows without making every session feel high stakes.",
+            "Build a September-ready revision routine before school, mocks and coursework begin competing for attention.",
+        ]
+    elif year == 12:
+        lead = (
+            "Early July 2026 is the moment Year 12 students can connect end-of-year assessments with the 2027 UCAS cycle, which is already open for applications. "
+            "The best tuition plan strengthens subject depth while also making independent study more deliberate."
+        )
+        bullets = [
+            "Use recent papers or topic tests to identify the subject area most likely to limit next year's predicted grade.",
+            "Link academic repair to wider goals such as course research, personal statement evidence and super-curricular reading.",
+            "Create a summer study rhythm that is realistic enough to continue when Year 13 starts.",
+        ]
+    else:
+        lead = (
+            "By early July 2026, Year 13 support should be moving from broad revision into calm results-day and progression planning, with UCAS Clearing opening on 2 July for eligible applicants. "
+            "The aim is to keep key subject skills active while students prepare for university, apprenticeships, Clearing or a gap-year decision."
+        )
+        bullets = [
+            "Capture the topics that felt weakest in final papers before the memory fades.",
+            "Prepare a short plan for results day so Clearing, resits or course changes are not handled in a panic.",
+            "Keep academic confidence steady for the next step without pretending the exam season is still running.",
+        ]
+    return summer_section(f"Early July 2026 timing for Year {year}", lead, bullets)
+
+
+def summer_year_subject(year: int, subject: str, detail: dict[str, str]) -> str:
+    subject_label = "English" if subject == "english" else "Maths"
+    focus = detail["english"] if subject == "english" else detail["maths"]
+    if subject == "english":
+        if year <= 6:
+            bullets = [
+                "Use early-July report comments to separate reading fluency, vocabulary, SPaG and writing stamina.",
+                f"Practise {focus} in small bursts so written quality improves without turning summer into school-at-home.",
+                "Talk through answers before writing them, because primary English confidence often improves fastest orally first.",
+            ]
+        elif year <= 9:
+            bullets = [
+                "Use end-of-year assessments to spot whether the issue is reading depth, paragraph structure or confidence.",
+                f"Practise {focus} with short modelled answers before asking for longer independent writing.",
+                "Keep one reading habit alive through the break so September English does not feel like a cold start.",
+            ]
+        elif year == 10:
+            bullets = [
+                "Use Year 10 assessment feedback to choose one Language and one Literature priority before Year 11 starts.",
+                f"Practise {focus} through timed paragraphs, not only notes or quotation lists.",
+                "Build a September routine for text knowledge, unseen reading and question timing.",
+            ]
+        else:
+            bullets = [
+                "After the final GCSE papers, record which question types felt most difficult under time pressure.",
+                f"Keep {focus} active if English resit, sixth-form essay subjects or course bridging may be relevant.",
+                "Use short review sessions after results day only where they support the student's next route.",
+            ]
+    else:
+        if year <= 6:
+            bullets = [
+                f"Use early-July class work or SATs-style feedback to decide whether {focus} is the first priority.",
+                "Correct working line by line so the student remembers the method, not just the answer.",
+                "Keep number fluency ticking over with short retrieval tasks between sessions.",
+            ]
+        elif year <= 9:
+            bullets = [
+                "Use end-of-year assessments to find whether arithmetic, algebra, ratio or problem-solving is blocking progress.",
+                f"Warm up {focus} through short mixed questions before moving into longer problems.",
+                "Practise explaining method clearly so September maths feels less rushed.",
+            ]
+        elif year == 10:
+            bullets = [
+                "Map Year 10 test results against GCSE topic families so the first repair target is obvious.",
+                f"Practise {focus} with mixed exam questions rather than isolated worksheet pages only.",
+                "Build a small routine for calculator judgement, method marks and checking before Year 11.",
+            ]
+        else:
+            bullets = [
+                "After the final GCSE papers, note whether timing, topic knowledge or method accuracy felt most fragile.",
+                f"Keep {focus} warm if a resit, sixth-form Maths route or vocational course will need it.",
+                "Use results-day outcomes to decide whether the next step is bridging, resit repair or a pause.",
+            ]
+    lead = (
+        f"Early July 2026 {subject_label} tuition for Year {year} should start from the evidence families have now: reports, recent papers and the student's own confidence. "
+        f"The goal is to return to school sharper on {focus}, while still leaving the holiday feeling like a holiday."
+    )
+    return summer_section(f"Early July 2026 {subject_label} plan for Year {year}", lead, bullets)
+
+
+def summer_manual(service: str, fit_text: str) -> str:
+    service_lower = service.lower()
+    if "ucat" in service_lower:
+        lead = (
+            "UCAT 2026 is now in a live July planning window: booking has opened, July test slots are becoming real choices, and the booking deadline is 16 September. "
+            "Preparation should therefore move from casual practice into section-by-section timing, test-window choices and recovery strategy."
+        )
+        bullets = [
+            "Confirm registration, access arrangements and the intended test window before choosing a preparation schedule.",
+            "Track speed and accuracy separately so each UCAT section has a clear improvement target.",
+            "Connect UCAT preparation to Medicine or Dentistry course research and the October UCAS deadline.",
+        ]
+    elif "11+" in service or "grammar" in service_lower or "king edward" in service_lower:
+        lead = (
+            f"Early July 2026 is a practical 11+ checkpoint for {service}: West Midlands Grammar Schools registration for September 2027 entry has now closed, so families should use the waiting period before allocated test-centre information arrives in September to balance GL-style paper practice, section repair and confidence. "
+            "The strongest holiday plan uses feedback carefully without overtesting the child."
+        )
+        bullets = [
+            "Balance English comprehension, verbal reasoning, maths and non-verbal or spatial reasoning so one confident area does not hide a weaker one.",
+            "Use a small number of timed tasks to practise pace, then spend more time reviewing the mistakes.",
+            "Check answer-sheet habits and section timing as well as subject knowledge.",
+        ]
+    elif "sats" in service_lower:
+        lead = (
+            "The 2026 KS2 SATs papers and mark schemes are now available, so early July is a useful moment to turn test evidence into a calm next step. "
+            "For Year 6, that means secondary transition; for Year 5, it means building foundations before the next May test window."
+        )
+        bullets = [
+            "Use the published 2026 paper style to identify reading, arithmetic, reasoning or SPaG patterns rather than simply doing more tests.",
+            "Separate post-SATs confidence rebuilding from new Year 6 preparation so the child gets the right kind of support.",
+            "Keep maths method and written explanation active through the summer without extending exam pressure unnecessarily.",
+        ]
+    elif "gcse" in service_lower or "mock" in service_lower or "predicted" in service_lower or "exam" in service_lower or "resit" in service_lower:
+        lead = (
+            f"By early July 2026, {service} sits right between the live GCSE exam cycle and the results-day or next-mock decisions families are already thinking about. "
+            "Students usually make better progress when the target is a small set of mark-losing habits."
+        )
+        bullets = [
+            "Start from the last paper, mock, school report or final-exam experience rather than guessing which topic matters most.",
+            "Mix reteaching with short timed questions so knowledge starts transferring into marks.",
+            "Decide whether the next step is Year 10 repair, Year 11 exam support, results-day planning or resit preparation.",
+        ]
+    elif "a-level" in service_lower or "ucat" in service_lower or "sixth" in service_lower:
+        lead = (
+            f"Early July 2026 makes {service} a live sixth-form planning issue: Year 13 students are moving into results-day and Clearing planning, while Year 12 students are now inside the 2027 UCAS application cycle. "
+            "That matters most where the next term expects deeper thinking rather than more notes."
+        )
+        bullets = [
+            "Identify the one topic or skill that will unlock the most later progress.",
+            "Use past-paper review to separate understanding problems from timing or accuracy problems.",
+            "Link academic support to predicted grades, course research and the September return to sixth form.",
+        ]
+    elif "btec" in service_lower:
+        lead = (
+            f"Early July 2026 is a useful checkpoint for {service} because assignments, external assessments and progression choices often collide at this point in the year. "
+            "Good support should help the student organise evidence, not just polish individual paragraphs."
+        )
+        bullets = [
+            "Review current unit feedback before deciding whether the priority is science understanding, assignment structure or exam technique.",
+            "Break remaining assignment tasks into evidence, explanation and checking stages.",
+            "Connect the work to the student's next step, whether that is sixth form, college, apprenticeship or university planning.",
+        ]
+    elif "summer" in service_lower:
+        lead = (
+            f"Early July 2026 is exactly when {service} becomes most useful: families have school reports, exam-season context and a clearer view of what September will demand. "
+            "The best plan is short, specific and built around one or two goals rather than a full holiday timetable."
+        )
+        bullets = [
+            "Choose the priority from recent evidence: report comments, mock marks, SATs feedback or end-of-year assessments.",
+            "Use lessons to rebuild confidence and method before the next school year starts moving quickly.",
+            "Set a September decision point so families know whether to continue, change subject or pause.",
+        ]
+    elif any(word in service_lower for word in ("ks2", "homework", "catch-up", "english", "maths", "science", "supportive", "learning")):
+        lead = (
+            f"Early July 2026 gives families fresh school evidence for {service}: reports, class tests, teacher comments and the student's own confidence after a long term. "
+            "That makes this a good moment to choose a precise support target instead of starting broad extra work."
+        )
+        bullets = [
+            "Read the recent school evidence first, then choose the subject or skill that will change the next term most.",
+            "Keep the first block focused enough that parents can see what is improving by September.",
+            "Use the summer pace for calm reteaching, not a pile of disconnected revision tasks.",
+        ]
+    elif service_lower == "tutors in smethwick":
+        lead = (
+            "Early July 2026 is a strong moment for Smethwick families to compare local tutor options because school reports, exam-season evidence and summer schedules are all visible at once. "
+            "A short holiday block can show whether the student responds better online, in person or one-to-one before September routines harden."
+        )
+        bullets = [
+            "Choose a lesson time that fits around childcare, travel and family plans so attendance stays consistent.",
+            "Use the first session to identify the real subject priority instead of spreading the work too thinly.",
+            "Finish with a simple September recommendation so the family knows whether to continue, pause or change focus.",
+        ]
+    elif "online" in service_lower or "in-person" in service_lower or "one-to-one" in service_lower or "centre" in service_lower or "near me" in service_lower or "private" in service_lower or "tuition" in service_lower:
+        lead = (
+            f"Early July 2026 is a strong moment to try {service} because families can compare end-of-term evidence with the reality of summer schedules. "
+            "A short holiday block also shows whether the student responds better online, in person or one-to-one before September routines harden."
+        )
+        bullets = [
+            "Choose a lesson time that fits around childcare, travel and family plans so attendance stays consistent.",
+            "Use the first session to identify the real subject priority instead of spreading the work too thinly.",
+            "Finish with a simple September recommendation so the family knows whether to continue, pause or change focus.",
+        ]
+    else:
+        lead = (
+            f"The summer holidays give families a calmer window to decide whether {service} is the right route. "
+            f"{fit_text}"
+        )
+        bullets = [
+            "Start with a clear diagnosis so the holiday work has a purpose.",
+            "Keep tasks focused on the subject or skill most likely to affect the next school term.",
+            "Review progress before September so the next step is obvious.",
+        ]
+    return summer_section(f"Early July 2026 update for {service}", lead, bullets)
+
+
+def summer_private(title: str, focus: str) -> str:
+    lead = (
+        f"For {title} families, early July 2026 is when school reports, exam timetables and September planning all start to overlap. "
+        f"The local focus should stay practical: {focus}."
+    )
+    return summer_section(
+        f"Early July 2026 tuition priorities for {title} families",
+        lead,
+        [
+            "Use the first session to decide whether the student needs catch-up, confidence work or exam preparation.",
+            "Choose online or in-person around summer travel plans so the routine is easy to keep.",
+            "End the block with a September recommendation linked to the next school pressure point.",
+        ],
+    )
+
+
+BESPOKE_2026_UPDATES = {
+    "11-plus-english-tutor-smethwick": {
+        "eyebrow": "Early July 2026 Update",
+        "title": "Early July 2026: build 11+ English without draining the final run-in.",
+        "lead": "West Midlands 11+ preparation now needs to connect vocabulary, comprehension and verbal reasoning with the autumn test format. Early July is the right point to use mock feedback and reading habits carefully, before the summer turns into rushed paper practice.",
+        "steps": [
+            ("Read wider, but review properly", "Short discussion after reading helps children turn vocabulary, inference and evidence into marks instead of just finishing another chapter."),
+            ("Drill one weak question type", "Inference, synonym, antonym or cloze work should be practised in small focused sets so mistakes are corrected properly."),
+            ("Add timing after accuracy", "Timed passages matter, but early-July and summer work should build pace calmly before full-paper pressure returns."),
+        ],
+        "grid": "mock-step-grid",
+    },
+    "11-plus-maths-tutor-smethwick": {
+        "eyebrow": "Early July 2026 Update",
+        "title": "Early July 2026: sharpen 11+ Maths method before final-speed practice.",
+        "lead": "The West Midlands 11+ includes mathematics alongside English, verbal reasoning and non-verbal or spatial reasoning. Early July is a useful checkpoint for deciding whether a child needs arithmetic repair, reasoning practice or tighter timing before the autumn test period.",
+        "steps": [
+            ("Repair the highest-value gaps", "Focus first on topics that appear often and cost marks quickly, especially fractions, arithmetic accuracy and multi-step reasoning."),
+            ("Explain the method aloud", "Children who can describe their approach usually make fewer repeated mistakes when the question is unfamiliar."),
+            ("Move into timed sets", "Once method is secure, short timed sets help build the pace needed for the GL-style paper without making every lesson feel high stakes."),
+        ],
+        "grid": "mock-step-grid",
+    },
+    "11-plus-mock-test-smethwick": {
+        "eyebrow": "Early July 2026 Update",
+        "title": "Early July 2026 mock tests should turn one sitting into a clear final plan.",
+        "lead": "A Smethwick 11+ mock is most useful now when it shows which section needs teaching before the autumn test period, not when it simply adds another score to worry about.",
+        "steps": [
+            ("Test early enough to act", "Book the mock while there is still time to improve maths, English, verbal reasoning or non-verbal reasoning before the real exam window."),
+            ("Review the weakest section first", "The report should lead to a short priority list, not a vague instruction to do more papers over the holiday."),
+            ("Protect confidence", "Summer practice should build stamina without making every week feel like another high-stakes test."),
+        ],
+        "grid": "how-grid",
+    },
+    "11-plus-mock-test-birmingham": {
+        "eyebrow": "Early July 2026 Update",
+        "title": "Early July 2026 Birmingham mock tests should guide the final stretch.",
+        "lead": "Birmingham families are now close enough to the autumn 11+ window that a mock result needs to become a teaching plan quickly. The useful question is not just the total score, but which section can still move the most.",
+        "steps": [
+            ("Compare sections honestly", "A child may look ready overall but still be losing marks in one section that needs urgent attention."),
+            ("Turn scores into teaching", "The result should point toward the exact maths, English or reasoning work that will make the biggest difference next."),
+            ("Avoid overtesting", "One good early-July or summer mock followed by careful review is often better than repeated tests with no time to fix the errors."),
+        ],
+        "grid": "how-grid",
+    },
+    "11-plus-mock-exams-birmingham": {
+        "eyebrow": "Early July 2026 Update",
+        "title": "Early July 2026 mock exams help families choose the right final priorities.",
+        "lead": "The current West Midlands Grammar Schools guidance keeps the test focus clear: English comprehension, verbal reasoning, mathematics and non-verbal or spatial reasoning. An early-July mock should show how those sections balance for this child, not just produce one broad readiness label.",
+        "steps": [
+            ("Check the balance", "A strong maths score can hide English timing problems, while good comprehension can hide weaker spatial reasoning."),
+            ("Prioritise teaching", "The mock should identify the section where direct teaching will change the result most before the real test period."),
+            ("Plan the final weeks", "Use the report to decide whether the next step is tuition, a second mock, lighter practice or confidence maintenance."),
+        ],
+        "grid": "how-grid",
+    },
+    "11-plus-tutor-birmingham": {
+        "eyebrow": "Early July 2026 Update",
+        "title": "Early July 2026 Birmingham 11+ tutoring should narrow the plan, not broaden it.",
+        "lead": "By early July, registration has closed and Birmingham families are waiting for allocated test-centre information. The best tutoring now turns mock evidence, target schools and the child's section profile into a focused final plan for the West Midlands GL-style format.",
+        "steps": [
+            ("Check all four sections", "English comprehension, verbal reasoning, maths and non-verbal or spatial reasoning need separate attention because one strong area can hide another weakness."),
+            ("Use local school goals", "King Edward's, Handsworth, Sutton Coldfield and other grammar routes all need high-quality preparation, but the child's section profile should shape the weekly plan."),
+            ("Keep practice purposeful", "Early-July and summer lessons should combine targeted teaching with enough timed work to build confidence without exhausting the child."),
+        ],
+        "grid": "mock-step-grid",
+    },
+    "11-plus-tutor-bearwood": {
+        "eyebrow": "Early July 2026 Update",
+        "title": "Early July 2026 Bearwood families can test the 11+ routine before Year 6 pressure rises.",
+        "lead": "Bearwood families are close enough to the Smethwick base to try a practical in-person routine before September. This is the moment to see whether the child needs core KS2 repair, reasoning practice or mock-test strategy first.",
+        "steps": [
+            ("Start from evidence", "Use recent school work, mock results or tutor assessment before choosing the first 11+ priority."),
+            ("Protect the routine", "A short journey from Bearwood makes weekly lessons easier to sustain through the final preparation window."),
+            ("Finish with a September plan", "The summer block should end with clear next steps for reading, maths, reasoning and mock timing."),
+        ],
+        "grid": "mock-step-grid",
+    },
+    "11-plus-tutor-oldbury": {
+        "eyebrow": "Early July 2026 Update",
+        "title": "Early July 2026 Oldbury 11+ preparation should be structured but not overloaded.",
+        "lead": "Oldbury families are often comparing Birmingham, Walsall and nearby grammar-school routes. After the registration deadline, early July is the right time to turn that comparison into a balanced plan across English, maths and reasoning while families wait for allocated test-centre information.",
+        "steps": [
+            ("Use the closed-registration window", "Keep target schools in view while using the waiting period to decide how much mock practice and section repair is needed."),
+            ("Find the first teaching gap", "The strongest starting point may be comprehension, arithmetic, verbal reasoning or non-verbal/spatial reasoning."),
+            ("Keep summer realistic", "Lessons should fit around family plans while still building the confidence needed for the autumn test period."),
+        ],
+        "grid": "mock-step-grid",
+    },
+    "11-plus-tutor-west-bromwich": {
+        "eyebrow": "Early July 2026 Update",
+        "title": "Early July 2026 West Bromwich families can turn 11+ preparation into a clear final plan.",
+        "lead": "West Bromwich students often have several realistic selective-school routes nearby. With registration now closed for September 2027 entry, early July is the practical point for checking mock evidence, travel routine and which section needs the most focused teaching.",
+        "steps": [
+            ("Review the section pattern", "Do not rely on a single score if English, maths or reasoning marks tell a more specific story."),
+            ("Choose the format", "In-person lessons can help younger pupils with focus, while online can protect routine when family travel is tight."),
+            ("Set the final priorities", "The next few weeks should be about targeted repair, answer-sheet habits and enough timed practice to stay calm."),
+        ],
+        "grid": "mock-step-grid",
+    },
+    "11-plus-year-5-smethwick": {
+        "eyebrow": "Early July 2026 Update",
+        "title": "Early July 2026 is the calmest point to make Year 5 11+ preparation more serious.",
+        "lead": "Year 5 families now have enough school-year evidence to decide whether the child is ready for a more structured 11+ plan. The useful goal is not full exam pressure; it is building the foundations that Year 6 will need.",
+        "steps": [
+            ("Separate foundation from test practice", "Reading stamina, number confidence and vocabulary should be secure before heavy timed papers take over."),
+            ("Introduce reasoning carefully", "Verbal and non-verbal or spatial reasoning improve fastest when patterns are taught, not guessed."),
+            ("Build a Year 6 runway", "An early-July-to-September plan should make the start of Year 6 feel purposeful rather than rushed."),
+        ],
+        "grid": "mock-step-grid",
+    },
+    "king-edwards-11-plus-preparation": {
+        "eyebrow": "Early July 2026 Update",
+        "title": "Early July 2026 King Edward's preparation should balance ambition with evidence.",
+        "lead": "King Edward's preparation is competitive, but the current West Midlands test route still rewards the same balanced skills: English, verbal reasoning, maths and non-verbal or spatial reasoning. After registration closes, early July is the moment to check whether ambition is matched by section evidence.",
+        "steps": [
+            ("Check the school shortlist", "Use target schools to shape expectations, but use the child's section data to shape the actual teaching plan."),
+            ("Avoid one-strength preparation", "A strong maths pupil still needs careful comprehension and verbal reasoning; a strong reader still needs speed and non-verbal logic."),
+            ("Use mocks carefully", "Mock results should guide the final block of teaching, not become weekly pressure without enough review time."),
+        ],
+        "grid": "mock-step-grid",
+    },
+}
+
+
+def render_bespoke_update(slug: str) -> str:
+    meta = BESPOKE_2026_UPDATES[slug]
+    if meta["grid"] == "how-grid":
+        cards = "\n".join(
+            f'        <div class="how-step"><div class="step-num">{idx}</div><h3>{title}</h3><p>{text}</p></div>'
+            for idx, (title, text) in enumerate(meta["steps"], start=1)
+        )
+        grid_html = f'      <div class="how-grid">\n{cards}\n      </div>'
+    else:
+        cards = "\n".join(
+            f'        <div class="mock-step"><div class="number">{idx}</div><h3>{title}</h3><p>{text}</p></div>'
+            for idx, (title, text) in enumerate(meta["steps"], start=1)
+        )
+        grid_html = f'      <div class="mock-step-grid">\n{cards}\n      </div>'
+    return f"""    <section class="section" id="summer">
+      <div class="mock-section-head">
+        <div>
+          <div class="eyebrow">{meta["eyebrow"]}</div>
+          <h2 class="sec-h2">{meta["title"]}</h2>
+        </div>
+        <p class="sec-sub">{meta["lead"]}</p>
+      </div>
+{grid_html}
+    </section>"""
+
+
+def replace_bespoke_update_section(text: str, slug: str) -> str:
+    pattern = re.compile(r'    <section class="section" id="summer">.*?    </section>', re.S)
+    replacement = render_bespoke_update(slug)
+    new_text, count = pattern.subn(replacement, text, count=1)
+    if count != 1:
+        raise RuntimeError(f"Could not update Early July 2026 section for {slug}")
+    return new_text
+
+
 def render_related(links: list[tuple[str, str]]) -> str:
     uniq = []
     seen = set()
@@ -1347,17 +1975,21 @@ def render_related(links: list[tuple[str, str]]) -> str:
 
 
 def replace_main(text: str, sections_html: str) -> str:
-    pattern = re.compile(r'(<main class="blp-main">\s*)(.*?)(\s*</main>)', re.S)
-    return pattern.sub(lambda m: m.group(1) + sections_html + m.group(3), text, count=1)
+    pattern = re.compile(r'(<main class="blp-main">)\s*(.*?)(\s*</main>)', re.S)
+    return pattern.sub(
+        lambda m: f'{m.group(1)}\n{sections_html}\n    </main>',
+        text,
+        count=1,
+    )
 
 
 def replace_related(text: str, related_html: str) -> str:
     pattern = re.compile(
-        r'<div class="blp-related">\s*<div class="blp-related-inner">.*?</div>\s*</div>',
+        r'\n\s*<div class="blp-related">\s*<div class="blp-related-inner">.*?</div>\s*</div>',
         re.S,
     )
     if pattern.search(text):
-        return pattern.sub(related_html, text, count=1)
+        return pattern.sub("\n" + related_html, text, count=1)
     return text
 
 
@@ -1367,6 +1999,122 @@ def update_date_modified(text: str) -> str:
         rf"\g<1>{DATE}\2",
         text,
     )
+
+
+def page_title(text: str, fallback: str) -> str:
+    h1 = re.search(r"<h1>(.*?)</h1>", text, re.S)
+    if h1:
+        return re.sub(r"\s+", " ", h1.group(1)).strip()
+    title = re.search(r"<title>(.*?)</title>", text, re.S)
+    if title:
+        return re.sub(r"\s+", " ", title.group(1)).strip()
+    return fallback.replace("-", " ").title()
+
+
+def page_description(text: str) -> str:
+    desc = re.search(r'<meta name="description" content="(.*?)"', text, re.S)
+    if desc:
+        return re.sub(r"\s+", " ", desc.group(1)).strip()
+    return "Teacher-led tuition from Teaching Success."
+
+
+def service_type_for_slug(slug: str) -> str:
+    if "11-plus" in slug or "grammar-school" in slug or "king-edwards" in slug:
+        return "11 plus tuition"
+    if "math" in slug or "maths" in slug:
+        return "Maths tuition"
+    if "english" in slug or "language" in slug:
+        return "English tuition"
+    if "science" in slug or "biology" in slug or "chemistry" in slug or "physics" in slug:
+        return "Science tuition"
+    if "sats" in slug:
+        return "SATs preparation"
+    if "a-level" in slug:
+        return "A-Level tuition"
+    if "gcse" in slug:
+        return "GCSE tuition"
+    if "ucat" in slug:
+        return "UCAT preparation"
+    if "mock" in slug:
+        return "Exam preparation"
+    return "Private tuition"
+
+
+def areas_for_slug(slug: str) -> list[str]:
+    areas = ["Smethwick", "Birmingham"]
+    area_words = {
+        "bearwood": "Bearwood",
+        "oldbury": "Oldbury",
+        "west-bromwich": "West Bromwich",
+        "wolverhampton": "Wolverhampton",
+        "walsall": "Walsall",
+        "bloxwich": "Bloxwich",
+        "willenhall": "Willenhall",
+        "wednesbury": "Wednesbury",
+        "dudley": "Dudley",
+        "solihull": "Solihull",
+        "manchester": "Manchester",
+        "harborne": "Harborne",
+        "edgbaston": "Edgbaston",
+        "handsworth": "Handsworth",
+        "quinton": "Quinton",
+        "tipton": "Tipton",
+        "rowley-regis": "Rowley Regis",
+        "cape-hill": "Cape Hill",
+    }
+    for key, label in area_words.items():
+        if key in slug and label not in areas:
+            areas.insert(0, label)
+    return areas[:4]
+
+
+def update_service_schema(text: str, slug: str) -> str:
+    marker = "ts-service-schema"
+    text = re.sub(
+        rf'\n?<script type="application/ld\+json" id="{marker}">.*?</script>',
+        "",
+        text,
+        flags=re.S,
+    )
+    url = f"https://www.teachingsuccess.co.uk/blog/{slug}.html"
+    schema = {
+        "@context": "https://schema.org",
+        "@type": "Service",
+        "@id": f"{url}#service",
+        "name": page_title(text, slug),
+        "description": page_description(text),
+        "url": url,
+        "serviceType": service_type_for_slug(slug),
+        "provider": {
+            "@type": ["EducationalOrganization", "LocalBusiness"],
+            "@id": "https://www.teachingsuccess.co.uk/#organization",
+            "name": "Teaching Success",
+            "url": "https://www.teachingsuccess.co.uk/",
+            "telephone": "+447909274901",
+            "priceRange": "£15-£25",
+        },
+        "areaServed": [
+            {"@type": "Place", "name": area} for area in areas_for_slug(slug)
+        ],
+        "audience": {
+            "@type": "EducationalAudience",
+            "educationalRole": "student",
+        },
+        "offers": {
+            "@type": "Offer",
+            "url": "https://www.teachingsuccess.co.uk/",
+            "priceCurrency": "GBP",
+            "price": "0",
+            "description": "Free trial lesson and consultation before regular paid tuition.",
+            "availability": "https://schema.org/InStock",
+        },
+    }
+    block = (
+        f'<script type="application/ld+json" id="{marker}">\n'
+        f"{json.dumps(schema, ensure_ascii=False, indent=2)}\n"
+        "</script>\n"
+    )
+    return text.replace("</head>", block + "</head>", 1)
 
 
 def year_links(year: int, subject: str) -> list[tuple[str, str]]:
@@ -1438,6 +2186,7 @@ def year_links(year: int, subject: str) -> list[tuple[str, str]]:
 
 def render_year_general(year: int) -> tuple[str, str]:
     detail = YEAR_DETAILS[year]
+    search_angle = YEAR_SEARCH_ANGLES[year]
     if year <= 6:
         sections = [
             section(
@@ -1462,6 +2211,23 @@ def render_year_general(year: int) -> tuple[str, str]:
                         "Enough review to build confidence, not just enough to finish the worksheet",
                     ]
                 ),
+            ),
+            section(
+                f"Why this Year {year} page is different",
+                p(
+                    f"Parents searching specifically for a Year {year} tutor are usually looking for {search_angle}. That makes this page different from a broad primary tuition page: the plan needs to match the child's current school year, not just the subject name."
+                ),
+            ),
+            summer_year_general(year, detail),
+            intent_section(
+                f"Year {year} tutor in Smethwick",
+                [
+                    f"Year {year} tuition Smethwick",
+                    f"Year {year} maths tutor Smethwick",
+                    f"Year {year} English tutor Smethwick",
+                    "primary tutor near me",
+                ],
+                "The page keeps the advice year-specific so parents can move from a broad local search into the English, maths, SATs or 11+ route that actually fits.",
             ),
             next_step(),
         ]
@@ -1490,6 +2256,23 @@ def render_year_general(year: int) -> tuple[str, str]:
                     ]
                 ),
             ),
+            section(
+                f"Why this Year {year} page is different",
+                p(
+                    f"A Year {year} search usually signals {search_angle}. The support should therefore connect school routine, homework habits and subject confidence instead of acting like a generic secondary tutor page."
+                ),
+            ),
+            summer_year_general(year, detail),
+            intent_section(
+                f"Year {year} tutor in Smethwick",
+                [
+                    f"Year {year} tuition Smethwick",
+                    "KS3 tutor Smethwick",
+                    "secondary tutor near me",
+                    "catch-up tuition Smethwick",
+                ],
+                "That search intent matters because KS3 families often need a practical confidence plan before they are ready to choose a GCSE subject page.",
+            ),
             next_step(),
         ]
     elif year <= 11:
@@ -1516,6 +2299,23 @@ def render_year_general(year: int) -> tuple[str, str]:
                         "Enough feedback for the student to know what is improving and why",
                     ]
                 ),
+            ),
+            section(
+                f"Why this Year {year} page is different",
+                p(
+                    f"Families searching by Year {year} are usually thinking about {search_angle}. That is why the teaching plan should start from recent school evidence and turn it into a tighter set of exam priorities."
+                ),
+            ),
+            summer_year_general(year, detail),
+            intent_section(
+                f"Year {year} tutor in Smethwick",
+                [
+                    f"Year {year} GCSE tutor",
+                    "GCSE tutors near me",
+                    "GCSE revision Smethwick",
+                    "exam technique tutor",
+                ],
+                "The page points families toward subject-specific GCSE support once the first priority is clear, rather than leaving them on a broad exam-year overview.",
             ),
             next_step(),
         ]
@@ -1544,6 +2344,23 @@ def render_year_general(year: int) -> tuple[str, str]:
                     ]
                 ),
             ),
+            section(
+                f"Why this Year {year} page is different",
+                p(
+                    f"Year {year} searches tend to be about {search_angle}. The support should therefore include independent-study structure as well as subject teaching, because sixth-form progress depends on both."
+                ),
+            ),
+            summer_year_general(year, detail),
+            intent_section(
+                f"Year {year} tutor in Smethwick",
+                [
+                    f"Year {year} A-Level tutor",
+                    "A-Level tutor near me",
+                    "sixth form tutor",
+                    "online A-Level tuition",
+                ],
+                "The intent is different from GCSE: students usually need subject depth and a stronger independent-study routine, so the next link should lead into the exact A-Level subject.",
+            ),
             next_step(),
         ]
     return "\n".join(sections), render_related(year_links(year, "general"))
@@ -1551,9 +2368,9 @@ def render_year_general(year: int) -> tuple[str, str]:
 
 def render_year_subject(year: int, subject: str) -> tuple[str, str]:
     detail = YEAR_DETAILS[year]
-    is_primary = year <= 6
     subject_label = "English" if subject == "english" else "Maths"
     if subject == "english":
+        focus = ENGLISH_YEAR_FOCUS[year]
         sections = [
             section(
                 f"What English usually looks like in Year {year}",
@@ -1578,11 +2395,29 @@ def render_year_subject(year: int, subject: str) -> tuple[str, str]:
                     ]
                 ),
             ),
+            section(
+                f"How Year {year} English support is different",
+                p(
+                    f"This page is aimed at {focus}, so it should not read like the Year {year} Maths page or a broad English hub. The useful starting point is to decide whether the student needs reading confidence, sentence-level correction, paragraph modelling or timed exam practice."
+                ),
+            ),
+            summer_year_subject(year, subject, detail),
+            intent_section(
+                f"Year {year} English tutor in Smethwick",
+                [
+                    f"Year {year} English tuition",
+                    "English teacher in Smethwick",
+                    "language tutor Smethwick",
+                    "English tutor near me",
+                ],
+                "Where searches mention language tutoring, this page is careful to answer school English, reading, writing and English Language needs rather than implying modern foreign language tuition.",
+            ),
             next_step(
                 f'Call <a href="tel:07909274901">07909&nbsp;274901</a> or <a href="/">book a free trial lesson</a> to discuss the strongest starting point for Year {year} English support.'
             ),
         ]
     else:
+        focus = MATHS_YEAR_FOCUS[year]
         sections = [
             section(
                 f"What Maths gets harder in Year {year}",
@@ -1607,6 +2442,23 @@ def render_year_subject(year: int, subject: str) -> tuple[str, str]:
                     ]
                 ),
             ),
+            section(
+                f"How Year {year} Maths support is different",
+                p(
+                    f"This page is focused on {focus}, so it should not compete with a broad maths page or an English page for the same year group. The lesson plan needs to show the pupil how to choose methods, keep working clear and transfer practice into mixed questions."
+                ),
+            ),
+            summer_year_subject(year, subject, detail),
+            intent_section(
+                f"Year {year} Maths tutor in Smethwick",
+                [
+                    f"Year {year} maths tuition",
+                    "maths teacher in Smethwick",
+                    "maths tutor near me",
+                    "maths intervention Smethwick",
+                ],
+                "The wording keeps the page aligned with maths-teacher searches while still routing families toward KS2, KS3 or GCSE support when the year-group page is only the starting point.",
+            ),
             next_step(
                 f'Call <a href="tel:07909274901">07909&nbsp;274901</a> or <a href="/">book a free trial lesson</a> to discuss the strongest starting point for Year {year} Maths support.'
             ),
@@ -1618,11 +2470,19 @@ def render_private_tutor(slug: str) -> tuple[str, str]:
     location = slug.replace("private-tutor-", "")
     meta = LOCATION_META[location]
     title = location.replace("-", " ").title()
+    search_phrase = f"tuition in {title}" if location == "bloxwich" else f"private tutor in {title}"
+    nearby = [
+        name
+        for name in ("Smethwick", "Bearwood", "Oldbury", "Birmingham", "Walsall", "Wolverhampton")
+        if name != title
+    ]
+    nearby_names = nearby[:3]
+    nearby_text = ", ".join(nearby_names[:-1]) + f" and {nearby_names[-1]}"
     sections = [
         section(
             f"What {title} families usually want help with",
             p(
-                f"Families looking for a private tutor in {title} are usually trying to find a practical route into {meta['focus']}. The search is rarely about tutoring in the abstract; it is usually about making one specific school pressure point feel more manageable."
+                f"Families looking for {search_phrase} are usually trying to find a practical route into {meta['focus']}. The search is rarely about tutoring in the abstract; it is usually about making one specific school pressure point feel more manageable."
             ),
         ),
         section(
@@ -1632,6 +2492,23 @@ def render_private_tutor(slug: str) -> tuple[str, str]:
         section(
             "In-person or online?",
             p(meta["format"]),
+        ),
+        section(
+            f"What makes the {title} page distinct",
+            p(
+                f"This page is written for families comparing a {title} tutor with nearby {nearby_text} options. It focuses on local travel, weekly consistency and the subject mix families in {title} usually ask about, rather than repeating a generic private tutor description."
+            ),
+        ),
+        summer_private(title, meta["focus"]),
+        intent_section(
+            search_phrase,
+            [
+                f"tutors in {title}",
+                f"tuition in {title}",
+                f"maths teacher in {title}",
+                f"language tutors in {title}",
+            ],
+            "If the search is subject-led, the related links help families move from the local-area page into maths, English, science, 11+ or GCSE support without losing the local context.",
         ),
         next_step(
             f'Call <a href="tel:07909274901">07909&nbsp;274901</a> or <a href="/">book a free trial lesson</a> to talk through the best starting point for {title} tuition.'
@@ -1648,9 +2525,32 @@ def render_manual_meta(meta: dict[str, object], next_text: str | None = None) ->
         )
     )
     sections = [
-        section(f"What strong {meta['service']} should really do", p(str(meta["intro"]))),
-        section(f"What strong {meta['service']} should include", ul(list(meta["points"]))),
+        section(f"What {meta['service']} should really do", p(str(meta["intro"]))),
+        section(f"What {meta['service']} should include", ul(list(meta["points"]))),
         section("When this route is the right fit", p(fit_text)),
+        section(
+            "How this guide helps you choose",
+            p(
+                f"This guide is built around families actively comparing {meta['service']} rather than browsing a general tuition article. The related links point toward the most relevant next route so the page acts as a useful decision point, not just a generic directory page."
+            ),
+        ),
+        summer_manual(str(meta["service"]), fit_text),
+        intent_section(
+            str(meta["service"]),
+            list(meta.get("queries", []))
+            or [
+                f"{meta['service']} near me",
+                f"{meta['service']} Smethwick",
+                "tutors in Smethwick",
+                "tuition near me",
+            ],
+            str(
+                meta.get(
+                    "intent",
+                    "The page is designed to answer the search quickly, then move the family toward a clearer subject, year-group or exam-stage decision.",
+                )
+            ),
+        ),
         next_step(next_text),
     ]
     return "\n".join(sections), render_related(list(meta["links"]))
@@ -1735,9 +2635,26 @@ def main() -> None:
         new_text = replace_main(text, sections_html)
         new_text = replace_related(new_text, related_html)
         new_text = update_date_modified(new_text)
+        new_text = update_service_schema(new_text, path.stem)
         if new_text != text:
             path.write_text(new_text, encoding="utf-8")
             changed.append(path.stem)
+
+    bespoke_targets = [
+        BLOG_DIR / f"{slug}.html"
+        for slug in sorted(BESPOKE_2026_UPDATES)
+        if (BLOG_DIR / f"{slug}.html").exists()
+    ]
+    for path in bespoke_targets:
+        text = path.read_text(encoding="utf-8")
+        if "noindex" in text:
+            continue
+        new_text = replace_bespoke_update_section(text, path.stem)
+        new_text = update_date_modified(new_text)
+        if new_text != text:
+            path.write_text(new_text, encoding="utf-8")
+            changed.append(path.stem)
+
     update_sitemap(changed)
     print(f"Refreshed {len(changed)} blog pages.")
 
