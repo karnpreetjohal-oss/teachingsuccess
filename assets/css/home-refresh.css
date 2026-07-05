@@ -24,6 +24,9 @@
 .nphone::before{content:'📞';font-size:.85em}
 
 /* ---------- Hero ---------- */
+/* <picture> becomes the absolute background layer so it stays out of the hero grid,
+   exactly as the bare <img> did before (prevents the text stack shifting columns) */
+.hero picture{position:absolute;inset:0;z-index:0}
 .hero-glass{border-radius:18px;box-shadow:0 24px 60px rgba(7,12,24,.35)}
 .hero-trust-chips{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:.5rem}
 .hero-trust-chips li{display:inline-flex;align-items:center;gap:.4rem;padding:.45rem .8rem;border-radius:999px;background:rgba(20,28,45,.78);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid rgba(245,200,66,.28);color:rgba(255,255,255,.94);font-size:.8rem;font-weight:700;text-shadow:0 1px 2px rgba(0,0,0,.3)}
