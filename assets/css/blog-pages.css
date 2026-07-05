@@ -373,3 +373,7 @@ body.blog-lp{
   .blp-trust{padding:.6rem 1.2rem;gap:1rem}
   .blp-section{padding:1.2rem}
 }
+
+/* 11+ hub: parent-note callout on child pages */
+.blp-parent-note{background:var(--surf,#e4e9f2);border-left:4px solid var(--gold,#f5c842);border-radius:10px;padding:.9rem 1.1rem}
+.blp-parent-note p{margin:0;font-size:.95rem}
