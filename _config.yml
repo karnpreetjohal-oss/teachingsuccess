@@ -1,0 +1,25 @@
+title: Teaching Success
+url: "https://www.teachingsuccess.co.uk"
+baseurl: ""
+
+include:
+  - CNAME
+
+exclude:
+  - .claude
+  - .codex
+  - .agents
+  - .DS_Store
+  - .gitignore
+  - APP_MVP_IMPLEMENTATION_PLAN.md
+  - SEO_CONTENT_CALENDAR.md
+  - SEO_SEARCH_CONSOLE_ACTIONS_2026-05-02.md
+  - SEO_SEARCH_CONSOLE_ACTIONS_2026-05-16.md
+  - SEO_SEARCH_CONSOLE_ACTIONS_2026-06-05.md
+  - SUPABASE_SETUP.md
+  - claude-seo-review.md
+  - refresh_seo_blog_posts.py
+  - transform_blog_pages.py
+  - apps
+  - marketing
+  - supabase
