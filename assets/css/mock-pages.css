@@ -752,3 +752,14 @@
     font-size:1.8rem;
   }
 }
+
+/* Visible breadcrumb trail (both hero styles are dark) */
+.blp-crumbs{display:flex;flex-wrap:wrap;align-items:center;gap:.15rem;margin-bottom:1.1rem;font-size:.82rem;line-height:1.4}
+.blp-crumbs a{color:rgba(255,255,255,.72);text-decoration:none;transition:color .15s}
+.blp-crumbs a:hover,.blp-crumbs a:focus-visible{color:#f5c842;text-decoration:underline}
+.blp-crumbs-sep{color:rgba(255,255,255,.4);margin:0 .35rem}
+.blp-crumbs-here{color:rgba(255,255,255,.9);font-weight:600}
+@media(max-width:600px){.blp-crumbs{font-size:.76rem}}
+
+/* breadcrumb sits above the two-column mock hero grid */
+.mock-hero > .blp-crumbs{position:relative;z-index:1;max-width:1200px;margin:0 auto 1.4rem}
