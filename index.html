@@ -30,7 +30,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,700;0,9..144,900;1,9..144,700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<link rel="preload" as="image" href="assets/images/home-hero-source.jpg">
+<link rel="preload" as="image" href="assets/images/home-hero-source.webp" type="image/webp">
 <link rel="stylesheet" href="assets/css/index.css">
 <link rel="stylesheet" href="assets/css/home-refresh.css">
 <script type="application/ld+json">
@@ -246,12 +246,17 @@
   </nav>
 
   <section class="hero">
-    <img
-      src="assets/images/home-hero-source.jpg"
-      alt="Kevin teaching a science experiment"
-      class="hero-bg-img"
-      fetchpriority="high"
-    >
+    <picture>
+      <source srcset="assets/images/home-hero-source.webp" type="image/webp">
+      <img
+        src="assets/images/home-hero-source.jpg"
+        alt="Kevin teaching a science experiment"
+        class="hero-bg-img"
+        fetchpriority="high"
+        width="1360"
+        height="958"
+      >
+    </picture>
     <div class="hero-l">
       <div class="hero-stack">
         <div class="hero-glass">
