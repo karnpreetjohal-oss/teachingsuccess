@@ -78,6 +78,8 @@
 .ac-top{position:relative;overflow:hidden}
 .ac-top::after{content:'';position:absolute;top:-40%;right:-25%;width:70%;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.14),transparent 65%)}
 .aamt{color:var(--green2)}
+.level-card-links{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.8rem}
+.level-card-links .btn{flex:1;justify-content:center;min-width:95px;padding:.5rem .65rem;font-size:.76rem}
 
 /* ---------- How it works ---------- */
 .hiw{background:linear-gradient(160deg,#1a2434,#1e2a3d 55%,#243450)}
