@@ -71,12 +71,17 @@
 .proof-shift{color:var(--green2)}
 
 /* ---------- Levels / age cards ---------- */
-.agrid{gap:1.4rem}
-.ac{border-radius:var(--radius);box-shadow:var(--shadow-sm)}
+.levels-band{background:var(--surf)}
+#levels.levels-section{max-width:none;padding:2rem clamp(1rem,3.5vw,4rem) 3rem}
+#levels .agrid{max-width:1680px;margin:0 auto;gap:1.4rem;align-items:stretch}
+.ac{display:flex;flex-direction:column;border-radius:var(--radius);box-shadow:var(--shadow-sm);background:var(--card)}
 .ac:hover{transform:translateY(-6px);box-shadow:var(--shadow-lg)}
-.ac-bot{border-radius:0 0 var(--radius) var(--radius)}
+.ac-photo{display:block;width:100%;aspect-ratio:16/9;object-fit:cover}
+.ac-bot{display:flex;flex:1;flex-direction:column;border-radius:0 0 var(--radius) var(--radius)}
+.ac-bot .aitems{flex:1}
 .ac-top{position:relative;overflow:hidden}
-.ac-top::after{content:'';position:absolute;top:-40%;right:-25%;width:70%;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.14),transparent 65%)}
+.levels-section .ac-top{padding:1.15rem 1.5rem 1rem}
+.levels-section .ac-top::after{display:none}
 .aamt{color:var(--green2)}
 .level-card-links{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.8rem}
 .level-card-links .btn{flex:1;justify-content:center;min-width:95px;padding:.5rem .65rem;font-size:.76rem}
