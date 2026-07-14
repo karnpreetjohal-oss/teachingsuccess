@@ -73,7 +73,7 @@
 /* ---------- Levels / age cards ---------- */
 .levels-band{background:var(--surf)}
 #levels.levels-section{max-width:none;padding:2rem clamp(1rem,3.5vw,4rem) 3rem}
-#levels .agrid{max-width:1680px;margin:0 auto;gap:1.4rem;align-items:stretch}
+#levels .agrid{max-width:1680px;margin:0 auto;grid-template-columns:repeat(5,minmax(0,1fr));gap:1.4rem;align-items:stretch}
 .ac{display:flex;flex-direction:column;border-radius:var(--radius);box-shadow:var(--shadow-sm);background:var(--card)}
 .ac:hover{transform:translateY(-6px);box-shadow:var(--shadow-lg)}
 .ac-photo{display:block;width:100%;height:clamp(145px,10vw,180px);flex:none;object-fit:cover;object-position:center}
@@ -82,6 +82,7 @@
 .ac-top{position:relative;overflow:hidden}
 .levels-section .ac-top{padding:1.15rem 1.5rem 1rem}
 .levels-section .ac-top::after{display:none}
+.ac.eleven .ac-top{background:linear-gradient(135deg,#2f6c63,#4f8f82)}
 .aamt{color:var(--green2)}
 .level-card-links{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.8rem}
 .level-card-links .btn{flex:1;justify-content:center;min-width:95px;padding:.5rem .65rem;font-size:.76rem}
@@ -128,6 +129,12 @@ details.faq-item a{color:var(--green2);font-weight:700}
 .ctaband .cta-form-btn{display:inline-flex;margin-top:1.2rem}
 
 /* ---------- Mobile polish ---------- */
+@media (max-width:1200px){
+  #levels .agrid{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media (max-width:900px){
+  #levels .agrid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
 @media (max-width:768px){
   .ac-photo{height:180px}
   .nlinks a{min-height:44px;padding:.65rem 1rem;font-size:.82rem}
@@ -142,6 +149,7 @@ details.faq-item a{color:var(--green2);font-weight:700}
   .reviews-rating{font-size:.85rem}
 }
 @media (max-width:480px){
+  #levels .agrid{grid-template-columns:1fr}
   .hero-trust-chips li{font-size:.7rem}
   .ctaph{width:100%;justify-content:center}
   .ctaband .cta-form-btn{width:100%;justify-content:center;min-height:48px}
