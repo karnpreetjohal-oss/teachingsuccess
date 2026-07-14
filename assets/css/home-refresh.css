@@ -76,7 +76,7 @@
 #levels .agrid{max-width:1680px;margin:0 auto;gap:1.4rem;align-items:stretch}
 .ac{display:flex;flex-direction:column;border-radius:var(--radius);box-shadow:var(--shadow-sm);background:var(--card)}
 .ac:hover{transform:translateY(-6px);box-shadow:var(--shadow-lg)}
-.ac-photo{display:block;width:100%;aspect-ratio:16/9;object-fit:cover}
+.ac-photo{display:block;width:100%;height:clamp(145px,10vw,180px);flex:none;object-fit:cover;object-position:center}
 .ac-bot{display:flex;flex:1;flex-direction:column;border-radius:0 0 var(--radius) var(--radius)}
 .ac-bot .aitems{flex:1}
 .ac-top{position:relative;overflow:hidden}
@@ -129,6 +129,7 @@ details.faq-item a{color:var(--green2);font-weight:700}
 
 /* ---------- Mobile polish ---------- */
 @media (max-width:768px){
+  .ac-photo{height:180px}
   .nlinks a{min-height:44px;padding:.65rem 1rem;font-size:.82rem}
   .nphone{min-height:48px}
   .hero-trust-chips{gap:.45rem}
