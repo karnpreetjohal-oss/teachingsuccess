@@ -16,8 +16,16 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 BLOG_DIR = ROOT / "blog"
 SITEMAP_PATH = ROOT / "sitemap.xml"
-DATE = "2026-07-01"
-SKIP = set()
+DATE = "2026-07-12"
+# Hand-maintained digital-skills course pages: blp layout, but their main
+# content is written by hand — never regenerate it. They still get a
+# dateModified + sitemap bump each refresh via the loop in main().
+SKIP = {
+    "microsoft-office-training-birmingham",
+    "excel-training-birmingham",
+    "ai-training-birmingham",
+    "touch-typing-course-smethwick",
+}
 
 
 YEAR_DETAILS = {
@@ -1513,7 +1521,7 @@ def summer_section(title: str, lead: str, bullets: list[str], close: str | None 
 def summer_year_general(year: int, detail: dict[str, str]) -> str:
     if year <= 4:
         lead = (
-            f"Early July 2026 is the point where Year {year} school reports, class books and teacher comments start to show what needs a calm summer plan. "
+            f"Mid-July 2026 is the point where Year {year} school reports, class books and teacher comments have shown what needs a calm summer plan. "
             f"For this age, the best next step keeps {detail['general']} moving without making the break feel like another school term."
         )
         bullets = [
@@ -1523,7 +1531,7 @@ def summer_year_general(year: int, detail: dict[str, str]) -> str:
         ]
     elif year == 5:
         lead = (
-            "Early July 2026 is a useful Year 5 checkpoint because families can now see whether upper-KS2 confidence is ready for Year 6. "
+            "Mid-July 2026 is a useful Year 5 checkpoint because families can now see whether upper-KS2 confidence is ready for Year 6. "
             "For some children that means SATs foundations; for others it means deciding whether 11+ preparation should become more structured over the summer."
         )
         bullets = [
@@ -1534,7 +1542,7 @@ def summer_year_general(year: int, detail: dict[str, str]) -> str:
     elif year == 6:
         lead = (
             "The 2026 KS2 tests are now behind Year 6 pupils and the published papers give families a clearer way to read the evidence. "
-            "Early July should be less about more test drilling and more about using SATs feedback, school reports and transition information to make the move into Year 7 feel steadier."
+            "Mid-July should be less about more test drilling and more about using SATs feedback, school reports and transition information to make the move into Year 7 feel steadier."
         )
         bullets = [
             "Look at English and maths separately so secondary transition support starts with the subject most likely to affect confidence.",
@@ -1543,7 +1551,7 @@ def summer_year_general(year: int, detail: dict[str, str]) -> str:
         ]
     elif year <= 9:
         lead = (
-            f"Early July 2026 is when Year {year} families can use end-of-year assessments and reports before the next timetable lands. "
+            f"Mid-July 2026 is when Year {year} families can use end-of-year assessments and reports before the next timetable lands. "
             "A few focused lessons can stop KS3 drift while the school evidence is still fresh."
         )
         bullets = [
@@ -1553,7 +1561,7 @@ def summer_year_general(year: int, detail: dict[str, str]) -> str:
         ]
     elif year == 10:
         lead = (
-            "Early July 2026 gives Year 10 families a live preview of the GCSE pressure coming next year, while the current Year 11 exam cycle is still visible. "
+            "Mid-July 2026 gives Year 10 families a live preview of the GCSE pressure coming next year, while this summer's Year 11 exam season is still fresh. "
             "The useful move now is to turn Year 10 assessments into a repair plan before mock season becomes urgent."
         )
         bullets = [
@@ -1563,7 +1571,7 @@ def summer_year_general(year: int, detail: dict[str, str]) -> str:
         ]
     elif year == 11:
         lead = (
-            "By early July 2026, most Year 11 pupils are moving from final papers into the results-day and sixth-form bridge period. "
+            "By mid-July 2026, most Year 11 pupils have finished their final papers and are inside the results-day and sixth-form bridge period. "
             "Support should now be specific: fill the gaps that affect next steps, not restart broad GCSE revision for its own sake."
         )
         bullets = [
@@ -1583,7 +1591,7 @@ def summer_year_general(year: int, detail: dict[str, str]) -> str:
         ]
     elif year == 12:
         lead = (
-            "Early July 2026 is the moment Year 12 students can connect end-of-year assessments with the 2027 UCAS cycle, which is already open for applications. "
+            "Mid-July 2026 is the moment Year 12 students can connect end-of-year assessments with the 2027 UCAS cycle, which is already open for applications. "
             "The best tuition plan strengthens subject depth while also making independent study more deliberate."
         )
         bullets = [
@@ -1593,7 +1601,7 @@ def summer_year_general(year: int, detail: dict[str, str]) -> str:
         ]
     else:
         lead = (
-            "By early July 2026, Year 13 support should be moving from broad revision into calm results-day and progression planning, with UCAS Clearing opening on 2 July for eligible applicants. "
+            "By mid-July 2026, Year 13 support should be moving from broad revision into calm results-day and progression planning, with UCAS Clearing already open for eligible applicants. "
             "The aim is to keep key subject skills active while students prepare for university, apprenticeships, Clearing or a gap-year decision."
         )
         bullets = [
@@ -1601,7 +1609,7 @@ def summer_year_general(year: int, detail: dict[str, str]) -> str:
             "Prepare a short plan for results day so Clearing, resits or course changes are not handled in a panic.",
             "Keep academic confidence steady for the next step without pretending the exam season is still running.",
         ]
-    return summer_section(f"Early July 2026 timing for Year {year}", lead, bullets)
+    return summer_section(f"Mid-July 2026 timing for Year {year}", lead, bullets)
 
 
 def summer_year_subject(year: int, subject: str, detail: dict[str, str]) -> str:
@@ -1610,7 +1618,7 @@ def summer_year_subject(year: int, subject: str, detail: dict[str, str]) -> str:
     if subject == "english":
         if year <= 6:
             bullets = [
-                "Use early-July report comments to separate reading fluency, vocabulary, SPaG and writing stamina.",
+                "Use end-of-term report comments to separate reading fluency, vocabulary, SPaG and writing stamina.",
                 f"Practise {focus} in small bursts so written quality improves without turning summer into school-at-home.",
                 "Talk through answers before writing them, because primary English confidence often improves fastest orally first.",
             ]
@@ -1635,7 +1643,7 @@ def summer_year_subject(year: int, subject: str, detail: dict[str, str]) -> str:
     else:
         if year <= 6:
             bullets = [
-                f"Use early-July class work or SATs-style feedback to decide whether {focus} is the first priority.",
+                f"Use end-of-term class work or SATs-style feedback to decide whether {focus} is the first priority.",
                 "Correct working line by line so the student remembers the method, not just the answer.",
                 "Keep number fluency ticking over with short retrieval tasks between sessions.",
             ]
@@ -1658,17 +1666,17 @@ def summer_year_subject(year: int, subject: str, detail: dict[str, str]) -> str:
                 "Use results-day outcomes to decide whether the next step is bridging, resit repair or a pause.",
             ]
     lead = (
-        f"Early July 2026 {subject_label} tuition for Year {year} should start from the evidence families have now: reports, recent papers and the student's own confidence. "
+        f"Mid-July 2026 {subject_label} tuition for Year {year} should start from the evidence families have now: reports, recent papers and the student's own confidence. "
         f"The goal is to return to school sharper on {focus}, while still leaving the holiday feeling like a holiday."
     )
-    return summer_section(f"Early July 2026 {subject_label} plan for Year {year}", lead, bullets)
+    return summer_section(f"Mid-July 2026 {subject_label} plan for Year {year}", lead, bullets)
 
 
 def summer_manual(service: str, fit_text: str) -> str:
     service_lower = service.lower()
     if "ucat" in service_lower:
         lead = (
-            "UCAT 2026 is now in a live July planning window: booking has opened, July test slots are becoming real choices, and the booking deadline is 16 September. "
+            "UCAT 2026 is now in a live testing window: booking is open, July sittings are already running, and the booking deadline is 16 September. "
             "Preparation should therefore move from casual practice into section-by-section timing, test-window choices and recovery strategy."
         )
         bullets = [
@@ -1678,7 +1686,7 @@ def summer_manual(service: str, fit_text: str) -> str:
         ]
     elif "11+" in service or "grammar" in service_lower or "king edward" in service_lower:
         lead = (
-            f"Early July 2026 is a practical 11+ checkpoint for {service}: West Midlands Grammar Schools registration for September 2027 entry has now closed, so families should use the waiting period before allocated test-centre information arrives in September to balance GL-style paper practice, section repair and confidence. "
+            f"Mid-July 2026 is a practical 11+ checkpoint for {service}: West Midlands Grammar Schools registration for September 2027 entry has now closed, so families should use the waiting period before allocated test-centre information arrives in September to balance GL-style paper practice, section repair and confidence. "
             "The strongest holiday plan uses feedback carefully without overtesting the child."
         )
         bullets = [
@@ -1688,7 +1696,7 @@ def summer_manual(service: str, fit_text: str) -> str:
         ]
     elif "sats" in service_lower:
         lead = (
-            "The 2026 KS2 SATs papers and mark schemes are now available, so early July is a useful moment to turn test evidence into a calm next step. "
+            "The 2026 KS2 SATs papers and mark schemes are now available, so mid-July is a useful moment to turn test evidence into a calm next step. "
             "For Year 6, that means secondary transition; for Year 5, it means building foundations before the next May test window."
         )
         bullets = [
@@ -1698,7 +1706,7 @@ def summer_manual(service: str, fit_text: str) -> str:
         ]
     elif "gcse" in service_lower or "mock" in service_lower or "predicted" in service_lower or "exam" in service_lower or "resit" in service_lower:
         lead = (
-            f"By early July 2026, {service} sits right between the live GCSE exam cycle and the results-day or next-mock decisions families are already thinking about. "
+            f"By mid-July 2026, {service} sits right between the finished GCSE exam season and the results-day or next-mock decisions families are already thinking about. "
             "Students usually make better progress when the target is a small set of mark-losing habits."
         )
         bullets = [
@@ -1708,7 +1716,7 @@ def summer_manual(service: str, fit_text: str) -> str:
         ]
     elif "a-level" in service_lower or "ucat" in service_lower or "sixth" in service_lower:
         lead = (
-            f"Early July 2026 makes {service} a live sixth-form planning issue: Year 13 students are moving into results-day and Clearing planning, while Year 12 students are now inside the 2027 UCAS application cycle. "
+            f"Mid-July 2026 makes {service} a live sixth-form planning issue: Year 13 students are moving into results-day and Clearing planning, while Year 12 students are now inside the 2027 UCAS application cycle. "
             "That matters most where the next term expects deeper thinking rather than more notes."
         )
         bullets = [
@@ -1718,7 +1726,7 @@ def summer_manual(service: str, fit_text: str) -> str:
         ]
     elif "btec" in service_lower:
         lead = (
-            f"Early July 2026 is a useful checkpoint for {service} because assignments, external assessments and progression choices often collide at this point in the year. "
+            f"Mid-July 2026 is a useful checkpoint for {service} because assignments, external assessments and progression choices often collide at this point in the year. "
             "Good support should help the student organise evidence, not just polish individual paragraphs."
         )
         bullets = [
@@ -1728,7 +1736,7 @@ def summer_manual(service: str, fit_text: str) -> str:
         ]
     elif "summer" in service_lower:
         lead = (
-            f"Early July 2026 is exactly when {service} becomes most useful: families have school reports, exam-season context and a clearer view of what September will demand. "
+            f"Mid-July 2026 is exactly when {service} becomes most useful: families have school reports, exam-season context and a clearer view of what September will demand. "
             "The best plan is short, specific and built around one or two goals rather than a full holiday timetable."
         )
         bullets = [
@@ -1738,7 +1746,7 @@ def summer_manual(service: str, fit_text: str) -> str:
         ]
     elif any(word in service_lower for word in ("ks2", "homework", "catch-up", "english", "maths", "science", "supportive", "learning")):
         lead = (
-            f"Early July 2026 gives families fresh school evidence for {service}: reports, class tests, teacher comments and the student's own confidence after a long term. "
+            f"Mid-July 2026 gives families fresh school evidence for {service}: reports, class tests, teacher comments and the student's own confidence after a long term. "
             "That makes this a good moment to choose a precise support target instead of starting broad extra work."
         )
         bullets = [
@@ -1748,7 +1756,7 @@ def summer_manual(service: str, fit_text: str) -> str:
         ]
     elif service_lower == "tutors in smethwick":
         lead = (
-            "Early July 2026 is a strong moment for Smethwick families to compare local tutor options because school reports, exam-season evidence and summer schedules are all visible at once. "
+            "Mid-July 2026 is a strong moment for Smethwick families to compare local tutor options because school reports, exam-season evidence and summer schedules are all visible at once. "
             "A short holiday block can show whether the student responds better online, in person or one-to-one before September routines harden."
         )
         bullets = [
@@ -1758,7 +1766,7 @@ def summer_manual(service: str, fit_text: str) -> str:
         ]
     elif "online" in service_lower or "in-person" in service_lower or "one-to-one" in service_lower or "centre" in service_lower or "near me" in service_lower or "private" in service_lower or "tuition" in service_lower:
         lead = (
-            f"Early July 2026 is a strong moment to try {service} because families can compare end-of-term evidence with the reality of summer schedules. "
+            f"Mid-July 2026 is a strong moment to try {service} because families can compare end-of-term evidence with the reality of summer schedules. "
             "A short holiday block also shows whether the student responds better online, in person or one-to-one before September routines harden."
         )
         bullets = [
@@ -1776,16 +1784,16 @@ def summer_manual(service: str, fit_text: str) -> str:
             "Keep tasks focused on the subject or skill most likely to affect the next school term.",
             "Review progress before September so the next step is obvious.",
         ]
-    return summer_section(f"Early July 2026 update for {service}", lead, bullets)
+    return summer_section(f"Mid-July 2026 update for {service}", lead, bullets)
 
 
 def summer_private(title: str, focus: str) -> str:
     lead = (
-        f"For {title} families, early July 2026 is when school reports, exam timetables and September planning all start to overlap. "
+        f"For {title} families, mid-July 2026 is when school reports, end-of-term feedback and September planning all overlap. "
         f"The local focus should stay practical: {focus}."
     )
     return summer_section(
-        f"Early July 2026 tuition priorities for {title} families",
+        f"Mid-July 2026 tuition priorities for {title} families",
         lead,
         [
             "Use the first session to decide whether the student needs catch-up, confidence work or exam preparation.",
@@ -1797,20 +1805,20 @@ def summer_private(title: str, focus: str) -> str:
 
 BESPOKE_2026_UPDATES = {
     "11-plus-english-tutor-smethwick": {
-        "eyebrow": "Early July 2026 Update",
-        "title": "Early July 2026: build 11+ English without draining the final run-in.",
-        "lead": "West Midlands 11+ preparation now needs to connect vocabulary, comprehension and verbal reasoning with the autumn test format. Early July is the right point to use mock feedback and reading habits carefully, before the summer turns into rushed paper practice.",
+        "eyebrow": "Mid-July 2026 Update",
+        "title": "Mid-July 2026: build 11+ English without draining the final run-in.",
+        "lead": "West Midlands 11+ preparation now needs to connect vocabulary, comprehension and verbal reasoning with the autumn test format. Mid-July is the right point to use mock feedback and reading habits carefully, before the summer turns into rushed paper practice.",
         "steps": [
             ("Read wider, but review properly", "Short discussion after reading helps children turn vocabulary, inference and evidence into marks instead of just finishing another chapter."),
             ("Drill one weak question type", "Inference, synonym, antonym or cloze work should be practised in small focused sets so mistakes are corrected properly."),
-            ("Add timing after accuracy", "Timed passages matter, but early-July and summer work should build pace calmly before full-paper pressure returns."),
+            ("Add timing after accuracy", "Timed passages matter, but mid-July and summer work should build pace calmly before full-paper pressure returns."),
         ],
         "grid": "mock-step-grid",
     },
     "11-plus-maths-tutor-smethwick": {
-        "eyebrow": "Early July 2026 Update",
-        "title": "Early July 2026: sharpen 11+ Maths method before final-speed practice.",
-        "lead": "The West Midlands 11+ includes mathematics alongside English, verbal reasoning and non-verbal or spatial reasoning. Early July is a useful checkpoint for deciding whether a child needs arithmetic repair, reasoning practice or tighter timing before the autumn test period.",
+        "eyebrow": "Mid-July 2026 Update",
+        "title": "Mid-July 2026: sharpen 11+ Maths method before final-speed practice.",
+        "lead": "The West Midlands 11+ includes mathematics alongside English, verbal reasoning and non-verbal or spatial reasoning. Mid-July is a useful checkpoint for deciding whether a child needs arithmetic repair, reasoning practice or tighter timing before the autumn test period.",
         "steps": [
             ("Repair the highest-value gaps", "Focus first on topics that appear often and cost marks quickly, especially fractions, arithmetic accuracy and multi-step reasoning."),
             ("Explain the method aloud", "Children who can describe their approach usually make fewer repeated mistakes when the question is unfamiliar."),
@@ -1819,8 +1827,8 @@ BESPOKE_2026_UPDATES = {
         "grid": "mock-step-grid",
     },
     "11-plus-mock-test-smethwick": {
-        "eyebrow": "Early July 2026 Update",
-        "title": "Early July 2026 mock tests should turn one sitting into a clear final plan.",
+        "eyebrow": "Mid-July 2026 Update",
+        "title": "Mid-July 2026 mock tests should turn one sitting into a clear final plan.",
         "lead": "A Smethwick 11+ mock is most useful now when it shows which section needs teaching before the autumn test period, not when it simply adds another score to worry about.",
         "steps": [
             ("Test early enough to act", "Book the mock while there is still time to improve maths, English, verbal reasoning or non-verbal reasoning before the real exam window."),
@@ -1830,20 +1838,20 @@ BESPOKE_2026_UPDATES = {
         "grid": "how-grid",
     },
     "11-plus-mock-test-birmingham": {
-        "eyebrow": "Early July 2026 Update",
-        "title": "Early July 2026 Birmingham mock tests should guide the final stretch.",
+        "eyebrow": "Mid-July 2026 Update",
+        "title": "Mid-July 2026 Birmingham mock tests should guide the final stretch.",
         "lead": "Birmingham families are now close enough to the autumn 11+ window that a mock result needs to become a teaching plan quickly. The useful question is not just the total score, but which section can still move the most.",
         "steps": [
             ("Compare sections honestly", "A child may look ready overall but still be losing marks in one section that needs urgent attention."),
             ("Turn scores into teaching", "The result should point toward the exact maths, English or reasoning work that will make the biggest difference next."),
-            ("Avoid overtesting", "One good early-July or summer mock followed by careful review is often better than repeated tests with no time to fix the errors."),
+            ("Avoid overtesting", "One good mid-July or summer mock followed by careful review is often better than repeated tests with no time to fix the errors."),
         ],
         "grid": "how-grid",
     },
     "11-plus-mock-exams-birmingham": {
-        "eyebrow": "Early July 2026 Update",
-        "title": "Early July 2026 mock exams help families choose the right final priorities.",
-        "lead": "The current West Midlands Grammar Schools guidance keeps the test focus clear: English comprehension, verbal reasoning, mathematics and non-verbal or spatial reasoning. An early-July mock should show how those sections balance for this child, not just produce one broad readiness label.",
+        "eyebrow": "Mid-July 2026 Update",
+        "title": "Mid-July 2026 mock exams help families choose the right final priorities.",
+        "lead": "The current West Midlands Grammar Schools guidance keeps the test focus clear: English comprehension, verbal reasoning, mathematics and non-verbal or spatial reasoning. A mid-July mock should show how those sections balance for this child, not just produce one broad readiness label.",
         "steps": [
             ("Check the balance", "A strong maths score can hide English timing problems, while good comprehension can hide weaker spatial reasoning."),
             ("Prioritise teaching", "The mock should identify the section where direct teaching will change the result most before the real test period."),
@@ -1852,19 +1860,19 @@ BESPOKE_2026_UPDATES = {
         "grid": "how-grid",
     },
     "11-plus-tutor-birmingham": {
-        "eyebrow": "Early July 2026 Update",
-        "title": "Early July 2026 Birmingham 11+ tutoring should narrow the plan, not broaden it.",
-        "lead": "By early July, registration has closed and Birmingham families are waiting for allocated test-centre information. The best tutoring now turns mock evidence, target schools and the child's section profile into a focused final plan for the West Midlands GL-style format.",
+        "eyebrow": "Mid-July 2026 Update",
+        "title": "Mid-July 2026 Birmingham 11+ tutoring should narrow the plan, not broaden it.",
+        "lead": "By mid-July, registration has closed and Birmingham families are waiting for allocated test-centre information. The best tutoring now turns mock evidence, target schools and the child's section profile into a focused final plan for the West Midlands GL-style format.",
         "steps": [
             ("Check all four sections", "English comprehension, verbal reasoning, maths and non-verbal or spatial reasoning need separate attention because one strong area can hide another weakness."),
             ("Use local school goals", "King Edward's, Handsworth, Sutton Coldfield and other grammar routes all need high-quality preparation, but the child's section profile should shape the weekly plan."),
-            ("Keep practice purposeful", "Early-July and summer lessons should combine targeted teaching with enough timed work to build confidence without exhausting the child."),
+            ("Keep practice purposeful", "Mid-July and summer lessons should combine targeted teaching with enough timed work to build confidence without exhausting the child."),
         ],
         "grid": "mock-step-grid",
     },
     "11-plus-tutor-bearwood": {
-        "eyebrow": "Early July 2026 Update",
-        "title": "Early July 2026 Bearwood families can test the 11+ routine before Year 6 pressure rises.",
+        "eyebrow": "Mid-July 2026 Update",
+        "title": "Mid-July 2026 Bearwood families can test the 11+ routine before Year 6 pressure rises.",
         "lead": "Bearwood families are close enough to the Smethwick base to try a practical in-person routine before September. This is the moment to see whether the child needs core KS2 repair, reasoning practice or mock-test strategy first.",
         "steps": [
             ("Start from evidence", "Use recent school work, mock results or tutor assessment before choosing the first 11+ priority."),
@@ -1874,9 +1882,9 @@ BESPOKE_2026_UPDATES = {
         "grid": "mock-step-grid",
     },
     "11-plus-tutor-oldbury": {
-        "eyebrow": "Early July 2026 Update",
-        "title": "Early July 2026 Oldbury 11+ preparation should be structured but not overloaded.",
-        "lead": "Oldbury families are often comparing Birmingham, Walsall and nearby grammar-school routes. After the registration deadline, early July is the right time to turn that comparison into a balanced plan across English, maths and reasoning while families wait for allocated test-centre information.",
+        "eyebrow": "Mid-July 2026 Update",
+        "title": "Mid-July 2026 Oldbury 11+ preparation should be structured but not overloaded.",
+        "lead": "Oldbury families are often comparing Birmingham, Walsall and nearby grammar-school routes. After the registration deadline, mid-July is the right time to turn that comparison into a balanced plan across English, maths and reasoning while families wait for allocated test-centre information.",
         "steps": [
             ("Use the closed-registration window", "Keep target schools in view while using the waiting period to decide how much mock practice and section repair is needed."),
             ("Find the first teaching gap", "The strongest starting point may be comprehension, arithmetic, verbal reasoning or non-verbal/spatial reasoning."),
@@ -1885,9 +1893,9 @@ BESPOKE_2026_UPDATES = {
         "grid": "mock-step-grid",
     },
     "11-plus-tutor-west-bromwich": {
-        "eyebrow": "Early July 2026 Update",
-        "title": "Early July 2026 West Bromwich families can turn 11+ preparation into a clear final plan.",
-        "lead": "West Bromwich students often have several realistic selective-school routes nearby. With registration now closed for September 2027 entry, early July is the practical point for checking mock evidence, travel routine and which section needs the most focused teaching.",
+        "eyebrow": "Mid-July 2026 Update",
+        "title": "Mid-July 2026 West Bromwich families can turn 11+ preparation into a clear final plan.",
+        "lead": "West Bromwich students often have several realistic selective-school routes nearby. With registration now closed for September 2027 entry, mid-July is the practical point for checking mock evidence, travel routine and which section needs the most focused teaching.",
         "steps": [
             ("Review the section pattern", "Do not rely on a single score if English, maths or reasoning marks tell a more specific story."),
             ("Choose the format", "In-person lessons can help younger pupils with focus, while online can protect routine when family travel is tight."),
@@ -1896,20 +1904,20 @@ BESPOKE_2026_UPDATES = {
         "grid": "mock-step-grid",
     },
     "11-plus-year-5-smethwick": {
-        "eyebrow": "Early July 2026 Update",
-        "title": "Early July 2026 is the calmest point to make Year 5 11+ preparation more serious.",
+        "eyebrow": "Mid-July 2026 Update",
+        "title": "Mid-July 2026 is the calmest point to make Year 5 11+ preparation more serious.",
         "lead": "Year 5 families now have enough school-year evidence to decide whether the child is ready for a more structured 11+ plan. The useful goal is not full exam pressure; it is building the foundations that Year 6 will need.",
         "steps": [
             ("Separate foundation from test practice", "Reading stamina, number confidence and vocabulary should be secure before heavy timed papers take over."),
             ("Introduce reasoning carefully", "Verbal and non-verbal or spatial reasoning improve fastest when patterns are taught, not guessed."),
-            ("Build a Year 6 runway", "An early-July-to-September plan should make the start of Year 6 feel purposeful rather than rushed."),
+            ("Build a Year 6 runway", "A mid-July-to-September plan should make the start of Year 6 feel purposeful rather than rushed."),
         ],
         "grid": "mock-step-grid",
     },
     "king-edwards-11-plus-preparation": {
-        "eyebrow": "Early July 2026 Update",
-        "title": "Early July 2026 King Edward's preparation should balance ambition with evidence.",
-        "lead": "King Edward's preparation is competitive, but the current West Midlands test route still rewards the same balanced skills: English, verbal reasoning, maths and non-verbal or spatial reasoning. After registration closes, early July is the moment to check whether ambition is matched by section evidence.",
+        "eyebrow": "Mid-July 2026 Update",
+        "title": "Mid-July 2026 King Edward's preparation should balance ambition with evidence.",
+        "lead": "King Edward's preparation is competitive, but the current West Midlands test route still rewards the same balanced skills: English, verbal reasoning, maths and non-verbal or spatial reasoning. After registration closes, mid-July is the moment to check whether ambition is matched by section evidence.",
         "steps": [
             ("Check the school shortlist", "Use target schools to shape expectations, but use the child's section data to shape the actual teaching plan."),
             ("Avoid one-strength preparation", "A strong maths pupil still needs careful comprehension and verbal reasoning; a strong reader still needs speed and non-verbal logic."),
@@ -1951,7 +1959,7 @@ def replace_bespoke_update_section(text: str, slug: str) -> str:
     replacement = render_bespoke_update(slug)
     new_text, count = pattern.subn(replacement, text, count=1)
     if count != 1:
-        raise RuntimeError(f"Could not update Early July 2026 section for {slug}")
+        raise RuntimeError(f"Could not update Mid-July 2026 section for {slug}")
     return new_text
 
 
@@ -2651,6 +2659,16 @@ def main() -> None:
             continue
         new_text = replace_bespoke_update_section(text, path.stem)
         new_text = update_date_modified(new_text)
+        if new_text != text:
+            path.write_text(new_text, encoding="utf-8")
+            changed.append(path.stem)
+
+    for slug in sorted(SKIP):
+        path = BLOG_DIR / f"{slug}.html"
+        if not path.exists():
+            continue
+        text = path.read_text(encoding="utf-8")
+        new_text = update_date_modified(text)
         if new_text != text:
             path.write_text(new_text, encoding="utf-8")
             changed.append(path.stem)
