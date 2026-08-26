@@ -154,3 +154,38 @@ details.faq-item a{color:var(--green2);font-weight:700}
   .ctaph{width:100%;justify-content:center}
   .ctaband .cta-form-btn{width:100%;justify-content:center;min-height:48px}
 }
+
+/* ---------- Mobile fix: hero headline + compact level cards ---------- */
+@media (max-width:768px){
+  /* Put the hero photo back into normal flow on mobile so the headline
+     card sits below it instead of being clipped under the navbar */
+  .hero picture{position:static;inset:auto;z-index:auto}
+  .hero{overflow:visible}
+  .hero-bg-img{border-radius:0 0 18px 18px}
+  .hero-cta-row{padding:0 1rem}
+
+  /* Slimmer sticky navbar: logo + phone on one row, pills below */
+  .navbar{display:grid;grid-template-columns:1fr auto;align-items:center;row-gap:.55rem;padding-top:.65rem;padding-bottom:.65rem}
+  .nacts{width:auto;grid-column:2;grid-row:1;margin:0}
+  .nphone{width:auto;padding:.5rem .8rem;font-size:.88rem;border-radius:10px}
+  .nnav{grid-column:1/-1;grid-row:2;order:0;width:100%}
+  .nlinks a{min-height:34px;padding:.42rem .8rem;font-size:.74rem}
+
+  /* Compact level cards */
+  #levels.levels-section{padding-top:1.2rem;padding-bottom:1.4rem}
+  #levels .agrid{gap:.75rem}
+  .ac:hover{transform:none}
+  .ac-photo{height:84px}
+  .levels-section .ac-top{padding:.6rem .9rem .5rem}
+  .ac-top h3{font-size:.94rem;margin-bottom:.05rem}
+  .ac-rng{font-size:.68rem}
+  .ac-bot{display:grid;grid-template-columns:auto 1fr;align-items:center;column-gap:.8rem;padding:.65rem .9rem .7rem}
+  .aitems{grid-column:1/-1;gap:.2rem;margin-bottom:.45rem}
+  .aitem{font-size:.78rem;line-height:1.3}
+  .aprow{grid-column:1;margin:0;padding:0;border-top:none;white-space:nowrap}
+  .afrom{display:inline;font-size:.64rem;margin-right:.15rem}
+  .aamt{font-size:1.05rem}
+  .aper{font-size:.7rem}
+  .level-card-links{grid-column:2;margin:0;justify-content:flex-end}
+  .level-card-links .btn{flex:0 1 auto;padding:.44rem .8rem;font-size:.73rem;min-height:38px}
+}
