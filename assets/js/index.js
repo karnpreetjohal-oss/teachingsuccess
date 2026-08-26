@@ -142,12 +142,6 @@ async function doBook() {
   bookingInFlight = true;
   setBookingSubmitState(true);
 
-  trackGAEvent('book_trial_submit', {
-    event_category: 'lead',
-    subject,
-    year_group: year
-  });
-
   try {
     const response = await fetch(FORMSPREE_ENDPOINT, {
       method: 'POST',
@@ -158,6 +152,18 @@ async function doBook() {
     if (!response.ok) {
       throw new Error(`Formspree returned ${response.status}`);
     }
+
+    trackGAEvent('book_trial_submit', {
+      event_category: 'lead',
+      subject,
+      year_group: year
+    });
+    trackGAEvent('generate_lead', {
+      event_category: 'lead',
+      lead_source: 'free_trial_form',
+      subject,
+      year_group: year
+    });
 
     closeM('book');
     clearBookingForm();
