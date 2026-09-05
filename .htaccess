@@ -7,3 +7,13 @@ Redirect 301 /index.html /
 Redirect 301 /blog/tutor-near-me-smethwick.html /blog/tutor-near-me-smethwick-birmingham.html
 Redirect 301 /blog/tutoring-bearwood-guide.html /blog/private-tutor-bearwood.html
 Redirect 301 /blog/tutoring-oldbury-guide.html /blog/private-tutor-oldbury.html
+
+# Mr Olu moved from Wolverhampton to Coventry
+Redirect 301 /tutors/mr-olu-wolverhampton.html /tutors/mr-olu-coventry.html
+Redirect 301 /blog/private-tutor-wolverhampton.html /blog/private-tutor-coventry.html
+Redirect 301 /blog/maths-tutor-wolverhampton.html /blog/maths-tutor-coventry.html
+Redirect 301 /blog/gcse-maths-wolverhampton.html /blog/gcse-maths-coventry.html
+Redirect 301 /blog/gcse-science-wolverhampton.html /blog/gcse-science-coventry.html
+Redirect 301 /blog/english-tutor-wolverhampton.html /blog/english-tutor-coventry.html
+Redirect 301 /blog/a-level-tutor-wolverhampton.html /blog/a-level-tutor-coventry.html
+Redirect 301 /blog/secondary-tutor-wolverhampton.html /blog/secondary-tutor-coventry.html

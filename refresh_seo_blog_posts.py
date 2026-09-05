@@ -561,21 +561,21 @@ GUIDE_META = {
             ("/tutors/mr-vasta-walsall.html", "Mr Vasta's profile"),
         ],
     },
-    "maths-tutor-wolverhampton": {
-        "service": "the Wolverhampton maths route with Mr Olu",
-        "intro": "A Wolverhampton maths search is usually driven by one pressure point: GCSE results, KS3 confidence drift or the need for a teacher who can explain methods properly rather than just mark answers.",
+    "maths-tutor-coventry": {
+        "service": "the Coventry maths route with Mr Olu",
+        "intro": "A Coventry maths search is usually driven by one pressure point: GCSE results, KS3 confidence drift or the need for a teacher who can explain methods properly rather than just mark answers.",
         "points": [
-            "A local Wolverhampton route through Mr Olu for KS3 and GCSE Maths",
+            "A local Coventry route through Mr Olu for KS3 and GCSE Maths",
             "Strong emphasis on algebra, problem-solving and method marks under time pressure",
             "Support that connects school assessment data to a clearer weekly plan",
             "The option of online lessons when families want less travel around busy evenings",
         ],
-        "fit": "This route suits families who want maths support anchored to Wolverhampton rather than a broader Birmingham search.",
+        "fit": "This route suits families who want maths support anchored to Coventry rather than a broader Birmingham search.",
         "links": [
-            ("/blog/gcse-maths-wolverhampton.html", "GCSE Maths in Wolverhampton"),
-            ("/blog/secondary-tutor-wolverhampton.html", "Secondary tutor in Wolverhampton"),
-            ("/blog/gcse-science-wolverhampton.html", "GCSE Science in Wolverhampton"),
-            ("/tutors/mr-olu-wolverhampton.html", "Mr Olu's profile"),
+            ("/blog/gcse-maths-coventry.html", "GCSE Maths in Coventry"),
+            ("/blog/secondary-tutor-coventry.html", "Secondary tutor in Coventry"),
+            ("/blog/gcse-science-coventry.html", "GCSE Science in Coventry"),
+            ("/tutors/mr-olu-coventry.html", "Mr Olu's profile"),
         ],
     },
     "mock-exam-preparation-smethwick": {
@@ -680,9 +680,9 @@ GUIDE_META = {
             ("/blog/a-level-physics-tutor-birmingham.html", "A-Level Physics tutor"),
         ],
     },
-    "secondary-tutor-wolverhampton": {
-        "service": "a secondary-school route in Wolverhampton",
-        "intro": "A broad secondary tutor search in Wolverhampton is usually driven by KS3 drift, GCSE pressure or the need for one clear local route into Maths and Science support.",
+    "secondary-tutor-coventry": {
+        "service": "a secondary-school route in Coventry",
+        "intro": "A broad secondary tutor search in Coventry is usually driven by KS3 drift, GCSE pressure or the need for one clear local route into Maths and Science support.",
         "points": [
             "Teacher-led support through Mr Olu for KS3 and GCSE pathways",
             "A practical local route before families decide whether they need a more subject-specific page",
@@ -691,10 +691,10 @@ GUIDE_META = {
         ],
         "fit": "This route suits families who know they need secondary support but want help deciding whether the next page should be Maths, Science or a more general KS3 route.",
         "links": [
-            ("/blog/maths-tutor-wolverhampton.html", "Maths tutor in Wolverhampton"),
-            ("/blog/gcse-science-wolverhampton.html", "GCSE Science in Wolverhampton"),
-            ("/blog/gcse-maths-wolverhampton.html", "GCSE Maths in Wolverhampton"),
-            ("/tutors/mr-olu-wolverhampton.html", "Mr Olu's profile"),
+            ("/blog/maths-tutor-coventry.html", "Maths tutor in Coventry"),
+            ("/blog/gcse-science-coventry.html", "GCSE Science in Coventry"),
+            ("/blog/gcse-maths-coventry.html", "GCSE Maths in Coventry"),
+            ("/tutors/mr-olu-coventry.html", "Mr Olu's profile"),
         ],
     },
     "smethwick-tuition-guide": {
@@ -879,21 +879,21 @@ GCSE_META = {
             ("/tutors/mr-vasta-walsall.html", "Mr Vasta's profile"),
         ],
     },
-    "gcse-maths-wolverhampton": {
-        "service": "GCSE Maths in Wolverhampton",
-        "intro": "The Wolverhampton GCSE Maths route is about strong local teaching through Mr Olu, especially for students who need clearer methods and more confidence before paper pressure gets heavier.",
+    "gcse-maths-coventry": {
+        "service": "GCSE Maths in Coventry",
+        "intro": "The Coventry GCSE Maths route is about strong local teaching through Mr Olu, especially for students who need clearer methods and more confidence before paper pressure gets heavier.",
         "points": [
             "A teacher-led route through KS3 into Foundation or Higher GCSE papers",
             "Focused work on the question types that repeatedly cost marks in school assessments",
             "Paper-practice routines that strengthen both speed and decision-making",
-            "A practical local option for Wolverhampton families who want subject-specific support",
+            "A practical local option for Coventry families who want subject-specific support",
         ],
-        "fit": "This route suits families who want GCSE Maths support shaped around Wolverhampton rather than a broad Midlands search.",
+        "fit": "This route suits families who want GCSE Maths support shaped around Coventry rather than a broad Midlands search.",
         "links": [
-            ("/blog/maths-tutor-wolverhampton.html", "Maths tutor in Wolverhampton"),
-            ("/blog/secondary-tutor-wolverhampton.html", "Secondary tutor in Wolverhampton"),
-            ("/blog/gcse-science-wolverhampton.html", "GCSE Science in Wolverhampton"),
-            ("/tutors/mr-olu-wolverhampton.html", "Mr Olu's profile"),
+            ("/blog/maths-tutor-coventry.html", "Maths tutor in Coventry"),
+            ("/blog/secondary-tutor-coventry.html", "Secondary tutor in Coventry"),
+            ("/blog/gcse-science-coventry.html", "GCSE Science in Coventry"),
+            ("/tutors/mr-olu-coventry.html", "Mr Olu's profile"),
         ],
     },
     "gcse-physics-tutor-smethwick": {
@@ -964,21 +964,21 @@ GCSE_META = {
             ("/tutors/mr-vasta-walsall.html", "Mr Vasta's profile"),
         ],
     },
-    "gcse-science-wolverhampton": {
-        "service": "GCSE Science in Wolverhampton",
-        "intro": "The Wolverhampton GCSE Science route gives families a local way to organise Biology, Chemistry and Physics support before the subject load becomes too fragmented to manage alone.",
+    "gcse-science-coventry": {
+        "service": "GCSE Science in Coventry",
+        "intro": "The Coventry GCSE Science route gives families a local way to organise Biology, Chemistry and Physics support before the subject load becomes too fragmented to manage alone.",
         "points": [
-            "Teacher-led science support through Mr Olu for Wolverhampton students",
+            "Teacher-led science support through Mr Olu for Coventry students",
             "Stronger command-word handling, scientific explanation and practical understanding",
             "A local route that works well alongside GCSE Maths support where both are wobbling",
             "Clearer revision planning across Combined or Triple Science papers",
         ],
-        "fit": "This route is best for Wolverhampton families who want science support locally anchored and easier to sustain through the school year.",
+        "fit": "This route is best for Coventry families who want science support locally anchored and easier to sustain through the school year.",
         "links": [
-            ("/blog/secondary-tutor-wolverhampton.html", "Secondary tutor in Wolverhampton"),
-            ("/blog/gcse-maths-wolverhampton.html", "GCSE Maths in Wolverhampton"),
-            ("/blog/maths-tutor-wolverhampton.html", "Maths tutor in Wolverhampton"),
-            ("/tutors/mr-olu-wolverhampton.html", "Mr Olu's profile"),
+            ("/blog/secondary-tutor-coventry.html", "Secondary tutor in Coventry"),
+            ("/blog/gcse-maths-coventry.html", "GCSE Maths in Coventry"),
+            ("/blog/maths-tutor-coventry.html", "Maths tutor in Coventry"),
+            ("/tutors/mr-olu-coventry.html", "Mr Olu's profile"),
         ],
     },
 }
@@ -1210,7 +1210,7 @@ LOCATION_META.update(
             "format": "Online is usually the simplest starting point for Dudley students, especially at GCSE, because the lesson can stay consistent around school, travel and clubs.",
             "school_context": "Most Dudley enquiries are subject-led rather than purely local: parents usually want maths, science or English support that gives clearer feedback than a broad tutor marketplace.",
             "links": [
-                ("/blog/private-tutor-wolverhampton.html", "Private tutor in Wolverhampton"),
+                ("/blog/private-tutor-coventry.html", "Private tutor in Coventry"),
                 ("/blog/private-tutor-walsall.html", "Private tutor in Walsall"),
                 ("/blog/gcse-maths-smethwick-birmingham.html", "GCSE Maths tuition"),
                 ("/blog/online-tutor-smethwick-birmingham.html", "Online tutor in Smethwick and Birmingham"),
@@ -1264,16 +1264,16 @@ LOCATION_META.update(
                 ("/blog/maths-tutor-walsall.html", "Maths tutor in Walsall"),
             ],
         },
-        "wolverhampton": {
-            "focus": "secondary Maths and Science support through Mr Olu's Wolverhampton route",
-            "journey": "Wolverhampton families usually need a local secondary route rather than travelling into Smethwick every week.",
-            "format": "In-person lessons can work through the Wolverhampton route, with online support available where a flexible routine is more realistic.",
+        "coventry": {
+            "focus": "secondary Maths and Science support through Mr Olu's Coventry route",
+            "journey": "Coventry families usually need a local secondary route rather than travelling into Smethwick every week.",
+            "format": "In-person lessons can work through the Coventry route, with online support available where a flexible routine is more realistic.",
             "school_context": "The main pressure points are KS3 foundations, GCSE Maths, GCSE Science and exam technique before or after mock results.",
             "links": [
-                ("/tutors/mr-olu-wolverhampton.html", "Mr Olu Wolverhampton tutor profile"),
-                ("/blog/maths-tutor-wolverhampton.html", "Maths tutor in Wolverhampton"),
-                ("/blog/gcse-maths-wolverhampton.html", "GCSE Maths tutor in Wolverhampton"),
-                ("/blog/gcse-science-wolverhampton.html", "GCSE Science tutor in Wolverhampton"),
+                ("/tutors/mr-olu-coventry.html", "Mr Olu Coventry tutor profile"),
+                ("/blog/maths-tutor-coventry.html", "Maths tutor in Coventry"),
+                ("/blog/gcse-maths-coventry.html", "GCSE Maths tutor in Coventry"),
+                ("/blog/gcse-science-coventry.html", "GCSE Science tutor in Coventry"),
             ],
         },
     }
@@ -1320,7 +1320,7 @@ GUIDE_META.update(
                 ("/blog/11-plus-primary-smethwick.html", "11 plus tuition in Smethwick"),
                 ("/blog/grammar-school-tutor-birmingham.html", "Grammar school tutor in Birmingham"),
                 ("/blog/11-plus-mock-exams-birmingham.html", "11+ mock exams"),
-                ("/blog/private-tutor-wolverhampton.html", "Private tutor in Wolverhampton"),
+                ("/tutor-network.html", "Teaching Success tutor network"),
             ],
         },
         "11-plus-year-4-smethwick": {
@@ -1357,16 +1357,16 @@ GUIDE_META.update(
                 ("/blog/year-6-tutor-smethwick.html", "Year 6 tutor in Smethwick"),
             ],
         },
-        "a-level-tutor-wolverhampton": {
-            "service": "A-Level tutoring in Wolverhampton",
-            "intro": "A-Level support in Wolverhampton is usually about independence as much as content. Students often understand lessons but need sharper routines for practice, review and exam performance.",
+        "a-level-tutor-coventry": {
+            "service": "A-Level tutoring in Coventry",
+            "intro": "A-Level support in Coventry is usually about independence as much as content. Students often understand lessons but need sharper routines for practice, review and exam performance.",
             "points": [
                 "Identifying whether the issue is subject knowledge, paper technique or weak independent practice",
                 "Using past-paper evidence rather than vague revision confidence to plan lessons",
                 "Supporting students through the jump from GCSE success to sixth-form depth",
                 "Choosing online or local support based on consistency, not convenience alone",
             ],
-            "fit": "This page is best for Wolverhampton sixth-form students who need a clear plan before choosing a subject-specific A-Level route.",
+            "fit": "This page is best for Coventry sixth-form students who need a clear plan before choosing a subject-specific A-Level route.",
             "links": [
                 ("/blog/a-level-maths-tutor-birmingham.html", "A-Level Maths tutor"),
                 ("/blog/a-level-physics-tutor-birmingham.html", "A-Level Physics tutor"),
@@ -1391,21 +1391,21 @@ GUIDE_META.update(
                 ("/blog/english-tutor-smethwick.html", "English teacher in Smethwick"),
             ],
         },
-        "english-tutor-wolverhampton": {
-            "service": "English tutoring in Wolverhampton",
-            "intro": "Wolverhampton English support is most useful when it identifies whether the barrier is reading, vocabulary, essay structure, confidence or timing.",
+        "english-tutor-coventry": {
+            "service": "English tutoring in Coventry",
+            "intro": "Coventry English support is most useful when it identifies whether the barrier is reading, vocabulary, essay structure, confidence or timing.",
             "points": [
                 "Checking comprehension and written explanation separately",
                 "Helping KS3 students build stronger paragraphs before GCSE texts become demanding",
                 "Using model answers carefully without turning lessons into copying",
-                "Linking English work to wider secondary support through the Wolverhampton route",
+                "Linking English work to wider secondary support through the Coventry route",
             ],
             "fit": "This page suits families who want a secondary English route but still need to know which part of English is actually holding progress back.",
             "links": [
-                ("/blog/private-tutor-wolverhampton.html", "Private tutor in Wolverhampton"),
-                ("/blog/secondary-tutor-wolverhampton.html", "Secondary tutor in Wolverhampton"),
+                ("/blog/private-tutor-coventry.html", "Private tutor in Coventry"),
+                ("/blog/secondary-tutor-coventry.html", "Secondary tutor in Coventry"),
                 ("/blog/gcse-english-tutor-smethwick.html", "GCSE English tutor"),
-                ("/tutors/mr-olu-wolverhampton.html", "Mr Olu Wolverhampton profile"),
+                ("/tutors/mr-olu-coventry.html", "Mr Olu Coventry profile"),
             ],
         },
         "gcse-maths-manchester": {
@@ -1421,7 +1421,7 @@ GUIDE_META.update(
             "links": [
                 ("/tutors/miss-kay-manchester.html", "Miss Kay Manchester tutor profile"),
                 ("/blog/gcse-science-manchester.html", "GCSE Science tutor in Manchester"),
-                ("/blog/gcse-maths-wolverhampton.html", "GCSE Maths Wolverhampton"),
+                ("/blog/gcse-maths-coventry.html", "GCSE Maths Coventry"),
                 ("/blog/exam-technique-gcse-smethwick.html", "GCSE exam technique"),
             ],
         },
@@ -1439,7 +1439,7 @@ GUIDE_META.update(
                 ("/tutors/miss-kay-manchester.html", "Miss Kay Manchester tutor profile"),
                 ("/blog/gcse-maths-manchester.html", "GCSE Maths tutor in Manchester"),
                 ("/blog/gcse-science-tutor-smethwick.html", "GCSE Science tutor in Smethwick"),
-                ("/blog/gcse-science-wolverhampton.html", "GCSE Science Wolverhampton"),
+                ("/blog/gcse-science-coventry.html", "GCSE Science Coventry"),
             ],
         },
         "sats-preparation-birmingham": {
@@ -2055,6 +2055,7 @@ def areas_for_slug(slug: str) -> list[str]:
         "oldbury": "Oldbury",
         "west-bromwich": "West Bromwich",
         "wolverhampton": "Wolverhampton",
+        "coventry": "Coventry",
         "walsall": "Walsall",
         "bloxwich": "Bloxwich",
         "willenhall": "Willenhall",
