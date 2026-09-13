@@ -96,6 +96,23 @@ function clearBookingForm() {
     const input = $(id);
     if (input) input.value = '';
   });
+  if ($('book-format')) $('book-format').value = 'Not sure yet';
+}
+
+function applyEnquiryContext() {
+  const enquiry = new URLSearchParams(window.location.search).get('enquiry');
+  const formats = new Map([
+    ['home-education', 'Online home education support'],
+    ['online-tuition', 'Online subject tuition']
+  ]);
+  const format = formats.get(enquiry);
+  if (!format || !$('book-format')) return;
+  $('book-format').value = format;
+  if (enquiry === 'home-education' && $('book-subject')) {
+    $('book-subject').value = 'Multiple subjects';
+  }
+  openM('book');
+  $('book-parent')?.focus();
 }
 
 function setBookingSubmitState(isLoading) {
@@ -115,6 +132,7 @@ async function doBook() {
   const subject = $('book-subject')?.value || '';
   const year = $('book-year')?.value || '';
   const notes = $('book-notes')?.value.trim() || '';
+  const tuitionFormat = $('book-format')?.value || 'Not sure yet';
 
   if (!parent || !email || !student || !phone) {
     toast('Please fill in all required fields.');
@@ -135,6 +153,7 @@ async function doBook() {
     subject,
     year,
     notes,
+    tuition_format: tuitionFormat,
     _replyto: email,
     _subject: `New Trial Booking: ${student} (${subject})`
   };
@@ -156,13 +175,15 @@ async function doBook() {
     trackGAEvent('book_trial_submit', {
       event_category: 'lead',
       subject,
-      year_group: year
+      year_group: year,
+      tuition_format: tuitionFormat
     });
     trackGAEvent('generate_lead', {
       event_category: 'lead',
       lead_source: 'free_trial_form',
       subject,
-      year_group: year
+      year_group: year,
+      tuition_format: tuitionFormat
     });
 
     closeM('book');
@@ -404,4 +425,5 @@ document.addEventListener('DOMContentLoaded', () => {
   bindUi();
   bindPhoneTracking();
   initReviews();
+  applyEnquiryContext();
 });

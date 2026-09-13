@@ -32,7 +32,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,700;0,9..144,900;1,9..144,700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="preload" as="image" href="assets/images/home-hero-source.webp" type="image/webp">
 <link rel="stylesheet" href="assets/css/index.css">
-<link rel="stylesheet" href="assets/css/home-refresh.css">
+<link rel="stylesheet" href="assets/css/home-refresh.css?v=tutor-launch-20260912">
 <script type="application/ld+json">
 {
   "@context":"https://schema.org",
@@ -63,10 +63,7 @@
   "founder":[{"@type":"Person","name":"Kevin Johal"},{"@type":"Person","name":"Serena Johal"}],
   "employee":[
     {"@type":"Person","name":"Kevin Johal","honorificSuffix":"MEd","jobTitle":"Secondary School Teacher & Tutor","hasCredential":{"@type":"EducationalOccupationalCredential","credentialCategory":"degree","name":"MEd in Educational Technology and Learning Design"}},
-    {"@type":"Person","name":"Serena Johal","jobTitle":"Primary School Teacher & Tutor"},
-    {"@type":"Person","name":"Mr Olu","jobTitle":"Secondary School Teacher & Tutor — Coventry"},
-    {"@type":"Person","name":"Mr Vasta","jobTitle":"Tutor — Maths, Science & English — Walsall"},
-    {"@type":"Person","name":"Miss Kay","jobTitle":"GCSE Science Tutor — Manchester"}
+    {"@type":"Person","name":"Serena Johal","jobTitle":"Primary School Teacher & Tutor"}
   ],
   "aggregateRating":{
     "@type":"AggregateRating",
@@ -233,7 +230,7 @@
 }
 </script>
 </head>
-<body>
+<body class="home-page">
 <div id="landing" class="view active">
   <nav class="navbar">
     <div class="nlogo">
@@ -243,8 +240,9 @@
     <div class="nnav">
       <div class="nlinks">
         <a href="/tutor-network.html#tutors">Our Tutors</a>
-        <a href="/tutor-network.html#network">Tutor Network</a>
         <a href="/qts-mentoring.html">Teacher Mentoring</a>
+        <a href="/work-with-us.html">Work with us</a>
+        <a href="/tutor-business-setup.html">Tutor Launch</a>
         <a href="#levels">Subjects &amp; Levels</a>
         <a href="#reviews">Reviews</a>
       </div>
@@ -466,7 +464,7 @@
       </details>
       <details class="faq-item">
         <summary><h3>Who teaches the lessons?</h3></summary>
-        <p>Lessons are taught by qualified teachers including <strong>Kevin Johal</strong> (secondary, science, A-Level — MEd in Educational Technology &amp; Learning Design), <strong>Serena Johal</strong> (primary, English, 11+), <strong>Mr Olu</strong> (secondary — Coventry), <strong>Mr Vasta</strong> (Maths, Science, English — Walsall) and <strong>Miss Kay</strong> (secondary — Manchester). See <a href="/tutor-network.html">our full tutor profiles</a>.</p>
+        <p>Lessons are taught by <strong>Kevin Johal</strong> (secondary, science and A-Level — MEd in Educational Technology &amp; Learning Design) and <strong>Serena Johal</strong> (primary, English and 11+). See <a href="/tutor-network.html">their tutor profiles</a>.</p>
       </details>
       <details class="faq-item">
         <summary><h3>How long is each tutoring session?</h3></summary>
@@ -502,6 +500,7 @@
         <a href="/blog/a-level-physics-tutor-birmingham.html">A-Level Physics</a>
         <a href="/blog/catch-up-tuition-smethwick.html">Catch-up tuition</a>
         <a href="/blog/one-to-one-tuition-smethwick.html">One-to-one tuition</a>
+        <a href="/online-home-education.html">Online &amp; home education</a>
         <a href="/blog/microsoft-office-training-birmingham.html">Microsoft Office training</a>
         <a href="/blog/excel-training-birmingham.html">Excel training</a>
         <a href="/blog/touch-typing-course-smethwick.html">Touch typing</a>
@@ -535,6 +534,9 @@
       <a href="tel:07909274901">07909 274901</a>
       <a href="/qts-mentoring.html">Teacher Mentoring</a>
       <a href="/blog/microsoft-office-training-birmingham.html">Digital Skills Training</a>
+      <a href="/online-home-education.html">Online Home Education</a>
+      <a href="/work-with-us.html">Work with us</a>
+      <a href="/tutor-business-setup.html">Tutor Launch</a>
       <a href="blog.html">Blog</a>
       <button class="footer-link-btn" type="button" data-open-modal="book">Book Trial</button>
     </nav>
@@ -604,7 +606,8 @@
         </select>
       </div>
     </div>
-    <div class="fg"><label>Anything else? (optional)</label><textarea id="book-notes" placeholder="Tell us about your child's current level, what they're struggling with, or any specific goals..."></textarea></div>
+    <div class="fg"><label for="book-format">Tuition format</label><select id="book-format"><option value="Not sure yet">Not sure yet</option><option value="In-person tuition">In-person tuition</option><option value="Online subject tuition">Online subject tuition</option><option value="Online home education support">Online home education support</option></select></div>
+    <div class="fg"><label>Anything else? (optional)</label><textarea id="book-notes" placeholder="Tell us about your child's current level, preferred lesson times, or any specific goals..."></textarea></div>
     <button class="btn btn-gold book-submit-btn" id="book-submit" type="button">Send Enquiry</button>
   </div>
 </div>
