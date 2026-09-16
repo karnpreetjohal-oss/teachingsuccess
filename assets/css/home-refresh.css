@@ -275,3 +275,9 @@ details.faq-item a{color:var(--green2);font-weight:700}
   .level-card-links{grid-column:2;margin:0;justify-content:flex-end}
   .level-card-links .btn{flex:0 1 auto;padding:.44rem .8rem;font-size:.73rem;min-height:38px}
 }
+
+@media(max-width:520px){
+  #modal-book .modal{padding:1.5rem}
+  #modal-book .frow{grid-template-columns:1fr;gap:0}
+  #modal-book .fg{min-width:0}
+}

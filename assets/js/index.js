@@ -101,18 +101,25 @@ function clearBookingForm() {
 
 function applyEnquiryContext() {
   const enquiry = new URLSearchParams(window.location.search).get('enquiry');
-  const formats = new Map([
-    ['home-education', 'Online home education support'],
-    ['online-tuition', 'Online subject tuition']
+  const contexts = new Map([
+    ['home-education', { format: 'Online home education support', subject: 'Multiple subjects' }],
+    ['online-tuition', { format: 'Online subject tuition' }],
+    ['tuition', {}],
+    ['maths', { subject: 'Maths' }],
+    ['a-level-maths', { subject: 'Maths', year: 'A-Level (Year 12 or 13)' }],
+    ['11-plus', { subject: '11+ Preparation' }],
+    ['office', { subject: 'Microsoft Office', year: 'Adult / Professional' }],
+    ['excel', { subject: 'Excel', year: 'Adult / Professional' }],
+    ['powerpoint', { subject: 'PowerPoint', year: 'Adult / Professional' }]
   ]);
-  const format = formats.get(enquiry);
-  if (!format || !$('book-format')) return;
-  $('book-format').value = format;
-  if (enquiry === 'home-education' && $('book-subject')) {
-    $('book-subject').value = 'Multiple subjects';
-  }
+  const context = contexts.get(enquiry);
+  if (!context || !$('modal-book')) return;
+  if (context.format && $('book-format')) $('book-format').value = context.format;
+  if (context.subject && $('book-subject')) $('book-subject').value = context.subject;
+  if (context.year && $('book-year')) $('book-year').value = context.year;
   openM('book');
-  $('book-parent')?.focus();
+  // Focus after the browser finishes positioning the incoming page fragment.
+  requestAnimationFrame(() => $('book-parent')?.focus({ preventScroll: true }));
 }
 
 function setBookingSubmitState(isLoading) {
