@@ -1,0 +1,15 @@
+/* Scoped editorial additions; existing page layouts and forms are unchanged. */
+.fresh-note{scroll-margin-top:7rem}
+.fresh-note{box-sizing:border-box;width:calc(100% - 2rem);max-width:1080px;margin:2rem auto;padding:clamp(1.25rem,3vw,2.25rem);border:1px solid #d4dce6;border-top:4px solid #ddba48;border-radius:14px;background:#fff;color:#26354b;text-align:left;overflow-wrap:anywhere;font-family:'Outfit',system-ui,sans-serif}
+.blp-main>.fresh-note,.guide-article>.fresh-note,.resource-main>.fresh-note{width:100%;margin:0 0 1.5rem;max-width:none}
+.fresh-note .fresh-note-kicker{margin:0 0 .75rem;color:#536456;font-size:.78rem;font-weight:700;letter-spacing:.035em;line-height:1.5}
+.fresh-note h2{margin:0 0 1rem;font-family:'Fraunces',Georgia,serif;font-size:clamp(1.45rem,2.3vw,2rem);font-weight:700;line-height:1.25;color:#1e2d42;letter-spacing:-.015em}
+.fresh-note p{max-width:78ch;margin:0 0 1rem;font-size:1rem;line-height:1.75;color:#3e4e64}
+.fresh-note .fresh-note-example{margin:1.2rem 0;padding:1rem 1.2rem;background:#f0f5f2;border-left:3px solid #527262;border-radius:0 8px 8px 0}
+.fresh-note .fresh-note-example h3{margin:0 0 .45rem;color:#355848;font-family:inherit;font-size:.85rem;font-weight:700;line-height:1.5}
+.fresh-note .fresh-note-example p,.fresh-note p:last-child{margin-bottom:0}
+.fresh-note a{color:#264f77;text-decoration:underline;text-underline-offset:3px}
+.fresh-note a:focus-visible{outline:3px solid #bd9120;outline-offset:3px}
+.fresh-note .fresh-note-source{font-size:.82rem;color:#536456}
+@media(max-width:600px){.fresh-note{width:calc(100% - 1.5rem);margin:1.25rem auto;padding:1.2rem}.fresh-note .fresh-note-example{padding:.85rem}.fresh-note p{font-size:.96rem}}
+@media print{.fresh-note{break-inside:avoid;width:100%;border-color:#888;background:#fff;box-shadow:none}.fresh-note .fresh-note-example{background:#fff}}

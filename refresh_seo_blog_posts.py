@@ -2500,6 +2500,7 @@ def is_target_page(path: Path) -> bool:
         'class="blog-lp"' in text
         and '<main class="blp-main">' in text
         and "noindex" not in text
+        and "data-content-refresh" not in text
         and path.stem not in SKIP
     )
 
@@ -2538,7 +2539,7 @@ def main() -> None:
     ]
     for path in bespoke_targets:
         text = path.read_text(encoding="utf-8")
-        if "noindex" in text:
+        if "noindex" in text or "data-content-refresh" in text:
             continue
         new_text = replace_bespoke_update_section(text, path.stem)
         new_text = update_date_modified(new_text)
@@ -2551,6 +2552,8 @@ def main() -> None:
         if not path.exists():
             continue
         text = path.read_text(encoding="utf-8")
+        if "data-content-refresh" in text:
+            continue
         new_text = update_date_modified(text)
         if new_text != text:
             path.write_text(new_text, encoding="utf-8")
