@@ -2,8 +2,7 @@
 :root{
   --ink:#2c3a52;--ink2:#1e2a3d;
   --green:#4a6fa5;--green2:#3a5f95;--green-lt:#7a9ec8;
-  --gold:#ffe36b;--gold-lt:#fff0a6;
-  --brand-blue:#8595ae;--brand-doodle:#abc3cb;--brand-charcoal:#252629;
+  --gold:#f5c842;--gold-lt:#fde07a;
   --cream:#eef1f7;--surf:#e4e9f2;--warm:#dde3ef;
   --rose:#c94444;--sky:#5b8ecf;
   --muted:#6b7a96;--border:#c8d0e0;--card:#fff;
@@ -668,12 +667,3 @@ body.modal-open{overflow:hidden}
   }
 }
  
-
-/* Shared Facebook identity: original supplied artwork, not a substitute mark. */
-.nlogo{flex-shrink:0;text-decoration:none}
-.nlogo .nlogo-mark,.flogo .nlogo-mark{width:54px;height:54px;flex-shrink:0;background:#8595ae url('/assets/images/brand/lightbulb-logo.png') center/cover no-repeat;border-radius:12px;color:transparent;font-size:0;overflow:hidden}
-.nlogo .nlogo-txt{font-family:'Outfit',sans-serif;font-weight:900;text-transform:uppercase;font-size:1.15rem;line-height:1.08;letter-spacing:.025em;color:#fff;-webkit-text-stroke:1.7px #252629;paint-order:stroke fill;text-shadow:1px 2px 0 #252629}
-.nlogo .nlogo-txt span{display:block;color:#fff}
-.flogo{font-family:'Outfit',sans-serif;font-weight:800}
-.nlogo:focus-visible{outline:3px solid var(--gold);outline-offset:5px;border-radius:6px}
-@media(max-width:480px){.nlogo .nlogo-mark{width:44px;height:44px}.nlogo .nlogo-txt{font-size:.95rem}}
