@@ -2,7 +2,7 @@
 :root{
   --ink:#2c3a52;--ink2:#1e2a3d;
   --green:#4a6fa5;--green2:#3a5f95;--green-lt:#7a9ec8;
-  --gold:#f5c842;--gold-lt:#fde07a;
+  --gold:#ffe36b;--gold-lt:#fff0a6;
   --cream:#eef1f7;--surf:#e4e9f2;--warm:#dde3ef;
   --rose:#c94444;--sky:#5b8ecf;
   --muted:#6b7a96;--border:#c8d0e0;--card:#fff;
@@ -667,3 +667,13 @@ body.modal-open{overflow:hidden}
   }
 }
  
+
+/* Light brand accents; preserve existing layout and logo dimensions. */
+.nlogo .nlogo-mark,.flogo .nlogo-mark{
+  background:#8595ae url('/assets/images/brand/lightbulb-logo.png') center/cover no-repeat;
+  color:transparent!important;font-size:0;
+}
+.nlogo-txt,.flogo{font-family:'Outfit',sans-serif;font-weight:800}
+.home-page .navbar,.home-page .footer{background:#38475e}
+.home-page .btn-gold{background:linear-gradient(160deg,var(--gold-lt),var(--gold))}
+.home-page .btn-gold:hover{background:var(--gold-lt)}
