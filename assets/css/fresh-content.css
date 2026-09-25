@@ -13,3 +13,9 @@
 .fresh-note .fresh-note-source{font-size:.82rem;color:#536456}
 @media(max-width:600px){.fresh-note{width:calc(100% - 1.5rem);margin:1.25rem auto;padding:1.2rem}.fresh-note .fresh-note-example{padding:.85rem}.fresh-note p{font-size:.96rem}}
 @media print{.fresh-note{break-inside:avoid;width:100%;border-color:#888;background:#fff;box-shadow:none}.fresh-note .fresh-note-example{background:#fff}}
+
+/* Follow-up activities added 23 September 2026. */
+.fresh-note .fresh-note-followup{border-top:1px solid #d4dce6;margin-top:1.5rem;padding-top:1.25rem;scroll-margin-top:11rem}
+.fresh-note .fresh-note-followup h3{margin:0 0 .8rem;font-family:inherit;font-size:1.15rem;line-height:1.4;font-weight:700;color:#1e2d42}
+.fresh-note .fresh-note-followup p{margin:0 0 1rem}
+.fresh-note .fresh-note-followup p:last-child{margin-bottom:0}
