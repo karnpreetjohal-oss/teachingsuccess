@@ -25,3 +25,7 @@ a:focus-visible,summary:focus-visible{outline:3px solid #d3a419;outline-offset:4
   .online-tutor img{width:88px;height:96px}
   .hero-actions .btn{white-space:normal;text-align:center;justify-content:center}
 }
+
+.online-page-links{display:flex;flex-wrap:wrap;justify-content:center;gap:.65rem 1.5rem;padding:1.25rem;background:#e9f5ee}
+.online-page-links a{color:#28533b;font-weight:600;text-underline-offset:4px}
+body[data-stage="online"] section[id]{scroll-margin-top:7rem}
