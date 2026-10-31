@@ -1,0 +1,46 @@
+/* Parent-facing lesson information on the priority subject pages. */
+.lesson-panel{background:#fff;border:1px solid #c8d0e0;border-radius:18px;padding:1.6rem 1.8rem;color:#2c3a52;scroll-margin-top:110px}
+.lesson-panel h2{font-family:'Fraunces',serif;font-size:1.55rem;line-height:1.2;margin:0 0 1rem;color:#2c3a52}
+.lesson-panel h3{font-size:1.1rem;line-height:1.35;margin:0 0 .6rem;color:#2c3a52}
+.lesson-panel p,.lesson-panel dd,.lesson-panel li{font-size:.97rem;line-height:1.7;color:#52617a}
+.lesson-panel p{margin:.6rem 0}
+.lesson-panel a:not(.btn){color:#1f4f9c;text-decoration:underline;text-underline-offset:3px}
+.lesson-panel a:focus-visible,.lesson-panel summary:focus-visible{outline:3px solid #4d79b6;outline-offset:4px}
+.lesson-kicker{font-size:.75rem!important;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#4a6fa5!important;margin:0 0 .6rem!important}
+.lesson-facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1.15rem 1.5rem;margin:0}
+.lesson-facts>div{border-top:1px solid #dce2eb;padding-top:.8rem;min-width:0}
+.lesson-facts dt{font-weight:700;font-size:.86rem;color:#2c3a52;margin-bottom:.25rem}
+.lesson-facts dd{margin:0}
+.lesson-facts dd strong{color:#2c3a52}
+.lesson-panel .lesson-availability{border-left:3px solid #d5a514;padding-left:1rem;margin-top:1.4rem}
+.lesson-actions{display:flex;flex-wrap:wrap;gap:.75rem;margin-top:1.25rem}
+.lesson-actions .btn{min-height:44px;justify-content:center;text-align:center;white-space:normal}
+.lesson-call{background:#eaf2fc;color:#294c7e;border:1px solid #bdcde3}
+.lesson-teacher{display:grid;grid-template-columns:88px minmax(0,1fr);gap:1.2rem;align-items:start}
+.lesson-teacher img{width:88px;height:104px;object-fit:cover;object-position:center top;border-radius:10px}
+.lesson-teacher p:first-of-type{margin-top:0}
+.lesson-panel ol{padding-left:1.4rem;margin:.75rem 0}
+.lesson-panel ol li{padding-left:.25rem;margin-bottom:.6rem}
+.lesson-panel details{border-top:1px solid #dce2eb;padding:1rem 0}
+.lesson-panel details:last-child{padding-bottom:0}
+.lesson-panel summary{font-weight:700;cursor:pointer;line-height:1.5}
+.lesson-panel details p{margin-bottom:0}
+.lesson-stage{padding:2.5rem 1.25rem;background:#f3f5f9}
+.lesson-stage-in{max-width:1180px;margin:0 auto;display:grid;gap:1.25rem}
+.lesson-stage .lesson-facts{grid-template-columns:repeat(3,minmax(0,1fr))}
+.lesson-stage .lesson-panel{padding:2rem}
+.lesson-stage .lesson-panel h2{font-size:1.9rem}
+.lesson-stage .lesson-teacher{grid-template-columns:110px minmax(0,1fr)}
+.lesson-stage .lesson-teacher img{width:110px;height:130px}
+@media(max-width:720px){
+  .lesson-stage .lesson-facts{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .lesson-stage .lesson-panel,.lesson-panel{padding:1.25rem}
+  .lesson-stage .lesson-panel h2{font-size:1.55rem}
+  .lesson-stage .lesson-teacher{grid-template-columns:88px minmax(0,1fr)}
+  .lesson-stage .lesson-teacher img{width:88px;height:104px}
+}
+@media(max-width:480px){
+  .lesson-facts,.lesson-stage .lesson-facts{grid-template-columns:1fr}
+  .lesson-actions{flex-direction:column;align-items:stretch}
+  .lesson-teacher,.lesson-stage .lesson-teacher{grid-template-columns:1fr}
+}
